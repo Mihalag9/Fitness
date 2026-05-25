@@ -14,24 +14,24 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.navbar a {
-    display: block;
-    color: white;
-    text-align: center;
-    padding: 14px 20px;
-    text-decoration: none;
-    font-size: 16px;
-    transition: background 0.3s;
-}
+    .navbar a {
+        display: block;
+        color: white;
+        text-align: center;
+        padding: 14px 20px;
+        text-decoration: none;
+        font-size: 16px;
+        transition: background 0.3s;
+    }
 
-.navbar a:hover {
-    background: #1a252f;
-}
+        .navbar a:hover {
+            background: #1a252f;
+        }
 
-.navbar a.active {
-    background: #007bff;
-    font-weight: bold;
-}
+        .navbar a.active {
+            background: #007bff;
+            font-weight: bold;
+        }
 
 /* Заголовок */
 h1 {
@@ -69,25 +69,31 @@ tr:nth-child(even) {
 tr:hover {
     background-color: #f1f1f1;
 }
-/* Общие настройки для компактных карточек */
-.form-card, .filter-card {
+
+/* Карточки — единая ширина 95% */
+.form-card, .stats-card, .filter-card {
     background: white;
     padding: 20px;
     margin: 20px auto;
     width: 95%;
-    max-width: 1200px; /* Чтобы на огромных мониторах формы не растягивались слишком сильно */
     box-sizing: border-box;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* Обертка для элементов внутри карточки (сетка) */
+    .form-card h2, .stats-card h2, .filter-card h2 {
+        margin-top: 0;
+        color: #2c3e50;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+    }
+
+/* Сетка форм и фильтров */
 .form-grid, .filter-grid {
     display: grid;
-    /* Автоматически распределяет колонки. Минимальная ширина элемента 150px-180px */
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px;
-    align-items: end; /* Выравнивает элементы по нижней линии, чтобы кнопки не уезжали */
+    align-items: end;
 }
 
 /* Группа "подпись + инпут" */
@@ -103,39 +109,22 @@ tr:hover {
         margin-bottom: 4px;
     }
 
-/* Сбрасываем внешние отступы инпутов, чтобы они не ломали сетку */
+/* Сброс внешних отступов внутри сетки */
 .form-grid input, .form-grid select, .form-grid button,
 .filter-grid input, .filter-grid select, .filter-grid button {
     margin: 0;
     width: 100%;
     box-sizing: border-box;
-    height: 38px; /* Одинаковая высота для всех элементов управления */
+    height: 38px;
 }
 
-/* Кнопки управления (контейнер) */
+/* Кнопки управления */
 .form-actions, .filter-actions {
     display: flex;
     gap: 8px;
-    /* Позволяет кнопкам занимать целую колонку в сетке */
-}
-/* Карточки */
-.form-card, .stats-card, .filter-card {
-    background: white;
-    padding: 20px;
-    margin: 20px auto;
-    width: 95%;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.form-card h2, .stats-card h2, .filter-card h2 {
-    margin-top: 0;
-    color: #2c3e50;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 10px;
-}
-
-/* Поля ввода */
+/* Поля ввода — общие */
 input, select, button {
     margin: 5px;
     padding: 10px;
@@ -144,11 +133,11 @@ input, select, button {
     font-size: 14px;
 }
 
-input:focus, select:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 5px rgba(0,123,255,0.3);
-}
+    input:focus, select:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 5px rgba(0,123,255,0.3);
+    }
 
 button {
     cursor: pointer;
@@ -159,9 +148,9 @@ button {
     transition: background 0.2s;
 }
 
-button:hover {
-    background: #0056b3;
-}
+    button:hover {
+        background: #0056b3;
+    }
 
 /* Ошибка */
 .error {
@@ -169,9 +158,10 @@ button:hover {
     color: #721c24;
     padding: 10px;
     border-radius: 5px;
-    margin: 15px auto;
+    margin: 20px auto;
     width: 95%;
     border: 1px solid #f5c6cb;
+    box-sizing: border-box;
 }
 
 .hidden {
