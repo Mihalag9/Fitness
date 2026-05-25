@@ -20,10 +20,12 @@ const filterFullName = document.getElementById('filter-fullName');
 const filterPhone = document.getElementById('filter-phone');
 const filterBirthDateFrom = document.getElementById('filter-birthDateFrom');
 const filterBirthDateTo = document.getElementById('filter-birthDateTo');
+const filterRangeToggle = document.getElementById('filter-range-toggle');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
 let currentEditId = null;
+const PHONE_MAX_LEN = 12; // +7 + 10 цифр
 
 // ---- Вспомогательные функции ----
 function showError(text) {
@@ -50,6 +52,53 @@ function formatDate(dateString) {
     return date.toLocaleDateString('ru-RU');
 }
 
+// Проверка даты рождения: от 1939 до 2019 включительно
+function isValidBirthDate(dateString) {
+    if (!dateString) return true;
+    return dateString >= '1939-01-01' && dateString <= '2019-12-31';
+}
+
+// ---- Валидация формы перед отправкой ----
+function validateClientForm() {
+    const fullName = fullNameInput.value.trim();
+    const phone = phoneInput.value.trim();
+    const birthDate = birthDateInput.value;
+
+    // ФИО
+    if (!fullName) {
+        showError('ФИО обязательно');
+        return false;
+    }
+
+    const nameParts = fullName.split(' ').filter(p => p.length > 0);
+    if (nameParts.length < 2) {
+        showError('Укажите фамилию и имя (минимум 2 слова)');
+        return false;
+    }
+    if (nameParts.length > 3) {
+        showError('ФИО должно содержать не более 3 слов');
+        return false;
+    }
+    if (/\s{2,}/.test(fullName)) {
+        showError('Пробелы не могут идти подряд');
+        return false;
+    }
+
+    // Телефон (если указан)
+    if (phone && !/^\+7\d{10}$/.test(phone)) {
+        showError('Телефон должен быть в формате +7XXXXXXXXXX');
+        return false;
+    }
+
+    // Дата рождения
+    if (!isValidBirthDate(birthDate)) {
+        showError('Дата рождения должна быть в диапазоне с 1939 по 2019 год');
+        return false;
+    }
+
+    return true;
+}
+
 // ---- Статистика ----
 async function updateStats() {
     try {
@@ -67,12 +116,18 @@ async function updateStats() {
 // ---- Отрисовка таблицы ----
 async function renderTable() {
     try {
-        // Собираем query string из фильтров
         const params = new URLSearchParams();
         if (filterFullName.value) params.append('fullName', filterFullName.value.trim());
         if (filterPhone.value) params.append('phone', filterPhone.value.trim());
-        if (filterBirthDateFrom.value) params.append('birthDateFrom', filterBirthDateFrom.value);
-        if (filterBirthDateTo.value) params.append('birthDateTo', filterBirthDateTo.value);
+
+        if (filterBirthDateFrom.value) {
+            const from = filterBirthDateFrom.value;
+            const to = (filterRangeToggle.checked && filterBirthDateTo.value)
+                ? filterBirthDateTo.value
+                : from;
+            params.append('birthDateFrom', from);
+            params.append('birthDateTo', to);
+        }
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
@@ -117,15 +172,14 @@ function fillFormForEdit(client) {
 
 // ---- Добавление нового ----
 async function createClient() {
+    if (!validateClientForm()) return false;
+
     const newClient = {
         fullName: fullNameInput.value.trim(),
         birthDate: birthDateInput.value ? birthDateInput.value : null,
-        phone: phoneInput.value.trim()
+        phone: phoneInput.value.trim() || null
     };
-    if (!newClient.fullName) {
-        showError('ФИО обязательно');
-        return false;
-    }
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
@@ -147,16 +201,15 @@ async function createClient() {
 
 // ---- Обновление существующего ----
 async function updateClient(id) {
+    if (!validateClientForm()) return false;
+
     const updated = {
         clientId: id,
         fullName: fullNameInput.value.trim(),
         birthDate: birthDateInput.value ? birthDateInput.value : null,
-        phone: phoneInput.value.trim()
+        phone: phoneInput.value.trim() || null
     };
-    if (!updated.fullName) {
-        showError('ФИО не может быть пустым');
-        return false;
-    }
+
     try {
         const response = await fetch(`${API_URL}/${id}`, {
             method: 'PUT',
@@ -217,14 +270,101 @@ function onClearFilters() {
     filterPhone.value = '';
     filterBirthDateFrom.value = '';
     filterBirthDateTo.value = '';
+    filterRangeToggle.checked = false;
+    filterBirthDateTo.classList.add('hidden');
     renderTable();
 }
+
+// ---- Переключение диапазона ----
+function onToggleRange() {
+    if (filterRangeToggle.checked) {
+        filterBirthDateTo.classList.remove('hidden');
+    } else {
+        filterBirthDateTo.classList.add('hidden');
+        filterBirthDateTo.value = '';
+    }
+}
+
+// ---- Автоформатирование ФИО при вводе ----
+fullNameInput.addEventListener('input', function () {
+    let val = this.value;
+    val = val.replace(/[^a-zA-Zа-яА-ЯёЁ\s-]/g, '');
+    val = val.replace(/\s{2,}/g, ' ');
+    val = val.replace(/([a-zA-Zа-яА-ЯёЁ]+)/g, function (match) {
+        return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
+    });
+    this.value = val;
+});
+
+fullNameInput.addEventListener('keydown', function (e) {
+    if (e.key === ' ') {
+        const val = this.value;
+        if (val.length > 0 && val[val.length - 1] === ' ') {
+            e.preventDefault();
+            return;
+        }
+        const spaceCount = (val.match(/\s/g) || []).length;
+        if (spaceCount >= 2) {
+            e.preventDefault();
+        }
+    }
+});
+
+// ---- Автоформатирование телефона ----
+
+// При фокусе на пустое поле — подставляем +7
+phoneInput.addEventListener('focus', function () {
+    if (!this.value) {
+        this.value = '+7';
+    }
+});
+
+// Блокировка лишних символов и лишней длины
+phoneInput.addEventListener('keydown', function (e) {
+    const isDigit = /^\d$/.test(e.key);
+    const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
+    const isCtrlCmd = e.ctrlKey || e.metaKey;
+
+    if (isCtrlCmd || isNav) return;
+
+    if (!isDigit) {
+        e.preventDefault();
+        return;
+    }
+
+    // Если длина уже максимальная и нет выделения — блокируем ввод
+    if (this.value.length >= PHONE_MAX_LEN && this.selectionStart === this.selectionEnd) {
+        e.preventDefault();
+    }
+});
+
+// Очистка и форматирование значения
+phoneInput.addEventListener('input', function () {
+    let val = this.value;
+
+    // Удаляем всё кроме + и цифр
+    val = val.replace(/[^+\d]/g, '');
+
+    // Гарантируем +7 в начале
+    if (!val.startsWith('+7')) {
+        val = val.replace(/\+/g, '');
+        val = '+7' + val;
+    }
+
+    // Обрезаем до максимума
+    if (val.length > PHONE_MAX_LEN) {
+        val = val.substring(0, PHONE_MAX_LEN);
+    }
+
+    this.value = val;
+});
 
 // ---- Инициализация и обработчики событий ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
+filterRangeToggle.addEventListener('change', onToggleRange);
 
 // Загружаем данные при старте
 renderTable();
