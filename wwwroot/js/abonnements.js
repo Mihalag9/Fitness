@@ -9,8 +9,7 @@ const priceInput = document.getElementById('price');
 const durationMonthsInput = document.getElementById('durationMonths');
 const weekdayAccessSelect = document.getElementById('weekdayAccess');
 const weekendAccessSelect = document.getElementById('weekendAccess');
-const accessStartTimeInput = document.getElementById('accessStartTime');
-const accessEndTimeInput = document.getElementById('accessEndTime');
+const accessTimeRangeInput = document.getElementById('accessTimeRange'); // Одно поле вместо двух
 const submitBtn = document.getElementById('submit-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const editIdField = document.getElementById('edit-id');
@@ -45,8 +44,7 @@ function clearForm() {
     durationMonthsInput.value = '';
     weekdayAccessSelect.value = 'true';
     weekendAccessSelect.value = 'true';
-    accessStartTimeInput.value = '08:00';
-    accessEndTimeInput.value = '23:00';
+    accessTimeRangeInput.value = '08:00 - 23:00'; // Дефолтное значение
     editIdField.value = '';
     currentEditId = null;
     formTitle.textContent = 'Добавить абонемент';
@@ -79,7 +77,6 @@ async function updateStats() {
 // ---- Отрисовка таблицы ----
 async function renderTable() {
     try {
-        // Собираем query string из фильтров
         const params = new URLSearchParams();
         if (filterAbonnementType.value) params.append('abonnementType', filterAbonnementType.value.trim());
         if (filterWeekdayAccess.value !== '') params.append('weekdayAccess', filterWeekdayAccess.value === 'true');
@@ -129,8 +126,12 @@ function fillFormForEdit(abonnement) {
     durationMonthsInput.value = abonnement.durationMonths;
     weekdayAccessSelect.value = abonnement.weekdayAccess ? 'true' : 'false';
     weekendAccessSelect.value = abonnement.weekendAccess ? 'true' : 'false';
-    accessStartTimeInput.value = abonnement.accessStartTime.substring(0, 5);
-    accessEndTimeInput.value = abonnement.accessEndTime.substring(0, 5);
+
+    // Склеиваем "HH:mm" старта и конца в одну строку для единого инпута
+    const start = abonnement.accessStartTime.substring(0, 5);
+    const end = abonnement.accessEndTime.substring(0, 5);
+    accessTimeRangeInput.value = `${start} - ${end}`;
+
     editIdField.value = abonnement.abonnementId;
     currentEditId = abonnement.abonnementId;
     formTitle.textContent = 'Редактировать абонемент';
@@ -187,14 +188,22 @@ async function updateAbonnement(id) {
 }
 
 function collectFormData() {
+    // Дробим строку вида "08:00 - 23:00" на две части, удаляя лишние пробелы
+    const rawValue = accessTimeRangeInput.value || '';
+    const parts = rawValue.replace(/\s+/g, '').split('-');
+
+    const start = parts[0] || '08:00';
+    const end = parts[1] || '23:00';
+
     return {
         abonnementType: abonnementTypeInput.value.trim(),
         price: parseFloat(priceInput.value),
         durationMonths: parseInt(durationMonthsInput.value),
         weekdayAccess: weekdayAccessSelect.value === 'true',
         weekendAccess: weekendAccessSelect.value === 'true',
-        accessStartTime: accessStartTimeInput.value ? accessStartTimeInput.value + ':00' : '08:00:00',
-        accessEndTime: accessEndTimeInput.value ? accessEndTimeInput.value + ':00' : '23:00:00'
+        // Приводим к виду "HH:mm:00" для бэкенда
+        accessStartTime: start.substring(0, 5) + ':00',
+        accessEndTime: end.substring(0, 5) + ':00'
     };
 }
 
@@ -211,6 +220,17 @@ function validateForm(data) {
         showError('Длительность должна быть положительным целым числом');
         return false;
     }
+
+    // Проверка формата времени ЧЧ:ММ (регулярное выражение)
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    const startShort = data.accessStartTime.substring(0, 5);
+    const endShort = data.accessEndTime.substring(0, 5);
+
+    if (!timeRegex.test(startShort) || !timeRegex.test(endShort)) {
+        showError('Время должно быть в формате ЧЧ:ММ - ЧЧ:ММ (например, 08:00 - 23:00)');
+        return false;
+    }
+
     return true;
 }
 
@@ -249,6 +269,7 @@ async function onApplyFilters() {
     await renderTable();
 }
 
+// ---- Очистка фильтров ----
 function onClearFilters() {
     filterAbonnementType.value = '';
     filterWeekdayAccess.value = '';

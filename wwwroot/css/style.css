@@ -69,7 +69,55 @@ tr:nth-child(even) {
 tr:hover {
     background-color: #f1f1f1;
 }
+/* Общие настройки для компактных карточек */
+.form-card, .filter-card {
+    background: white;
+    padding: 20px;
+    margin: 20px auto;
+    width: 95%;
+    max-width: 1200px; /* Чтобы на огромных мониторах формы не растягивались слишком сильно */
+    box-sizing: border-box;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
 
+/* Обертка для элементов внутри карточки (сетка) */
+.form-grid, .filter-grid {
+    display: grid;
+    /* Автоматически распределяет колонки. Минимальная ширина элемента 150px-180px */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    align-items: end; /* Выравнивает элементы по нижней линии, чтобы кнопки не уезжали */
+}
+
+/* Группа "подпись + инпут" */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+    .form-group label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 4px;
+    }
+
+/* Сбрасываем внешние отступы инпутов, чтобы они не ломали сетку */
+.form-grid input, .form-grid select, .form-grid button,
+.filter-grid input, .filter-grid select, .filter-grid button {
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    height: 38px; /* Одинаковая высота для всех элементов управления */
+}
+
+/* Кнопки управления (контейнер) */
+.form-actions, .filter-actions {
+    display: flex;
+    gap: 8px;
+    /* Позволяет кнопкам занимать целую колонку в сетке */
+}
 /* Карточки */
 .form-card, .stats-card, .filter-card {
     background: white;
