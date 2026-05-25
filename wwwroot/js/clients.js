@@ -86,7 +86,7 @@ function validateClientForm() {
 
     // Телефон (если указан)
     if (phone && !/^\+7\d{10}$/.test(phone)) {
-        showError('Телефон должен быть в формате +7XXXXXXXXXX');
+        showError('Телефон должен быть в формате +79001234501');
         return false;
     }
 
@@ -240,6 +240,12 @@ async function deleteClient(id) {
         } else if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
+
+        // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
+        if (id === currentEditId) {
+            clearForm();
+        }
+
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
@@ -311,15 +317,12 @@ fullNameInput.addEventListener('keydown', function (e) {
 });
 
 // ---- Автоформатирование телефона ----
-
-// При фокусе на пустое поле — подставляем +7
 phoneInput.addEventListener('focus', function () {
     if (!this.value) {
         this.value = '+7';
     }
 });
 
-// Блокировка лишних символов и лишней длины
 phoneInput.addEventListener('keydown', function (e) {
     const isDigit = /^\d$/.test(e.key);
     const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
@@ -332,26 +335,20 @@ phoneInput.addEventListener('keydown', function (e) {
         return;
     }
 
-    // Если длина уже максимальная и нет выделения — блокируем ввод
     if (this.value.length >= PHONE_MAX_LEN && this.selectionStart === this.selectionEnd) {
         e.preventDefault();
     }
 });
 
-// Очистка и форматирование значения
 phoneInput.addEventListener('input', function () {
     let val = this.value;
-
-    // Удаляем всё кроме + и цифр
     val = val.replace(/[^+\d]/g, '');
 
-    // Гарантируем +7 в начале
     if (!val.startsWith('+7')) {
         val = val.replace(/\+/g, '');
         val = '+7' + val;
     }
 
-    // Обрезаем до максимума
     if (val.length > PHONE_MAX_LEN) {
         val = val.substring(0, PHONE_MAX_LEN);
     }

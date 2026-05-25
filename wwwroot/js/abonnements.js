@@ -244,6 +244,12 @@ async function deleteAbonnement(id) {
         } else if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
+
+        // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
+        if (id === currentEditId) {
+            clearForm();
+        }
+
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
