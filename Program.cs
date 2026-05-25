@@ -1,5 +1,9 @@
-var builder = WebApplication.CreateBuilder(args);
+using Fitness.Models;
+using Microsoft.EntityFrameworkCore;
 
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<FitnessContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Add services to the container.
 
 builder.Services.AddControllers();
