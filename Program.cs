@@ -1,4 +1,5 @@
 using Fitness.Models;
+using Fitness.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,7 +8,9 @@ builder.Services.AddDbContext<FitnessContext>(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<ClientService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
