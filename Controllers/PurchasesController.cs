@@ -23,7 +23,7 @@ namespace Fitness.Controllers
         }
 
         // GET: api/Purchases/5/10/2024-01-15
-        [HttpGet("{clientid}/{abonnementid}/{purchasedate:date}")]
+        [HttpGet("{clientid}/{abonnementid}/{purchasedate}")]
         public async Task<ActionResult<Purchase>> GetPurchase(int clientid, int abonnementid, DateOnly purchasedate)
         {
             var purchase = await _context.Purchases.FindAsync(clientid, abonnementid, purchasedate);
@@ -37,7 +37,7 @@ namespace Fitness.Controllers
         }
 
         // PUT: api/Purchases/5/10/2024-01-15
-        [HttpPut("{clientid}/{abonnementid}/{purchasedate:date}")]
+        [HttpPut("{clientid}/{abonnementid}/{purchasedate}")]
         public async Task<IActionResult> PutPurchase(int clientid, int abonnementid, DateOnly purchasedate, Purchase purchase)
         {
             if (clientid != purchase.ClientId || abonnementid != purchase.AbonnementId || purchasedate != purchase.PurchaseDate)
@@ -77,7 +77,7 @@ namespace Fitness.Controllers
         }
 
         // DELETE: api/Purchases/5/10/2024-01-15
-        [HttpDelete("{clientid}/{abonnementid}/{purchasedate:date}")]
+        [HttpDelete("{clientid}/{abonnementid}/{purchasedate}")]
         public async Task<IActionResult> DeletePurchase(int clientid, int abonnementid, DateOnly purchasedate)
         {
             var purchase = await _context.Purchases.FindAsync(clientid, abonnementid, purchasedate);
