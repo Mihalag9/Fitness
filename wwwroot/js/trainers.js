@@ -39,6 +39,41 @@ function clearForm() {
     cancelBtn.style.display = 'none';
 }
 
+// ---- Валидация формы перед отправкой ----
+function validateTrainerForm() {
+    const fullName = fullNameInput.value.trim();
+    const experience = experienceInput.value.trim();
+
+    if (!fullName) {
+        showError('ФИО обязательно');
+        return false;
+    }
+
+    const nameParts = fullName.split(' ').filter(p => p.length > 0);
+    if (nameParts.length < 2) {
+        showError('Укажите фамилию и имя (минимум 2 слова)');
+        return false;
+    }
+    if (nameParts.length > 3) {
+        showError('ФИО должно содержать не более 3 слов');
+        return false;
+    }
+    if (/\s{2,}/.test(fullName)) {
+        showError('Пробелы не могут идти подряд');
+        return false;
+    }
+
+    if (experience !== '') {
+        const expNum = parseInt(experience, 10);
+        if (isNaN(expNum) || expNum < 0) {
+            showError('Стаж должен быть неотрицательным числом');
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // ---- Статистика ----
 async function updateStats() {
     try {
@@ -56,7 +91,6 @@ async function updateStats() {
 // ---- Отрисовка таблицы ----
 async function renderTable() {
     try {
-        // Собираем query string из фильтров
         const params = new URLSearchParams();
         if (filterFullName.value) params.append('fullName', filterFullName.value.trim());
         if (filterExperienceSort.value) params.append('experienceSort', filterExperienceSort.value);
@@ -70,7 +104,8 @@ async function renderTable() {
             const row = tbody.insertRow();
             row.insertCell(0).textContent = trainer.trainerId;
             row.insertCell(1).textContent = trainer.fullName;
-            row.insertCell(2).textContent = trainer.experience != null ? trainer.experience : '—';
+            // ПРАВКА: 0 и null отображаются как прочерк
+            row.insertCell(2).textContent = (trainer.experience != null && trainer.experience > 0) ? trainer.experience : '—';
             const actionsCell = row.insertCell(3);
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
@@ -102,14 +137,13 @@ function fillFormForEdit(trainer) {
 
 // ---- Добавление нового ----
 async function createTrainer() {
+    if (!validateTrainerForm()) return false;
+
     const newTrainer = {
         fullName: fullNameInput.value.trim(),
-        experience: experienceInput.value ? parseInt(experienceInput.value) : null
+        experience: experienceInput.value ? parseInt(experienceInput.value, 10) : null
     };
-    if (!newTrainer.fullName) {
-        showError('ФИО обязательно');
-        return false;
-    }
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
@@ -131,15 +165,14 @@ async function createTrainer() {
 
 // ---- Обновление существующего ----
 async function updateTrainer(id) {
+    if (!validateTrainerForm()) return false;
+
     const updated = {
         trainerId: id,
         fullName: fullNameInput.value.trim(),
-        experience: experienceInput.value ? parseInt(experienceInput.value) : null
+        experience: experienceInput.value ? parseInt(experienceInput.value, 10) : null
     };
-    if (!updated.fullName) {
-        showError('ФИО не может быть пустым');
-        return false;
-    }
+
     try {
         const response = await fetch(`${API_URL}/${id}`, {
             method: 'PUT',
@@ -171,7 +204,6 @@ async function deleteTrainer(id) {
             throw new Error(`HTTP ${response.status}`);
         }
 
-        // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
         if (id === currentEditId) {
             clearForm();
         }
@@ -206,6 +238,51 @@ function onClearFilters() {
     filterExperienceSort.value = '';
     renderTable();
 }
+
+// ---- Автоформатирование ФИО при вводе ----
+fullNameInput.addEventListener('input', function () {
+    let val = this.value;
+    val = val.replace(/[^a-zA-Zа-яА-ЯёЁ\s-]/g, '');
+    val = val.replace(/\s{2,}/g, ' ');
+    val = val.replace(/([a-zA-Zа-яА-ЯёЁ]+)/g, function (match) {
+        return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
+    });
+    this.value = val;
+});
+
+fullNameInput.addEventListener('keydown', function (e) {
+    if (e.key === ' ') {
+        const val = this.value;
+        if (val.length > 0 && val[val.length - 1] === ' ') {
+            e.preventDefault();
+            return;
+        }
+        const spaceCount = (val.match(/\s/g) || []).length;
+        if (spaceCount >= 2) {
+            e.preventDefault();
+        }
+    }
+});
+
+// ---- Валидация стажа при вводе ----
+experienceInput.addEventListener('input', function () {
+    let val = this.value.replace(/\D/g, '');
+    if (val.length > 1) {
+        val = val.replace(/^0+/, '');
+    }
+    this.value = val;
+});
+
+experienceInput.addEventListener('keydown', function (e) {
+    const isDigit = /^\d$/.test(e.key);
+    const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
+    const isCtrlCmd = e.ctrlKey || e.metaKey;
+
+    if (isCtrlCmd || isNav) return;
+    if (!isDigit) {
+        e.preventDefault();
+    }
+});
 
 // ---- Инициализация и обработчики событий ----
 submitBtn.addEventListener('click', onSubmit);
