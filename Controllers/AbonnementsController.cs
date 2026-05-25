@@ -1,29 +1,38 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Fitness.Models;
+using Fitness.Services;
 
 [Route("api/[controller]")]
 [ApiController]
 public class AbonnementsController : ControllerBase
 {
-    private readonly FitnessContext _context;
-    public AbonnementsController(FitnessContext context)
+    private readonly AbonnementService _abonnementService;
+
+    public AbonnementsController(AbonnementService abonnementService)
     {
-        _context = context;
+        _abonnementService = abonnementService;
     }
 
-    // GET: api/Abonnement
+    // GET: api/Abonnements
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Abonnement>>> GetAbonnement()
+    public async Task<ActionResult<IEnumerable<Abonnement>>> GetAbonnements(
+        [FromQuery] string? abonnementType,
+        [FromQuery] bool? weekdayAccess,
+        [FromQuery] bool? weekendAccess,
+        [FromQuery] decimal? priceMin,
+        [FromQuery] decimal? priceMax,
+        [FromQuery] string? sortField,
+        [FromQuery] string? sortDirection)
     {
-        return await _context.Abonnements.ToListAsync();
+        var abonnements = await _abonnementService.GetAllAsync(abonnementType, weekdayAccess, weekendAccess, priceMin, priceMax, sortField, sortDirection);
+        return Ok(abonnements);
     }
 
-    // GET: api/Abonnement/5
+    // GET: api/Abonnements/5
     [HttpGet("{abonnementid}")]
     public async Task<ActionResult<Abonnement>> GetAbonnement(int abonnementid)
     {
-        var abonnement = await _context.Abonnements.FindAsync(abonnementid);
+        var abonnement = await _abonnementService.GetByIdAsync(abonnementid);
 
         if (abonnement == null)
         {
@@ -33,66 +42,47 @@ public class AbonnementsController : ControllerBase
         return abonnement;
     }
 
-    // PUT: api/Abonnement/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{abonnementid}")]
-    public async Task<IActionResult> PutAbonnement(int? abonnementid, Abonnement abonnement)
+    // GET: api/Abonnements/statistics
+    [HttpGet("statistics")]
+    public async Task<ActionResult<AbonnementService.AbonnementStatistics>> GetStatistics()
     {
-        if (abonnementid != abonnement.AbonnementId)
-        {
-            return BadRequest();
-        }
-
-        _context.Entry(abonnement).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!AbonnementExists(abonnementid))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
-
-        return NoContent();
+        var stats = await _abonnementService.GetStatisticsAsync();
+        return Ok(stats);
     }
 
-    // POST: api/Abonnement
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    // POST: api/Abonnements
     [HttpPost]
     public async Task<ActionResult<Abonnement>> PostAbonnement(Abonnement abonnement)
     {
-        _context.Abonnements.Add(abonnement);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetAbonnement", new { abonnementid = abonnement.AbonnementId }, abonnement);
+        var createdAbonnement = await _abonnementService.CreateAsync(abonnement);
+        return CreatedAtAction(nameof(GetAbonnement), new { abonnementid = createdAbonnement.AbonnementId }, createdAbonnement);
     }
 
-    // DELETE: api/Abonnement/5
-    [HttpDelete("{abonnementid}")]
-    public async Task<IActionResult> DeleteAbonnement(int? abonnementid)
+    // PUT: api/Abonnements/5
+    [HttpPut("{abonnementid}")]
+    public async Task<IActionResult> PutAbonnement(int abonnementid, Abonnement abonnement)
     {
-        var abonnement = await _context.Abonnements.FindAsync(abonnementid);
-        if (abonnement == null)
+        var success = await _abonnementService.UpdateAsync(abonnementid, abonnement);
+
+        if (!success)
         {
             return NotFound();
         }
 
-        _context.Abonnements.Remove(abonnement);
-        await _context.SaveChangesAsync();
-
         return NoContent();
     }
 
-    private bool AbonnementExists(int? abonnementid)
+    // DELETE: api/Abonnements/5
+    [HttpDelete("{abonnementid}")]
+    public async Task<IActionResult> DeleteAbonnement(int abonnementid)
     {
-        return _context.Abonnements.Any(e => e.AbonnementId == abonnementid);
+        var success = await _abonnementService.DeleteAsync(abonnementid);
+
+        if (!success)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
     }
 }

@@ -9,6 +9,8 @@ builder.Services.AddDbContext<FitnessContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<ClientService>();
+builder.Services.AddScoped<TrainerService>();
+builder.Services.AddScoped<AbonnementService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
 builder.Services.AddEndpointsApiExplorer();

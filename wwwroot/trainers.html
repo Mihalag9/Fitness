@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фитнес-клуб — Управление тренерами</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="clients.html">Клиенты</a>
+        <a href="trainers.html" class="active">Тренеры</a>
+        <a href="abonnements.html">Абонементы</a>
+    </nav>
+
+    <h1>Управление тренерами фитнес-клуба</h1>
+
+    <!-- Форма добавления/редактирования -->
+    <div class="form-card">
+        <h2 id="form-title">Добавить тренера</h2>
+        <input type="hidden" id="edit-id">
+        <input type="text" id="fullName" placeholder="ФИО" required>
+        <input type="number" id="experience" placeholder="Стаж (лет)" min="0">
+        <button id="submit-btn">Добавить</button>
+        <button id="cancel-btn" style="display:none;">Отмена</button>
+    </div>
+
+    <!-- Блок фильтров -->
+    <div class="filter-card">
+        <h2>Фильтры</h2>
+        <input type="text" id="filter-fullName" placeholder="ФИО">
+        <label for="filter-experienceSort">Сортировка по стажу:</label>
+        <select id="filter-experienceSort">
+            <option value="">Без сортировки</option>
+            <option value="asc">По возрастанию</option>
+            <option value="desc">По убыванию</option>
+        </select>
+        <button id="apply-filters">Применить</button>
+        <button id="clear-filters">Очистить</button>
+    </div>
+
+    <!-- Блок статистики -->
+    <div class="stats-card">
+        <h2>Статистика</h2>
+        <p>Всего тренеров: <span id="total-count">0</span></p>
+        <p>Со стажем более 2 лет: <span id="exp-count">0</span></p>
+        <p>Без опыта: <span id="no-exp-count">0</span></p>
+    </div>
+
+    <!-- Таблица с данными -->
+    <table id="trainers-table">
+        <thead>
+            <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Действия</th></tr>
+        </thead>
+        <tbody id="trainers-body"></tbody>
+    </table>
+
+    <div id="error-message" class="error hidden"></div>
+    <script src="js/trainers.js"></script>
+</body>
+</html>

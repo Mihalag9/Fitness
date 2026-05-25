@@ -1,29 +1,33 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Fitness.Models;
+using Fitness.Services;
 
 [Route("api/[controller]")]
 [ApiController]
 public class TrainersController : ControllerBase
 {
-    private readonly FitnessContext _context;
-    public TrainersController(FitnessContext context)
+    private readonly TrainerService _trainerService;
+
+    public TrainersController(TrainerService trainerService)
     {
-        _context = context;
+        _trainerService = trainerService;
     }
 
-    // GET: api/Trainer
+    // GET: api/Trainers?fullName=...&experienceSort=...
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Trainer>>> GetTrainer()
+    public async Task<ActionResult<IEnumerable<Trainer>>> GetTrainers(
+        [FromQuery] string? fullName,
+        [FromQuery] string? experienceSort)
     {
-        return await _context.Trainers.ToListAsync();
+        var trainers = await _trainerService.GetAllAsync(fullName, experienceSort);
+        return Ok(trainers);
     }
 
-    // GET: api/Trainer/5
+    // GET: api/Trainers/5
     [HttpGet("{trainerid}")]
     public async Task<ActionResult<Trainer>> GetTrainer(int trainerid)
     {
-        var trainer = await _context.Trainers.FindAsync(trainerid);
+        var trainer = await _trainerService.GetByIdAsync(trainerid);
 
         if (trainer == null)
         {
@@ -33,66 +37,47 @@ public class TrainersController : ControllerBase
         return trainer;
     }
 
-    // PUT: api/Trainer/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{trainerid}")]
-    public async Task<IActionResult> PutTrainer(int? trainerid, Trainer trainer)
+    // GET: api/Trainers/statistics
+    [HttpGet("statistics")]
+    public async Task<ActionResult<TrainerService.TrainerStatistics>> GetStatistics()
     {
-        if (trainerid != trainer.TrainerId)
-        {
-            return BadRequest();
-        }
-
-        _context.Entry(trainer).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!TrainerExists(trainerid))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
-
-        return NoContent();
+        var stats = await _trainerService.GetStatisticsAsync();
+        return Ok(stats);
     }
 
-    // POST: api/Trainer
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    // POST: api/Trainers
     [HttpPost]
     public async Task<ActionResult<Trainer>> PostTrainer(Trainer trainer)
     {
-        _context.Trainers.Add(trainer);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetTrainer", new { trainerid = trainer.TrainerId }, trainer);
+        var createdTrainer = await _trainerService.CreateAsync(trainer);
+        return CreatedAtAction(nameof(GetTrainer), new { trainerid = createdTrainer.TrainerId }, createdTrainer);
     }
 
-    // DELETE: api/Trainer/5
-    [HttpDelete("{trainerid}")]
-    public async Task<IActionResult> DeleteTrainer(int? trainerid)
+    // PUT: api/Trainers/5
+    [HttpPut("{trainerid}")]
+    public async Task<IActionResult> PutTrainer(int trainerid, Trainer trainer)
     {
-        var trainer = await _context.Trainers.FindAsync(trainerid);
-        if (trainer == null)
+        var success = await _trainerService.UpdateAsync(trainerid, trainer);
+
+        if (!success)
         {
             return NotFound();
         }
 
-        _context.Trainers.Remove(trainer);
-        await _context.SaveChangesAsync();
-
         return NoContent();
     }
 
-    private bool TrainerExists(int? trainerid)
+    // DELETE: api/Trainers/5
+    [HttpDelete("{trainerid}")]
+    public async Task<IActionResult> DeleteTrainer(int trainerid)
     {
-        return _context.Trainers.Any(e => e.TrainerId == trainerid);
+        var success = await _trainerService.DeleteAsync(trainerid);
+
+        if (!success)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
     }
 }
