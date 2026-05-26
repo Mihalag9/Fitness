@@ -277,16 +277,17 @@ function onClearFilters() {
     filterBirthDateFrom.value = '';
     filterBirthDateTo.value = '';
     filterRangeToggle.checked = false;
-    filterBirthDateTo.classList.add('hidden');
+    document.getElementById('filter-birthDateTo-group').classList.add('hidden');
     renderTable();
 }
 
 // ---- Переключение диапазона ----
 function onToggleRange() {
+    const group = document.getElementById('filter-birthDateTo-group');
     if (filterRangeToggle.checked) {
-        filterBirthDateTo.classList.remove('hidden');
+        group.classList.remove('hidden');
     } else {
-        filterBirthDateTo.classList.add('hidden');
+        group.classList.add('hidden');
         filterBirthDateTo.value = '';
     }
 }
