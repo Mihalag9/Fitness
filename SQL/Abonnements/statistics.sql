@@ -8,7 +8,7 @@ BEGIN
         'totalAbonnements', COUNT(*),
         'minPrice', COALESCE(MIN("Price"), 0),
         'maxPrice', COALESCE(MAX("Price"), 0),
-        'unlimitedPercentage', ROUND(COUNT(CASE WHEN "DurationMonths" >= 12 THEN 1 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2)
+        'unlimitedPercentage', ROUND(COUNT(CASE WHEN "WeekdayAccess" = TRUE AND "WeekendAccess" = TRUE THEN 1 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2)
     ) INTO result
     FROM "Abonnement";
     RETURN result;
