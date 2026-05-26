@@ -68,6 +68,10 @@ function validateClientForm() {
         showError('ФИО обязательно');
         return false;
     }
+    if (fullName.length > 50) {
+        showError('ФИО не должно превышать 50 символов');
+        return false;
+    }
 
     const nameParts = fullName.split(' ').filter(p => p.length > 0);
     if (nameParts.length < 2) {
