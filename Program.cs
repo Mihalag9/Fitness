@@ -11,6 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<ClientService>();
 builder.Services.AddScoped<TrainerService>();
 builder.Services.AddScoped<AbonnementService>();
+builder.Services.AddScoped<EquipmentService>();
 builder.Services.AddScoped<GymService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
