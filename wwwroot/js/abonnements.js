@@ -212,8 +212,26 @@ function collectFormData() {
 }
 
 function validateForm(data) {
-    if (!data.abonnementType) {
+    const name = data.abonnementType;
+    if (!name) {
         showError('Название обязательно');
+        return false;
+    }
+    if (name[0] !== name[0].toUpperCase()) {
+        showError('Название должно начинаться с большой буквы');
+        return false;
+    }
+    const digitCount = (name.match(/\d/g) || []).length;
+    if (digitCount > 2) {
+        showError('Название не должно содержать более 2 цифр');
+        return false;
+    }
+    if (name.length < 4 || !/[a-zA-Zа-яА-ЯёЁ]{4,}/.test(name.replace(/[^a-zA-Zа-яА-ЯёЁ]/g, ''))) {
+        showError('Название должно содержать не менее 4 букв');
+        return false;
+    }
+    if (/[^a-zA-Zа-яА-ЯёЁ0-9\s]/.test(name)) {
+        showError('Название может содержать только буквы, цифры и пробелы');
         return false;
     }
     if (isNaN(data.price) || data.price < 1000) {
