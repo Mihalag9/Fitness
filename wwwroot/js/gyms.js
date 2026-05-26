@@ -45,16 +45,39 @@ function clearForm() {
     inventoryBody.innerHTML = '';
 }
 
+// ---- Валидация формы ----
 function validateGymForm() {
     const name = gymNameInput.value.trim();
+
     if (!name) {
         showError('Название зала обязательно');
         return false;
     }
-    if (name.length > 100) {
-        showError('Название не должно превышать 100 символов');
+    if (name.length < 3) {
+        showError('Название зала должно содержать не менее 3 символов');
         return false;
     }
+    if (name.length > 30) {
+        showError('Название зала не должно превышать 30 символов');
+        return false;
+    }
+    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) {
+        showError('Название зала не может состоять только из цифр');
+        return false;
+    }
+    if (/^\d/.test(name)) {
+        showError('Название зала не может начинаться с цифры');
+        return false;
+    }
+    if (!/^[A-ZА-ЯЁ]/.test(name)) {
+        showError('Название зала должно начинаться с заглавной буквы');
+        return false;
+    }
+    if (/\s{2,}/.test(name)) {
+        showError('Пробелы не могут идти подряд');
+        return false;
+    }
+
     return true;
 }
 
@@ -150,7 +173,7 @@ async function addOrUpdateInventory() {
         equipmentSelect.value = '';
         equipmentQuantity.value = '1';
         await loadInventory(currentEditId);
-        await renderTable(); // обновляем агрегированный список в основной таблице
+        await renderTable();
         await updateStats();
     } catch (err) {
         showError(`Ошибка обновления: ${err.message}`);
@@ -314,15 +337,34 @@ function onClearFilters() {
     renderTable();
 }
 
-// ---- Input formatting ----
+// ---- Блокировка ввода первой цифры (keydown) ----
+function preventLeadingDigit(e, input) {
+    const isDigit = /^\d$/.test(e.key);
+    const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'].includes(e.key);
+    const isCtrlCmd = e.ctrlKey || e.metaKey;
+    if (isCtrlCmd || isNav) return;
+    if (input.value.length === 0 && isDigit) {
+        e.preventDefault();
+    }
+}
+
+gymNameInput.addEventListener('keydown', function (e) { preventLeadingDigit(e, this); });
+
+// ---- Автоформатирование при вводе (input) ----
 gymNameInput.addEventListener('input', function () {
     let val = this.value;
+    // Разрешаем буквы, цифры, пробелы, дефис, кавычки, скобки
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
+    // Убираем двойные пробелы
     val = val.replace(/\s{2,}/g, ' ');
+    // Каждое слово с заглавной буквы
+    val = val.replace(/([a-zA-Zа-яА-ЯёЁ]+)/g, function (match) {
+        return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
+    });
     this.value = val;
 });
 
-// ---- Init ----
+// ---- Инициализация ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
