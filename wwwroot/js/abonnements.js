@@ -15,8 +15,9 @@ const cancelBtn = document.getElementById('cancel-btn');
 const editIdField = document.getElementById('edit-id');
 const formTitle = document.getElementById('form-title');
 const totalSpan = document.getElementById('total-count');
-const revenueSpan = document.getElementById('total-revenue');
-const avgDurationSpan = document.getElementById('avg-duration');
+const minPriceSpan = document.getElementById('min-price');
+const maxPriceSpan = document.getElementById('max-price');
+const unlimitedPercentageSpan = document.getElementById('unlimited-percentage');
 
 // Фильтры
 const filterAbonnementType = document.getElementById('filter-abonnementType');
@@ -67,8 +68,9 @@ async function updateStats() {
         if (!response.ok) throw new Error('Не удалось загрузить статистику');
         const data = await response.json();
         totalSpan.textContent = data.totalAbonnements;
-        revenueSpan.textContent = data.totalRevenue.toLocaleString('ru-RU');
-        avgDurationSpan.textContent = data.averageDuration;
+        minPriceSpan.textContent = data.minPrice.toLocaleString('ru-RU');
+        maxPriceSpan.textContent = data.maxPrice.toLocaleString('ru-RU');
+        unlimitedPercentageSpan.textContent = data.unlimitedPercentage;
     } catch (err) {
         console.error('Ошибка статистики:', err);
     }

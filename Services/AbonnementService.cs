@@ -134,14 +134,17 @@ namespace Fitness.Services
         public async Task<AbonnementStatistics> GetStatisticsAsync()
         {
             var totalAbonnements = await _context.Abonnements.CountAsync();
-            var totalRevenue = await _context.Abonnements.SumAsync(a => a.Price);
-            var averageDuration = await _context.Abonnements.AverageAsync(a => (double?)a.DurationMonths) ?? 0;
+            var minPrice = totalAbonnements > 0 ? await _context.Abonnements.MinAsync(a => a.Price) : 0;
+            var maxPrice = totalAbonnements > 0 ? await _context.Abonnements.MaxAsync(a => a.Price) : 0;
+            var unlimitedCount = await _context.Abonnements.CountAsync(a => a.WeekdayAccess && a.WeekendAccess);
+            var unlimitedPercentage = totalAbonnements > 0 ? Math.Round((double)unlimitedCount / totalAbonnements * 100, 1) : 0;
 
             return new AbonnementStatistics
             {
                 TotalAbonnements = totalAbonnements,
-                TotalRevenue = totalRevenue,
-                AverageDuration = Math.Round(averageDuration, 2)
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                UnlimitedPercentage = unlimitedPercentage
             };
         }
 
@@ -153,8 +156,9 @@ namespace Fitness.Services
         public class AbonnementStatistics
         {
             public int TotalAbonnements { get; set; }
-            public decimal TotalRevenue { get; set; }
-            public double AverageDuration { get; set; }
+            public decimal MinPrice { get; set; }
+            public decimal MaxPrice { get; set; }
+            public double UnlimitedPercentage { get; set; }
         }
     }
 }
