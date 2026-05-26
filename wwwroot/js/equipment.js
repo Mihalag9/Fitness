@@ -20,6 +20,7 @@ const brandSpan = document.getElementById('brand-count');
 
 let currentEditId = null;
 
+// ---- Helpers ----
 function showError(text) {
     errorDiv.textContent = text;
     errorDiv.classList.remove('hidden');
@@ -37,19 +38,90 @@ function clearForm() {
     cancelBtn.style.display = 'none';
 }
 
+// ---- Валидация формы ----
 function validateForm() {
     const name = equipmentNameInput.value.trim();
+    const brand = brandInput.value.trim();
+    const model = modelInput.value.trim();
+
+    // Название (обязательное)
     if (!name) {
         showError('Название оборудования обязательно');
         return false;
     }
-    if (name.length > 100) {
-        showError('Название не должно превышать 100 символов');
+    if (name.length < 3) {
+        showError('Название должно содержать не менее 3 символов');
         return false;
     }
+    if (name.length > 40) {
+        showError('Название не должно превышать 40 символов');
+        return false;
+    }
+    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) {
+        showError('Название не может состоять только из цифр');
+        return false;
+    }
+    if (/^\d/.test(name)) {
+        showError('Название не может начинаться с цифры');
+        return false;
+    }
+    if (/\s{2,}/.test(name)) {
+        showError('Пробелы не могут идти подряд');
+        return false;
+    }
+
+    // Бренд (если заполнен)
+    if (brand) {
+        if (brand.length < 3) {
+            showError('Бренд должен содержать не менее 3 символов');
+            return false;
+        }
+        if (brand.length > 20) {
+            showError('Бренд не должен превышать 20 символов');
+            return false;
+        }
+        if (!/[a-zA-Zа-яА-ЯёЁ]/.test(brand)) {
+            showError('Бренд не может состоять только из цифр');
+            return false;
+        }
+        if (/^\d/.test(brand)) {
+            showError('Бренд не может начинаться с цифры');
+            return false;
+        }
+        if (/\s{2,}/.test(brand)) {
+            showError('Пробелы не могут идти подряд');
+            return false;
+        }
+    }
+
+    // Модель (если заполнена)
+    if (model) {
+        if (model.length < 3) {
+            showError('Модель должна содержать не менее 3 символов');
+            return false;
+        }
+        if (model.length > 20) {
+            showError('Модель не должна превышать 20 символов');
+            return false;
+        }
+        if (!/[a-zA-Zа-яА-ЯёЁ]/.test(model)) {
+            showError('Модель не может состоять только из цифр');
+            return false;
+        }
+        if (/^\d/.test(model)) {
+            showError('Модель не может начинаться с цифры');
+            return false;
+        }
+        if (/\s{2,}/.test(model)) {
+            showError('Пробелы не могут идти подряд');
+            return false;
+        }
+    }
+
     return true;
 }
 
+// ---- Статистика ----
 async function updateStats() {
     try {
         const response = await fetch(`${API_URL}/statistics`);
@@ -62,6 +134,7 @@ async function updateStats() {
     }
 }
 
+// ---- Справочник брендов ----
 async function loadBrands() {
     try {
         const response = await fetch(`${API_URL}/brands`);
@@ -79,6 +152,7 @@ async function loadBrands() {
     }
 }
 
+// ---- Таблица ----
 async function renderTable() {
     try {
         const params = new URLSearchParams();
@@ -115,6 +189,7 @@ async function renderTable() {
     }
 }
 
+// ---- Заполнение формы для редактирования ----
 function fillFormForEdit(item) {
     equipmentNameInput.value = item.equipmentName;
     brandInput.value = item.brand || '';
@@ -126,6 +201,7 @@ function fillFormForEdit(item) {
     cancelBtn.style.display = 'inline-block';
 }
 
+// ---- Добавление ----
 async function createEquipment() {
     if (!validateForm()) return false;
     const newItem = {
@@ -154,6 +230,7 @@ async function createEquipment() {
     }
 }
 
+// ---- Обновление ----
 async function updateEquipment(id) {
     if (!validateForm()) return false;
     const updated = {
@@ -184,6 +261,7 @@ async function updateEquipment(id) {
     }
 }
 
+// ---- Удаление ----
 async function deleteEquipment(id) {
     if (!confirm('Удалить это оборудование? Оно будет удалено из всех залов.')) return;
     try {
@@ -201,6 +279,7 @@ async function deleteEquipment(id) {
     }
 }
 
+// ---- Обработчики кнопок ----
 async function onSubmit() {
     if (currentEditId !== null) {
         await updateEquipment(currentEditId);
@@ -223,13 +302,54 @@ function onClearFilters() {
     renderTable();
 }
 
+// ---- Блокировка ввода первой цифры (keydown) ----
+function preventLeadingDigit(e, input) {
+    const isDigit = /^\d$/.test(e.key);
+    const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'].includes(e.key);
+    const isCtrlCmd = e.ctrlKey || e.metaKey;
+    if (isCtrlCmd || isNav) return;
+    if (input.value.length === 0 && isDigit) {
+        e.preventDefault();
+    }
+}
+
+equipmentNameInput.addEventListener('keydown', function (e) { preventLeadingDigit(e, this); });
+brandInput.addEventListener('keydown', function (e) { preventLeadingDigit(e, this); });
+modelInput.addEventListener('keydown', function (e) { preventLeadingDigit(e, this); });
+
+// ---- Автоформатирование при вводе (input) ----
+
+// Название: каждое слово с заглавной, убрать лишние пробелы, фильтр символов
 equipmentNameInput.addEventListener('input', function () {
+    let val = this.value;
+    val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
+    val = val.replace(/\s{2,}/g, ' ');
+    val = val.replace(/([a-zA-Zа-яА-ЯёЁ]+)/g, function (match) {
+        return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
+    });
+    this.value = val;
+});
+
+// Бренд: каждое слово с заглавной, убрать лишние пробелы
+brandInput.addEventListener('input', function () {
+    let val = this.value;
+    val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
+    val = val.replace(/\s{2,}/g, ' ');
+    val = val.replace(/([a-zA-Zа-яА-ЯёЁ]+)/g, function (match) {
+        return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
+    });
+    this.value = val;
+});
+
+// Модель: убрать лишние пробелы, сохранить оригинальный регистр
+modelInput.addEventListener('input', function () {
     let val = this.value;
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
     val = val.replace(/\s{2,}/g, ' ');
     this.value = val;
 });
 
+// ---- Инициализация ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
