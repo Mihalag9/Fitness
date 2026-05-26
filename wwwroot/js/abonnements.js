@@ -216,8 +216,8 @@ function validateForm(data) {
         showError('Название обязательно');
         return false;
     }
-    if (isNaN(data.price) || data.price < 0) {
-        showError('Цена должна быть неотрицательным числом');
+    if (isNaN(data.price) || data.price < 1000) {
+        showError('Цена должна быть не меньше 1000');
         return false;
     }
     if (isNaN(data.durationMonths) || data.durationMonths < 1) {
