@@ -16,8 +16,8 @@ namespace Fitness.Services
         public async Task<IEnumerable<Trainer>> GetAllAsync(string? fullName, string? experienceSort, bool? noExperience)
         {
             return await _context.Trainers
-                .FromSqlRaw("SELECT * FROM get_all_trainers({0}, {1}, {2})", 
-                    (object)fullName ?? DBNull.Value, 
+                .FromSqlRaw("SELECT * FROM get_all_trainers({0}, {1}, {2})",
+                    (object)fullName ?? DBNull.Value,
                     noExperience ?? false,
                     (object)experienceSort ?? DBNull.Value)
                 .ToListAsync();
@@ -32,26 +32,56 @@ namespace Fitness.Services
 
         public async Task<Trainer> CreateAsync(Trainer trainer)
         {
-            await _context.Database.ExecuteSqlRawAsync("SELECT add_trainer({0}, {1})", 
-                (object)trainer.FullName ?? DBNull.Value, 
-                (object)trainer.Experience ?? DBNull.Value);
-            return trainer;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT add_trainer(@p0, @p1)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = (object)trainer.FullName ?? DBNull.Value; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)trainer.Experience ?? DBNull.Value; command.Parameters.Add(p1);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result != null && result != DBNull.Value)
+                {
+                    trainer.TrainerId = Convert.ToInt32(result);
+                }
+                return trainer;
+            }
         }
 
         public async Task<bool> UpdateAsync(int id, Trainer trainer)
         {
-            var result = await _context.Database.ExecuteSqlRawAsync("SELECT update_trainer({0}, {1}, {2})", 
-                id,
-                (object)trainer.FullName ?? DBNull.Value, 
-                (object)trainer.Experience ?? DBNull.Value);
-            
-            return result > 0;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT update_trainer(@p0, @p1, @p2)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)trainer.FullName ?? DBNull.Value; command.Parameters.Add(p1);
+                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)trainer.Experience ?? DBNull.Value; command.Parameters.Add(p2);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return false;
+                return (bool)result;
+            }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var result = await _context.Database.ExecuteSqlRawAsync("SELECT delete_trainer({0})", id);
-            return result > 0;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT delete_trainer(@p0)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return false;
+                return (bool)result;
+            }
         }
 
         public async Task<TrainerStatistics> GetStatisticsAsync()
@@ -67,7 +97,7 @@ namespace Fitness.Services
 
                 if (string.IsNullOrEmpty(statsJson)) return new TrainerStatistics();
 
-                return JsonSerializer.Deserialize<TrainerStatistics>(statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new TrainerStatistics();
+                return JsonSerializer.Deserialize < TrainerStatistics > (statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new TrainerStatistics();
             }
         }
 

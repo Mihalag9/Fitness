@@ -16,10 +16,10 @@ namespace Fitness.Services
         public async Task<IEnumerable<Client>> GetAllAsync(string? fullName, string? phone, DateOnly? birthDateFrom, DateOnly? birthDateTo)
         {
             return await _context.Clients
-                .FromSqlRaw("SELECT * FROM get_all_clients({0}, {1}, {2}, {3})", 
-                    (object)fullName ?? DBNull.Value, 
-                    (object)phone ?? DBNull.Value, 
-                    (object)birthDateFrom ?? DBNull.Value, 
+                .FromSqlRaw("SELECT * FROM get_all_clients({0}, {1}, {2}, {3})",
+                    (object)fullName ?? DBNull.Value,
+                    (object)phone ?? DBNull.Value,
+                    (object)birthDateFrom ?? DBNull.Value,
                     (object)birthDateTo ?? DBNull.Value)
                 .ToListAsync();
         }
@@ -33,28 +33,58 @@ namespace Fitness.Services
 
         public async Task<Client> CreateAsync(Client client)
         {
-            await _context.Database.ExecuteSqlRawAsync("SELECT add_client({0}, {1}, {2})", 
-                (object)client.FullName ?? DBNull.Value, 
-                (object)client.BirthDate ?? DBNull.Value,
-                (object)client.Phone ?? DBNull.Value);
-            return client;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT add_client(@p0, @p1, @p2)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = (object)client.FullName ?? DBNull.Value; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)client.BirthDate ?? DBNull.Value; command.Parameters.Add(p1);
+                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)client.Phone ?? DBNull.Value; command.Parameters.Add(p2);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result != null && result != DBNull.Value)
+                {
+                    client.ClientId = Convert.ToInt32(result);
+                }
+                return client;
+            }
         }
 
         public async Task<bool> UpdateAsync(int id, Client client)
         {
-            var result = await _context.Database.ExecuteSqlRawAsync("SELECT update_client({0}, {1}, {2}, {3})", 
-                id,
-                (object)client.FullName ?? DBNull.Value, 
-                (object)client.BirthDate ?? DBNull.Value,
-                (object)client.Phone ?? DBNull.Value);
-            
-            return result > 0;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT update_client(@p0, @p1, @p2, @p3)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)client.FullName ?? DBNull.Value; command.Parameters.Add(p1);
+                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)client.BirthDate ?? DBNull.Value; command.Parameters.Add(p2);
+                var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = (object)client.Phone ?? DBNull.Value; command.Parameters.Add(p3);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return false;
+                return (bool)result;
+            }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var result = await _context.Database.ExecuteSqlRawAsync("SELECT delete_client({0})", id);
-            return result > 0;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT delete_client(@p0)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return false;
+                return (bool)result;
+            }
         }
 
         public async Task<ClientStatistics> GetStatisticsAsync()
@@ -70,7 +100,7 @@ namespace Fitness.Services
 
                 if (string.IsNullOrEmpty(statsJson)) return new ClientStatistics();
 
-                return JsonSerializer.Deserialize<ClientStatistics>(statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ClientStatistics();
+                return JsonSerializer.Deserialize < ClientStatistics > (statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ClientStatistics();
             }
         }
 
