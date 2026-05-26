@@ -1,6 +1,7 @@
 -- Procedure: get_all_equipments
 CREATE OR REPLACE FUNCTION get_all_equipments(
-    p_equipmentname VARCHAR DEFAULT NULL
+    p_equipmentname VARCHAR DEFAULT NULL,
+    p_brand VARCHAR DEFAULT NULL
 )
 RETURNS TABLE("EquipmentId" INTEGER, "EquipmentName" VARCHAR, "Brand" VARCHAR, "Model" VARCHAR) AS $$
 BEGIN
@@ -8,6 +9,7 @@ BEGIN
     SELECT e."EquipmentId", e."EquipmentName", e."Brand", e."Model"
     FROM "Equipment" e
     WHERE (p_equipmentname IS NULL OR e."EquipmentName" ILIKE '%' || p_equipmentname || '%')
+      AND (p_brand IS NULL OR e."Brand" = p_brand)
     ORDER BY e."EquipmentName" ASC;
 END;
 $$ LANGUAGE plpgsql;
@@ -67,5 +69,17 @@ BEGIN
     ) INTO result
     FROM "Equipment";
     RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Procedure: get_equipment_brands
+CREATE OR REPLACE FUNCTION get_equipment_brands()
+RETURNS TABLE("Brand" VARCHAR) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT DISTINCT e."Brand"
+    FROM "Equipment" e
+    WHERE e."Brand" IS NOT NULL AND e."Brand" <> ''
+    ORDER BY e."Brand" ASC;
 END;
 $$ LANGUAGE plpgsql;

@@ -16,10 +16,19 @@ namespace Fitness.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Equipment>>> GetEquipment([FromQuery] string? equipmentName)
+        public async Task<ActionResult<IEnumerable<Equipment>>> GetEquipment(
+            [FromQuery] string? equipmentName,
+            [FromQuery] string? brand)
         {
-            var items = await _equipmentService.GetAllAsync(equipmentName);
+            var items = await _equipmentService.GetAllAsync(equipmentName, brand);
             return Ok(items);
+        }
+
+        [HttpGet("brands")]
+        public async Task<ActionResult<IEnumerable<string>>> GetBrands()
+        {
+            var brands = await _equipmentService.GetBrandsAsync();
+            return Ok(brands);
         }
 
         [HttpGet("{equipmentid}")]

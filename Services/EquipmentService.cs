@@ -13,16 +13,17 @@ namespace Fitness.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Equipment>> GetAllAsync(string? equipmentName)
+        public async Task<IEnumerable<Equipment>> GetAllAsync(string? equipmentName, string? brand)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
-            var items = new List< Equipment > ();
+            var items = new List<Equipment > ();
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT * FROM get_all_equipments(@p0)";
+                command.CommandText = "SELECT * FROM get_all_equipments(@p0, @p1)";
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = (object)equipmentName ?? DBNull.Value; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)brand ?? DBNull.Value; command.Parameters.Add(p1);
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -102,6 +103,26 @@ namespace Fitness.Services
                 if (result == null || result == DBNull.Value) return false;
                 return (bool)result;
             }
+        }
+
+        public async Task<IEnumerable<string>> GetBrandsAsync()
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var brands = new List<string>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_equipment_brands()";
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        brands.Add(reader.GetString(0));
+                    }
+                }
+            }
+            return brands;
         }
 
         public async Task<EquipmentStatistics> GetStatisticsAsync()

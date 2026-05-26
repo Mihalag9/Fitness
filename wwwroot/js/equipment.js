@@ -11,6 +11,7 @@ const editIdField = document.getElementById('edit-id');
 const formTitle = document.getElementById('form-title');
 
 const filterEquipmentName = document.getElementById('filter-equipmentName');
+const filterBrand = document.getElementById('filter-brand');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
@@ -61,10 +62,28 @@ async function updateStats() {
     }
 }
 
+async function loadBrands() {
+    try {
+        const response = await fetch(`${API_URL}/brands`);
+        if (!response.ok) throw new Error('Не удалось загрузить бренды');
+        const brands = await response.json();
+        filterBrand.innerHTML = '<option value="">Все бренды</option>';
+        brands.forEach(brand => {
+            const opt = document.createElement('option');
+            opt.value = brand;
+            opt.textContent = brand;
+            filterBrand.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Ошибка загрузки брендов:', err);
+    }
+}
+
 async function renderTable() {
     try {
         const params = new URLSearchParams();
         if (filterEquipmentName.value) params.append('equipmentName', filterEquipmentName.value.trim());
+        if (filterBrand.value) params.append('brand', filterBrand.value);
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
@@ -127,6 +146,7 @@ async function createEquipment() {
         }
         clearForm();
         await renderTable();
+        await loadBrands();
         return true;
     } catch (err) {
         showError(`Не удалось добавить: ${err.message}`);
@@ -156,6 +176,7 @@ async function updateEquipment(id) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
         await renderTable();
+        await loadBrands();
         return true;
     } catch (err) {
         showError(`Ошибка обновления: ${err.message}`);
@@ -174,6 +195,7 @@ async function deleteEquipment(id) {
         }
         if (id === currentEditId) clearForm();
         await renderTable();
+        await loadBrands();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
     }
@@ -197,6 +219,7 @@ async function onApplyFilters() {
 
 function onClearFilters() {
     filterEquipmentName.value = '';
+    filterBrand.value = '';
     renderTable();
 }
 
@@ -212,4 +235,5 @@ cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
 
+loadBrands();
 renderTable();
