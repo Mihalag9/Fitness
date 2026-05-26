@@ -97,7 +97,12 @@ async function renderTable() {
     try {
         const params = new URLSearchParams();
         if (filterFullName.value) params.append('fullName', filterFullName.value.trim());
-        if (filterExperienceSort.value) params.append('experienceSort', filterExperienceSort.value);
+        
+        if (filterExperienceSort.value === 'no_exp') {
+            params.append('noExperience', 'true');
+        } else if (filterExperienceSort.value) {
+            params.append('experienceSort', filterExperienceSort.value);
+        }
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);

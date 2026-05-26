@@ -12,13 +12,18 @@ namespace Fitness.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Trainer>> GetAllAsync(string? fullName, string? experienceSort)
+        public async Task<IEnumerable<Trainer>> GetAllAsync(string? fullName, string? experienceSort, bool? noExperience)
         {
             IQueryable<Trainer> query = _context.Trainers;
 
             if (!string.IsNullOrWhiteSpace(fullName))
             {
                 query = query.Where(t => t.FullName.ToLower().Contains(fullName.ToLower()));
+            }
+
+            if (noExperience == true)
+            {
+                query = query.Where(t => t.Experience == null || t.Experience == 0);
             }
 
             // Сортировка по стажу
