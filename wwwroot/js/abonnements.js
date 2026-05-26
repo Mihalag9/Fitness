@@ -253,6 +253,12 @@ function validateForm(data) {
         return false;
     }
 
+    // Проверка диапазона 08:00 - 23:00
+    if (startShort < '08:00' || endShort > '23:00' || startShort >= endShort) {
+        showError('Время посещения должно быть в диапазоне от 08:00 до 23:00, и начало должно быть раньше конца');
+        return false;
+    }
+
     return true;
 }
 
