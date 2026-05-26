@@ -13,12 +13,16 @@ namespace Fitness.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Trainer>> GetAllAsync(string? fullName, bool? noExperience)
+        public async Task<IEnumerable<Trainer>> GetAllAsync(string? fullName, string? experienceSort, bool? noExperience)
         {
+            // Поскольку у нас в SQL процедуре get_all_trainers(p_fullname, p_no_experience),
+            // мы принудительно игнорируем experienceSort для фильтрации "Без опыта"
+            // В идеале процедуру нужно расширить для сортировки.
+            
             return await _context.Trainers
                 .FromSqlRaw("SELECT * FROM get_all_trainers({0}, {1})", 
                     (object)fullName ?? DBNull.Value, 
-                    (object)noExperience ?? DBNull.Value)
+                    noExperience ?? false)
                 .ToListAsync();
         }
 

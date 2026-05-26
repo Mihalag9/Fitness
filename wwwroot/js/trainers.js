@@ -98,11 +98,14 @@ async function renderTable() {
         const params = new URLSearchParams();
         if (filterFullName.value) params.append('fullName', filterFullName.value.trim());
         
+        // ВАЖНО: Если выбрана пустая опция, мы вообще не добавляем noExperience,
+        // чтобы бэкенд не фильтровал по умолчанию.
         if (filterExperienceSort.value === 'no_exp') {
             params.append('noExperience', 'true');
-        } else if (filterExperienceSort.value) {
+        } else if (filterExperienceSort.value === 'asc' || filterExperienceSort.value === 'desc') {
             params.append('experienceSort', filterExperienceSort.value);
         }
+        // Если выбрано "", ничего не добавляем, параметры не фильтруются.
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);

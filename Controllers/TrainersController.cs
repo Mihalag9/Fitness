@@ -17,9 +17,10 @@ public class TrainersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Trainer>>> GetTrainers(
         [FromQuery] string? fullName,
+        [FromQuery] string? experienceSort,
         [FromQuery] bool? noExperience)
     {
-        var trainers = await _trainerService.GetAllAsync(fullName, noExperience);
+        var trainers = await _trainerService.GetAllAsync(fullName, experienceSort, noExperience);
         return Ok(trainers);
     }
 
