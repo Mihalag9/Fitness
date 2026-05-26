@@ -29,19 +29,32 @@
     <!-- Блок управления оборудованием (показывается при редактировании) -->
     <div id="inventory-card" class="form-card hidden">
         <h2>Оборудование в зале: <span id="inventory-gym-name"></span></h2>
-        <div class="filter-grid">
-            <select id="equipment-select">
-                <option value="">— Выберите оборудование —</option>
-            </select>
-            <input type="number" id="equipment-quantity" placeholder="Количество" min="1" value="1">
-            <button id="add-equipment-btn">Добавить / Изменить</button>
+
+        <div class="inventory-controls">
+            <div class="form-group">
+                <label for="equipment-select">Оборудование</label>
+                <select id="equipment-select">
+                    <option value="">— Выберите оборудование —</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="equipment-quantity">Количество</label>
+                <input type="number" id="equipment-quantity" placeholder="Количество" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button id="add-equipment-btn">Добавить / Изменить</button>
+            </div>
         </div>
-        <table id="inventory-table">
-            <thead>
-                <tr><th>ID</th><th>Название</th><th>Бренд</th><th>Модель</th><th>Кол-во</th><th>Действия</th></tr>
-            </thead>
-            <tbody id="inventory-body"></tbody>
-        </table>
+
+        <div class="inventory-table-wrap">
+            <table id="inventory-table">
+                <thead>
+                    <tr><th>ID</th><th>Название</th><th>Бренд</th><th>Модель</th><th>Кол-во</th><th>Действия</th></tr>
+                </thead>
+                <tbody id="inventory-body"></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Блок фильтров -->

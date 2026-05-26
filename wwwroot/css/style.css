@@ -167,3 +167,75 @@ button {
 .hidden {
     display: none;
 }
+
+/* ==========================================
+   СТИЛИ ДЛЯ УПРАВЛЕНИЯ ИНВЕНТАРЁМ (ЗАЛЫ)
+   ========================================== */
+
+/* Панель управления оборудованием */
+.inventory-controls {
+    margin-bottom: 20px;
+}
+
+    .inventory-controls .form-group {
+        display: inline-block;
+        vertical-align: bottom;
+        margin-right: 10px;
+        margin-bottom: 0;
+    }
+
+        .inventory-controls .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        /* Ширины полей как в стандартных формах */
+        .inventory-controls .form-group:nth-child(1) {
+            width: 260px; /* Select оборудования */
+        }
+
+        .inventory-controls .form-group:nth-child(2) {
+            width: 100px; /* Количество */
+        }
+
+        .inventory-controls .form-group:nth-child(3) {
+            width: auto; /* Кнопка по содержимому */
+        }
+
+    .inventory-controls input,
+    .inventory-controls select,
+    .inventory-controls button {
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
+        height: 38px;
+    }
+
+/* Таблица инвентаря внутри карточки — на всю ширину без двойных отступов */
+.inventory-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+#inventory-table {
+    width: 100%;
+    margin: 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    #inventory-table th,
+    #inventory-table td {
+        padding: 10px 12px;
+    }
+
+        /* Компактные кнопки в колонке Действия */
+        #inventory-table td button {
+            padding: 6px 10px;
+            font-size: 14px;
+            margin: 0 2px;
+            min-width: 36px;
+        }
