@@ -12,7 +12,6 @@ const cancelBtn = document.getElementById('cancel-btn');
 const editIdField = document.getElementById('edit-id');
 const formTitle = document.getElementById('form-title');
 const totalSpan = document.getElementById('total-count');
-const phoneSpan = document.getElementById('phone-count');
 const activeAbonnementsSpan = document.getElementById('active-abonnements-count');
 
 // Фильтры
@@ -106,7 +105,6 @@ async function updateStats() {
         if (!response.ok) throw new Error('Не удалось загрузить статистику');
         const data = await response.json();
         totalSpan.textContent = data.totalClients;
-        phoneSpan.textContent = data.clientsWithPhone;
         activeAbonnementsSpan.textContent = data.activeAbonnements;
     } catch (err) {
         console.error('Ошибка статистики:', err);

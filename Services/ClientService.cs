@@ -94,7 +94,6 @@ namespace Fitness.Services
         public async Task<ClientStatistics> GetStatisticsAsync()
         {
             var totalClients = await _context.Clients.CountAsync();
-            var clientsWithPhone = await _context.Clients.CountAsync(c => !string.IsNullOrEmpty(c.Phone));
             
             var activeAbonnements = await _context.Purchases
                 .Where(p => p.Status == "активен")
@@ -105,7 +104,6 @@ namespace Fitness.Services
             return new ClientStatistics
             {
                 TotalClients = totalClients,
-                ClientsWithPhone = clientsWithPhone,
                 ActiveAbonnements = activeAbonnements
             };
         }
@@ -118,7 +116,6 @@ namespace Fitness.Services
         public class ClientStatistics
         {
             public int TotalClients { get; set; }
-            public int ClientsWithPhone { get; set; }
             public int ActiveAbonnements { get; set; }
         }
     }
