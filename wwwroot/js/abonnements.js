@@ -101,7 +101,9 @@ async function renderTable() {
             row.insertCell(3).textContent = abonnement.durationMonths;
             row.insertCell(4).textContent = boolToStr(abonnement.weekdayAccess);
             row.insertCell(5).textContent = boolToStr(abonnement.weekendAccess);
-            const actionsCell = row.insertCell(6);
+            const timeStr = `${abonnement.accessStartTime.substring(0, 5)} - ${abonnement.accessEndTime.substring(0, 5)}`;
+            row.insertCell(6).textContent = timeStr;
+            const actionsCell = row.insertCell(7);
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
