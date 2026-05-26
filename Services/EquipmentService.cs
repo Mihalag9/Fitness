@@ -18,7 +18,7 @@ namespace Fitness.Services
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
-            var items = new List<Equipment > ();
+            var items = new List<Equipment>();
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT * FROM get_all_equipments(@p0, @p1)";
@@ -138,14 +138,14 @@ namespace Fitness.Services
 
                 if (string.IsNullOrEmpty(statsJson)) return new EquipmentStatistics();
 
-                return JsonSerializer.Deserialize < EquipmentStatistics > (statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new EquipmentStatistics();
+                return JsonSerializer.Deserialize<EquipmentStatistics>(statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new EquipmentStatistics();
             }
         }
 
         public class EquipmentStatistics
         {
             public int TotalEquipment { get; set; }
-            public int WithBrand { get; set; }
+            public int WithModel { get; set; }
         }
     }
 }

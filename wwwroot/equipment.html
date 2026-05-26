@@ -21,7 +21,7 @@
         <h2 id="form-title">Добавить оборудование</h2>
         <input type="hidden" id="edit-id">
         <input type="text" id="equipmentName" placeholder="Название оборудования" required maxlength="40">
-        <input type="text" id="brand" placeholder="Бренд" maxlength="20">
+        <input type="text" id="brand" placeholder="Бренд" required maxlength="20">
         <input type="text" id="model" placeholder="Модель" maxlength="20">
         <button id="submit-btn">Добавить</button>
         <button id="cancel-btn" style="display:none;">Отмена</button>
@@ -41,7 +41,7 @@
     <div class="stats-card">
         <h2>Статистика</h2>
         <p>Всего видов оборудования: <span id="total-count">0</span></p>
-        <p>С указанным брендом: <span id="brand-count">0</span></p>
+        <p>С указанной моделью: <span id="model-count">0</span></p>
     </div>
 
     <table id="equipment-table">

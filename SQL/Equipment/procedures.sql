@@ -28,7 +28,7 @@ RETURNS INTEGER AS $$
 DECLARE new_id INTEGER;
 BEGIN
     INSERT INTO "Equipment" ("EquipmentName", "Brand", "Model") 
-    VALUES (trim(p_equipmentname), NULLIF(trim(p_brand), ''), NULLIF(trim(p_model), '')) 
+    VALUES (trim(p_equipmentname), trim(p_brand), NULLIF(trim(p_model), '')) 
     RETURNING "EquipmentId" INTO new_id;
     RETURN new_id;
 END;
@@ -41,7 +41,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM "Equipment" WHERE "EquipmentId" = p_id) THEN RETURN FALSE; END IF;
     UPDATE "Equipment" 
     SET "EquipmentName" = trim(p_equipmentname), 
-        "Brand" = NULLIF(trim(p_brand), ''), 
+        "Brand" = trim(p_brand), 
         "Model" = NULLIF(trim(p_model), '') 
     WHERE "EquipmentId" = p_id;
     RETURN TRUE;
@@ -65,7 +65,7 @@ DECLARE result JSON;
 BEGIN
     SELECT json_build_object(
         'totalEquipment', COUNT(*),
-        'withBrand', COUNT(CASE WHEN "Brand" IS NOT NULL AND "Brand" <> '' THEN 1 END)
+        'withModel', COUNT(CASE WHEN "Model" IS NOT NULL AND "Model" <> '' THEN 1 END)
     ) INTO result
     FROM "Equipment";
     RETURN result;

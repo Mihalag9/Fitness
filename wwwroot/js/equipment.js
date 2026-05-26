@@ -16,7 +16,7 @@ const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
 const totalSpan = document.getElementById('total-count');
-const brandSpan = document.getElementById('brand-count');
+const modelSpan = document.getElementById('model-count');
 
 let currentEditId = null;
 
@@ -70,28 +70,30 @@ function validateForm() {
         return false;
     }
 
-    // Бренд (если заполнен)
-    if (brand) {
-        if (brand.length < 3) {
-            showError('Бренд должен содержать не менее 3 символов');
-            return false;
-        }
-        if (brand.length > 20) {
-            showError('Бренд не должен превышать 20 символов');
-            return false;
-        }
-        if (!/[a-zA-Zа-яА-ЯёЁ]/.test(brand)) {
-            showError('Бренд не может состоять только из цифр');
-            return false;
-        }
-        if (/^\d/.test(brand)) {
-            showError('Бренд не может начинаться с цифры');
-            return false;
-        }
-        if (/\s{2,}/.test(brand)) {
-            showError('Пробелы не могут идти подряд');
-            return false;
-        }
+    // Бренд (обязательный)
+    if (!brand) {
+        showError('Бренд обязателен');
+        return false;
+    }
+    if (brand.length < 3) {
+        showError('Бренд должен содержать не менее 3 символов');
+        return false;
+    }
+    if (brand.length > 20) {
+        showError('Бренд не должен превышать 20 символов');
+        return false;
+    }
+    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(brand)) {
+        showError('Бренд не может состоять только из цифр');
+        return false;
+    }
+    if (/^\d/.test(brand)) {
+        showError('Бренд не может начинаться с цифры');
+        return false;
+    }
+    if (/\s{2,}/.test(brand)) {
+        showError('Пробелы не могут идти подряд');
+        return false;
     }
 
     // Модель (если заполнена)
@@ -128,7 +130,7 @@ async function updateStats() {
         if (!response.ok) throw new Error('Не удалось загрузить статистику');
         const data = await response.json();
         totalSpan.textContent = data.totalEquipment;
-        brandSpan.textContent = data.withBrand;
+        modelSpan.textContent = data.withModel;
     } catch (err) {
         console.error('Ошибка статистики:', err);
     }
@@ -169,7 +171,7 @@ async function renderTable() {
             const row = tbody.insertRow();
             row.insertCell(0).textContent = item.equipmentId;
             row.insertCell(1).textContent = item.equipmentName;
-            row.insertCell(2).textContent = item.brand || '—';
+            row.insertCell(2).textContent = item.brand;
             row.insertCell(3).textContent = item.model || '—';
             const actionsCell = row.insertCell(4);
             const editBtn = document.createElement('button');
@@ -192,7 +194,7 @@ async function renderTable() {
 // ---- Заполнение формы для редактирования ----
 function fillFormForEdit(item) {
     equipmentNameInput.value = item.equipmentName;
-    brandInput.value = item.brand || '';
+    brandInput.value = item.brand;
     modelInput.value = item.model || '';
     editIdField.value = item.equipmentId;
     currentEditId = item.equipmentId;
@@ -206,7 +208,7 @@ async function createEquipment() {
     if (!validateForm()) return false;
     const newItem = {
         equipmentName: equipmentNameInput.value.trim(),
-        brand: brandInput.value.trim() || null,
+        brand: brandInput.value.trim(),
         model: modelInput.value.trim() || null
     };
 
@@ -236,7 +238,7 @@ async function updateEquipment(id) {
     const updated = {
         equipmentId: id,
         equipmentName: equipmentNameInput.value.trim(),
-        brand: brandInput.value.trim() || null,
+        brand: brandInput.value.trim(),
         model: modelInput.value.trim() || null
     };
 
@@ -319,7 +321,6 @@ modelInput.addEventListener('keydown', function (e) { preventLeadingDigit(e, thi
 
 // ---- Автоформатирование при вводе (input) ----
 
-// Название: каждое слово с заглавной, убрать лишние пробелы, фильтр символов
 equipmentNameInput.addEventListener('input', function () {
     let val = this.value;
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
@@ -330,7 +331,6 @@ equipmentNameInput.addEventListener('input', function () {
     this.value = val;
 });
 
-// Бренд: каждое слово с заглавной, убрать лишние пробелы
 brandInput.addEventListener('input', function () {
     let val = this.value;
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
@@ -341,7 +341,6 @@ brandInput.addEventListener('input', function () {
     this.value = val;
 });
 
-// Модель: убрать лишние пробелы, сохранить оригинальный регистр
 modelInput.addEventListener('input', function () {
     let val = this.value;
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
