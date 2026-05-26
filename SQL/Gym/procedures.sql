@@ -152,7 +152,9 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: get_all_equipment
 -- Справочник оборудования для dropdown
-CREATE OR REPLACE FUNCTION get_all_equipment()
+-- Procedure: get_equipment_dictionary
+-- Справочник оборудования для dropdown в инвентаре залов
+CREATE OR REPLACE FUNCTION get_equipment_dictionary()
 RETURNS TABLE(
     "EquipmentId" INTEGER,
     "EquipmentName" VARCHAR,

@@ -178,7 +178,7 @@ namespace Fitness.Services
             var items = new List< EquipmentView > ();
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT * FROM get_all_equipment()";
+                command.CommandText = "SELECT * FROM get_equipment_dictionary()";
                 using (var reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
