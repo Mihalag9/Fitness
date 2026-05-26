@@ -1,98 +1,113 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Fitness.Models;
+using Fitness.Services;
 
-[Route("api/[controller]")]
-[ApiController]
-public class GymsController : ControllerBase
+namespace Fitness.Controllers
 {
-    private readonly FitnessContext _context;
-    public GymsController(FitnessContext context)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class GymsController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly GymService _gymService;
 
-    // GET: api/Gym
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Gym>>> GetGym()
-    {
-        return await _context.Gyms.ToListAsync();
-    }
-
-    // GET: api/Gym/5
-    [HttpGet("{gymid}")]
-    public async Task<ActionResult<Gym>> GetGym(int gymid)
-    {
-        var gym = await _context.Gyms.FindAsync(gymid);
-
-        if (gym == null)
+        public GymsController(GymService gymService)
         {
-            return NotFound();
+            _gymService = gymService;
         }
 
-        return gym;
-    }
-
-    // PUT: api/Gym/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{gymid}")]
-    public async Task<IActionResult> PutGym(int? gymid, Gym gym)
-    {
-        if (gymid != gym.GymId)
+        // GET: api/Gyms?gymName=...&hasEquipment=...
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<GymService.GymView>>> GetGyms(
+            [FromQuery] string? gymName,
+            [FromQuery] bool? hasEquipment)
         {
-            return BadRequest();
+            var gyms = await _gymService.GetAllAsync(gymName, hasEquipment);
+            return Ok(gyms);
         }
 
-        _context.Entry(gym).State = EntityState.Modified;
-
-        try
+        // GET: api/Gyms/5
+        [HttpGet("{gymid}")]
+        public async Task<ActionResult<Gym>> GetGym(int gymid)
         {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!GymExists(gymid))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
+            var gym = await _gymService.GetByIdAsync(gymid);
+            if (gym == null) return NotFound();
+            return gym;
         }
 
-        return NoContent();
-    }
-
-    // POST: api/Gym
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPost]
-    public async Task<ActionResult<Gym>> PostGym(Gym gym)
-    {
-        _context.Gyms.Add(gym);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetGym", new { gymid = gym.GymId }, gym);
-    }
-
-    // DELETE: api/Gym/5
-    [HttpDelete("{gymid}")]
-    public async Task<IActionResult> DeleteGym(int? gymid)
-    {
-        var gym = await _context.Gyms.FindAsync(gymid);
-        if (gym == null)
+        // GET: api/Gyms/statistics
+        [HttpGet("statistics")]
+        public async Task<ActionResult<GymService.GymStatistics>> GetStatistics()
         {
-            return NotFound();
+            var stats = await _gymService.GetStatisticsAsync();
+            return Ok(stats);
         }
 
-        _context.Gyms.Remove(gym);
-        await _context.SaveChangesAsync();
+        // POST: api/Gyms
+        [HttpPost]
+        public async Task<ActionResult<Gym>> PostGym(Gym gym)
+        {
+            var created = await _gymService.CreateAsync(gym);
+            return CreatedAtAction(nameof(GetGym), new { gymid = created.GymId }, created);
+        }
 
-        return NoContent();
+        // PUT: api/Gyms/5
+        [HttpPut("{gymid}")]
+        public async Task<IActionResult> PutGym(int gymid, Gym gym)
+        {
+            var success = await _gymService.UpdateAsync(gymid, gym);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        // DELETE: api/Gyms/5
+        [HttpDelete("{gymid}")]
+        public async Task<IActionResult> DeleteGym(int gymid)
+        {
+            var success = await _gymService.DeleteAsync(gymid);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        // ---- Inventory sub-routes ----
+
+        // GET: api/Gyms/5/inventory
+        [HttpGet("{gymid}/inventory")]
+        public async Task<ActionResult<IEnumerable<GymService.InventoryItemView>>> GetInventory(int gymid)
+        {
+            var items = await _gymService.GetInventoryByGymAsync(gymid);
+            return Ok(items);
+        }
+
+        // PUT: api/Gyms/5/inventory
+        [HttpPut("{gymid}/inventory")]
+        public async Task<IActionResult> PutInventory(int gymid, [FromBody] InventoryUpdateDto dto)
+        {
+            var success = await _gymService.UpsertInventoryAsync(gymid, dto.EquipmentId, dto.Quantity);
+            if (!success) return BadRequest();
+            return NoContent();
+        }
+
+        // DELETE: api/Gyms/5/inventory/10
+        [HttpDelete("{gymid}/inventory/{equipmentid}")]
+        public async Task<IActionResult> DeleteInventoryItem(int gymid, int equipmentid)
+        {
+            var success = await _gymService.DeleteInventoryItemAsync(gymid, equipmentid);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        // GET: api/Gyms/equipment (справочник)
+        [HttpGet("equipment")]
+        public async Task<ActionResult<IEnumerable<GymService.EquipmentView>>> GetEquipment()
+        {
+            var items = await _gymService.GetAllEquipmentAsync();
+            return Ok(items);
+        }
     }
 
-    private bool GymExists(int? gymid)
+    public class InventoryUpdateDto
     {
-        return _context.Gyms.Any(e => e.GymId == gymid);
+        public int EquipmentId { get; set; }
+        public int Quantity { get; set; }
     }
 }
