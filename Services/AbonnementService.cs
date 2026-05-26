@@ -1,5 +1,6 @@
 using Fitness.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace Fitness.Services
 {
@@ -17,135 +18,74 @@ namespace Fitness.Services
             bool? weekdayAccess,
             bool? weekendAccess,
             decimal? priceMin,
-            decimal? priceMax,
-            string? sortField,
-            string? sortDirection)
+            decimal? priceMax)
         {
-            IQueryable<Abonnement> query = _context.Abonnements;
-
-            // Фильтр по названию
-            if (!string.IsNullOrWhiteSpace(abonnementType))
-            {
-                query = query.Where(a => a.AbonnementType.ToLower().Contains(abonnementType.ToLower()));
-            }
-
-            // Фильтр по доступу в будни
-            if (weekdayAccess.HasValue)
-            {
-                query = query.Where(a => a.WeekdayAccess == weekdayAccess.Value);
-            }
-
-            // Фильтр по доступу на выходные
-            if (weekendAccess.HasValue)
-            {
-                query = query.Where(a => a.WeekendAccess == weekendAccess.Value);
-            }
-
-            // Фильтр по минимальной цене
-            if (priceMin.HasValue)
-            {
-                query = query.Where(a => a.Price >= priceMin.Value);
-            }
-
-            // Фильтр по максимальной цене
-            if (priceMax.HasValue)
-            {
-                query = query.Where(a => a.Price <= priceMax.Value);
-            }
-
-            // Сортировка
-            if (!string.IsNullOrWhiteSpace(sortField))
-            {
-                bool isDesc = !string.IsNullOrWhiteSpace(sortDirection) && sortDirection.ToLower() == "desc";
-
-                switch (sortField.ToLower())
-                {
-                    case "price":
-                        query = isDesc ? query.OrderByDescending(a => a.Price) : query.OrderBy(a => a.Price);
-                        break;
-                    case "duration":
-                        query = isDesc ? query.OrderByDescending(a => a.DurationMonths) : query.OrderBy(a => a.DurationMonths);
-                        break;
-                    default:
-                        query = query.OrderBy(a => a.AbonnementType);
-                        break;
-                }
-            }
-            else
-            {
-                query = query.OrderBy(a => a.AbonnementType);
-            }
-
-            return await query.ToListAsync();
+            return await _context.Abonnements
+                .FromSqlRaw("SELECT * FROM get_all_abonnements({0}, {1}, {2}, {3}, {4})", 
+                    (object)abonnementType ?? DBNull.Value,
+                    (object)weekdayAccess ?? DBNull.Value,
+                    (object)weekendAccess ?? DBNull.Value,
+                    (object)priceMin ?? DBNull.Value,
+                    (object)priceMax ?? DBNull.Value)
+                .ToListAsync();
         }
 
         public async Task<Abonnement?> GetByIdAsync(int id)
         {
-            return await _context.Abonnements.FindAsync(id);
+            return await _context.Abonnements
+                .FromSqlRaw("SELECT * FROM get_abonnement_by_id({0})", id)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<Abonnement> CreateAsync(Abonnement abonnement)
         {
-            _context.Abonnements.Add(abonnement);
-            await _context.SaveChangesAsync();
+            await _context.Database.ExecuteSqlRawAsync("SELECT add_abonnement({0}, {1}, {2}, {3}, {4}, {5}, {6})", 
+                (object)abonnement.AbonnementType ?? DBNull.Value,
+                abonnement.Price,
+                abonnement.DurationMonths,
+                abonnement.WeekdayAccess,
+                abonnement.WeekendAccess,
+                abonnement.AccessStartTime,
+                abonnement.AccessEndTime);
             return abonnement;
         }
 
         public async Task<bool> UpdateAsync(int id, Abonnement abonnement)
         {
-            if (id != abonnement.AbonnementId)
-            {
-                return false;
-            }
-
-            _context.Entry(abonnement).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AbonnementExists(id))
-                {
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var result = await _context.Database.ExecuteSqlRawAsync("SELECT update_abonnement({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})", 
+                id,
+                (object)abonnement.AbonnementType ?? DBNull.Value,
+                abonnement.Price,
+                abonnement.DurationMonths,
+                abonnement.WeekdayAccess,
+                abonnement.WeekendAccess,
+                abonnement.AccessStartTime,
+                abonnement.AccessEndTime);
+            
+            return result > 0;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var abonnement = await _context.Abonnements.FindAsync(id);
-            if (abonnement == null)
-            {
-                return false;
-            }
-
-            _context.Abonnements.Remove(abonnement);
-            await _context.SaveChangesAsync();
-            return true;
+            var result = await _context.Database.ExecuteSqlRawAsync("SELECT delete_abonnement({0})", id);
+            return result > 0;
         }
 
         public async Task<AbonnementStatistics> GetStatisticsAsync()
         {
-            var totalAbonnements = await _context.Abonnements.CountAsync();
-            var minPrice = totalAbonnements > 0 ? await _context.Abonnements.MinAsync(a => a.Price) : 0;
-            var maxPrice = totalAbonnements > 0 ? await _context.Abonnements.MaxAsync(a => a.Price) : 0;
-            var unlimitedCount = await _context.Abonnements.CountAsync(a => a.WeekdayAccess && a.WeekendAccess);
-            var unlimitedPercentage = totalAbonnements > 0 ? Math.Round((double)unlimitedCount / totalAbonnements * 100, 1) : 0;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
-            return new AbonnementStatistics
+            using (var command = connection.CreateCommand())
             {
-                TotalAbonnements = totalAbonnements,
-                MinPrice = minPrice,
-                MaxPrice = maxPrice,
-                UnlimitedPercentage = unlimitedPercentage
-            };
+                command.CommandText = "SELECT get_abonnement_statistics()";
+                var result = await command.ExecuteScalarAsync();
+                var statsJson = result?.ToString();
+
+                if (string.IsNullOrEmpty(statsJson)) return new AbonnementStatistics();
+
+                return JsonSerializer.Deserialize<AbonnementStatistics>(statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new AbonnementStatistics();
+            }
         }
 
         private bool AbonnementExists(int id)

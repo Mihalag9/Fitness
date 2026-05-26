@@ -1,5 +1,6 @@
 using Fitness.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace Fitness.Services
 {
@@ -14,98 +15,63 @@ namespace Fitness.Services
 
         public async Task<IEnumerable<Client>> GetAllAsync(string? fullName, string? phone, DateOnly? birthDateFrom, DateOnly? birthDateTo)
         {
-            IQueryable<Client> query = _context.Clients;
-
-            if (!string.IsNullOrWhiteSpace(fullName))
-            {
-                query = query.Where(c => c.FullName.ToLower().Contains(fullName.ToLower()));
-            }
-
-            if (!string.IsNullOrWhiteSpace(phone))
-            {
-                query = query.Where(c => c.Phone != null && c.Phone.Contains(phone));
-            }
-
-            if (birthDateFrom.HasValue)
-            {
-                query = query.Where(c => c.BirthDate >= birthDateFrom.Value);
-            }
-
-            if (birthDateTo.HasValue)
-            {
-                query = query.Where(c => c.BirthDate <= birthDateTo.Value);
-            }
-
-            return await query.ToListAsync();
+            return await _context.Clients
+                .FromSqlRaw("SELECT * FROM get_all_clients({0}, {1}, {2}, {3})", 
+                    (object)fullName ?? DBNull.Value, 
+                    (object)phone ?? DBNull.Value, 
+                    (object)birthDateFrom ?? DBNull.Value, 
+                    (object)birthDateTo ?? DBNull.Value)
+                .ToListAsync();
         }
 
         public async Task<Client?> GetByIdAsync(int id)
         {
-            return await _context.Clients.FindAsync(id);
+            return await _context.Clients
+                .FromSqlRaw("SELECT * FROM get_client_by_id({0})", id)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<Client> CreateAsync(Client client)
         {
-            _context.Clients.Add(client);
-            await _context.SaveChangesAsync();
+            await _context.Database.ExecuteSqlRawAsync("SELECT add_client({0}, {1}, {2})", 
+                (object)client.FullName ?? DBNull.Value, 
+                (object)client.BirthDate ?? DBNull.Value,
+                (object)client.Phone ?? DBNull.Value);
             return client;
         }
 
         public async Task<bool> UpdateAsync(int id, Client client)
         {
-            if (id != client.ClientId)
-            {
-                return false;
-            }
-
-            _context.Entry(client).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ClientExists(id))
-                {
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var result = await _context.Database.ExecuteSqlRawAsync("SELECT update_client({0}, {1}, {2}, {3})", 
+                id,
+                (object)client.FullName ?? DBNull.Value, 
+                (object)client.BirthDate ?? DBNull.Value,
+                (object)client.Phone ?? DBNull.Value);
+            
+            return result > 0;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
-            if (client == null)
-            {
-                return false;
-            }
-
-            _context.Clients.Remove(client);
-            await _context.SaveChangesAsync();
-            return true;
+            var result = await _context.Database.ExecuteSqlRawAsync("SELECT delete_client({0})", id);
+            return result > 0;
         }
 
         public async Task<ClientStatistics> GetStatisticsAsync()
         {
-            var totalClients = await _context.Clients.CountAsync();
-            
-            var activeAbonnements = await _context.Purchases
-                .Where(p => p.Status == "активен")
-                .Select(p => p.ClientId)
-                .Distinct()
-                .CountAsync();
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
-            return new ClientStatistics
+            using (var command = connection.CreateCommand())
             {
-                TotalClients = totalClients,
-                ActiveAbonnements = activeAbonnements
-            };
+                command.CommandText = "SELECT get_client_statistics()";
+                var result = await command.ExecuteScalarAsync();
+                var statsJson = result?.ToString();
+
+                if (string.IsNullOrEmpty(statsJson)) return new ClientStatistics();
+
+                return JsonSerializer.Deserialize<ClientStatistics>(statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ClientStatistics();
+            }
         }
 
         private bool ClientExists(int id)
