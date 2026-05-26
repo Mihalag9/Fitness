@@ -29,6 +29,7 @@ const inventoryBody = document.getElementById('inventory-body');
 
 let currentEditId = null;
 let allEquipment = [];
+let currentInventoryIds = new Set();
 
 // ---- Helpers ----
 function showError(text) {
@@ -97,19 +98,26 @@ async function updateStats() {
     }
 }
 
-// ---- Equipment dictionary (for inventory panel) ----
+// ---- Equipment dictionary (filtered: only not in current gym) ----
+function refreshEquipmentSelect() {
+    equipmentSelect.innerHTML = '<option value="">— Выберите оборудование —</option>';
+    allEquipment.forEach(eq => {
+        // Пропускаем оборудование, которое уже есть в зале
+        if (currentInventoryIds.has(eq.equipmentId)) return;
+
+        const opt = document.createElement('option');
+        opt.value = eq.equipmentId;
+        opt.textContent = `${eq.equipmentName}${eq.brand ? ' (' + eq.brand + ')' : ''}`;
+        equipmentSelect.appendChild(opt);
+    });
+}
+
 async function loadEquipmentDictionary() {
     try {
         const response = await fetch(`${API_URL}/equipment`);
         if (!response.ok) throw new Error('Не удалось загрузить справочник оборудования');
         allEquipment = await response.json();
-        equipmentSelect.innerHTML = '<option value="">— Выберите оборудование —</option>';
-        allEquipment.forEach(eq => {
-            const opt = document.createElement('option');
-            opt.value = eq.equipmentId;
-            opt.textContent = `${eq.equipmentName}${eq.brand ? ' (' + eq.brand + ')' : ''}`;
-            equipmentSelect.appendChild(opt);
-        });
+        refreshEquipmentSelect();
     } catch (err) {
         console.error('Ошибка загрузки оборудования:', err);
     }
@@ -139,6 +147,14 @@ async function loadInventory(gymId) {
         const response = await fetch(`${API_URL}/${gymId}/inventory`);
         if (!response.ok) throw new Error('Ошибка загрузки инвентаря');
         const items = await response.json();
+
+        // Обновляем Set ID оборудования в зале
+        currentInventoryIds.clear();
+        items.forEach(item => currentInventoryIds.add(item.equipmentId));
+
+        // Перестраиваем выпадающий список без уже имеющегося оборудования
+        refreshEquipmentSelect();
+
         inventoryBody.innerHTML = '';
         items.forEach(item => {
             const row = inventoryBody.insertRow();
@@ -152,10 +168,7 @@ async function loadInventory(gymId) {
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать количество';
-            editBtn.onclick = () => {
-                equipmentSelect.value = item.equipmentId;
-                equipmentQuantity.value = item.quantity;
-            };
+            editBtn.onclick = () => startEditInventory(item);
 
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '🗑️';
@@ -170,7 +183,67 @@ async function loadInventory(gymId) {
     }
 }
 
-async function addOrUpdateInventory() {
+// ---- Редактирование количества оборудования (inline) ----
+function startEditInventory(item) {
+    // Находим строку таблицы по equipmentId
+    const rows = inventoryBody.querySelectorAll('tr');
+    let targetRow = null;
+    rows.forEach(row => {
+        if (parseInt(row.cells[0].textContent) === item.equipmentId) {
+            targetRow = row;
+        }
+    });
+    if (!targetRow) return;
+
+    // Заменяем ячейку с количеством на input
+    const quantityCell = targetRow.cells[4];
+    const currentQuantity = item.quantity;
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '1';
+    input.value = currentQuantity;
+    input.style.width = '60px';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = '💾';
+    saveBtn.title = 'Сохранить';
+    saveBtn.onclick = () => saveInventoryQuantity(item.equipmentId, parseInt(input.value, 10));
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = '❌';
+    cancelBtn.title = 'Отмена';
+    cancelBtn.onclick = () => loadInventory(currentEditId);
+
+    quantityCell.innerHTML = '';
+    quantityCell.appendChild(input);
+    quantityCell.appendChild(saveBtn);
+    quantityCell.appendChild(cancelBtn);
+}
+
+async function saveInventoryQuantity(equipmentId, newQuantity) {
+    if (isNaN(newQuantity) || newQuantity < 1) {
+        showError('Количество должно быть не менее 1');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/${currentEditId}/inventory`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ equipmentId, quantity: newQuantity })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await loadInventory(currentEditId);
+        await renderTable();
+        await updateStats();
+    } catch (err) {
+        showError(`Ошибка обновления: ${err.message}`);
+    }
+}
+
+// ---- Добавление нового оборудования в зал ----
+async function addInventoryItem() {
     if (!currentEditId) return;
     const equipmentId = parseInt(equipmentSelect.value, 10);
     const quantity = parseInt(equipmentQuantity.value, 10);
@@ -181,6 +254,11 @@ async function addOrUpdateInventory() {
     }
     if (isNaN(quantity) || quantity < 1) {
         showError('Количество должно быть не менее 1');
+        return;
+    }
+    // Дополнительная проверка: оборудование уже есть в зале
+    if (currentInventoryIds.has(equipmentId)) {
+        showError('Это оборудование уже есть в зале. Используйте редактирование для изменения количества.');
         return;
     }
 
@@ -197,7 +275,7 @@ async function addOrUpdateInventory() {
         await renderTable();
         await updateStats();
     } catch (err) {
-        showError(`Ошибка обновления: ${err.message}`);
+        showError(`Ошибка добавления: ${err.message}`);
     }
 }
 
@@ -270,6 +348,7 @@ function fillFormForEdit(gym) {
 
     inventoryCard.classList.remove('hidden');
     inventoryGymName.textContent = gym.gymName;
+    addEquipmentBtn.textContent = 'Добавить';
     loadInventory(gym.gymId);
 }
 
@@ -391,7 +470,7 @@ submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
-addEquipmentBtn.addEventListener('click', addOrUpdateInventory);
+addEquipmentBtn.addEventListener('click', addInventoryItem);
 
 loadEquipmentDictionary();
 loadBrands();
