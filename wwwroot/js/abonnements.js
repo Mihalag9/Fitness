@@ -220,8 +220,8 @@ function validateForm(data) {
         showError('Цена должна быть не меньше 1000');
         return false;
     }
-    if (isNaN(data.durationMonths) || data.durationMonths < 1) {
-        showError('Длительность должна быть положительным целым числом');
+    if (isNaN(data.durationMonths) || data.durationMonths < 1 || data.durationMonths > 18) {
+        showError('Длительность должна быть целым числом от 1 до 18');
         return false;
     }
 
