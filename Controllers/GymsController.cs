@@ -15,17 +15,17 @@ namespace Fitness.Controllers
             _gymService = gymService;
         }
 
-        // GET: api/Gyms?gymName=...&hasEquipment=...
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GymService.GymView>>> GetGyms(
             [FromQuery] string? gymName,
-            [FromQuery] bool? hasEquipment)
+            [FromQuery] bool? hasEquipment,
+            [FromQuery] string? equipmentName,
+            [FromQuery] string? brand)
         {
-            var gyms = await _gymService.GetAllAsync(gymName, hasEquipment);
+            var gyms = await _gymService.GetAllAsync(gymName, hasEquipment, equipmentName, brand);
             return Ok(gyms);
         }
 
-        // GET: api/Gyms/5
         [HttpGet("{gymid}")]
         public async Task<ActionResult<Gym>> GetGym(int gymid)
         {
@@ -34,7 +34,6 @@ namespace Fitness.Controllers
             return gym;
         }
 
-        // GET: api/Gyms/statistics
         [HttpGet("statistics")]
         public async Task<ActionResult<GymService.GymStatistics>> GetStatistics()
         {
@@ -42,7 +41,6 @@ namespace Fitness.Controllers
             return Ok(stats);
         }
 
-        // POST: api/Gyms
         [HttpPost]
         public async Task<ActionResult<Gym>> PostGym(Gym gym)
         {
@@ -50,7 +48,6 @@ namespace Fitness.Controllers
             return CreatedAtAction(nameof(GetGym), new { gymid = created.GymId }, created);
         }
 
-        // PUT: api/Gyms/5
         [HttpPut("{gymid}")]
         public async Task<IActionResult> PutGym(int gymid, Gym gym)
         {
@@ -59,7 +56,6 @@ namespace Fitness.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Gyms/5
         [HttpDelete("{gymid}")]
         public async Task<IActionResult> DeleteGym(int gymid)
         {
@@ -68,9 +64,6 @@ namespace Fitness.Controllers
             return NoContent();
         }
 
-        // ---- Inventory sub-routes ----
-
-        // GET: api/Gyms/5/inventory
         [HttpGet("{gymid}/inventory")]
         public async Task<ActionResult<IEnumerable<GymService.InventoryItemView>>> GetInventory(int gymid)
         {
@@ -78,7 +71,6 @@ namespace Fitness.Controllers
             return Ok(items);
         }
 
-        // PUT: api/Gyms/5/inventory
         [HttpPut("{gymid}/inventory")]
         public async Task<IActionResult> PutInventory(int gymid, [FromBody] InventoryUpdateDto dto)
         {
@@ -87,7 +79,6 @@ namespace Fitness.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Gyms/5/inventory/10
         [HttpDelete("{gymid}/inventory/{equipmentid}")]
         public async Task<IActionResult> DeleteInventoryItem(int gymid, int equipmentid)
         {
@@ -96,7 +87,6 @@ namespace Fitness.Controllers
             return NoContent();
         }
 
-        // GET: api/Gyms/equipment (справочник)
         [HttpGet("equipment")]
         public async Task<ActionResult<IEnumerable<GymService.EquipmentView>>> GetEquipment()
         {

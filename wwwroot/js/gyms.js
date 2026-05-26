@@ -1,4 +1,5 @@
 ﻿const API_URL = 'https://localhost:7159/api/Gyms';
+const EQUIPMENT_API_URL = 'https://localhost:7159/api/Equipment';
 
 const tbody = document.getElementById('gyms-body');
 const errorDiv = document.getElementById('error-message');
@@ -10,6 +11,8 @@ const formTitle = document.getElementById('form-title');
 
 const filterGymName = document.getElementById('filter-gymName');
 const filterHasEquipment = document.getElementById('filter-hasEquipment');
+const filterEquipmentName = document.getElementById('filter-equipmentName');
+const filterBrand = document.getElementById('filter-brand');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
@@ -94,7 +97,7 @@ async function updateStats() {
     }
 }
 
-// ---- Equipment dictionary ----
+// ---- Equipment dictionary (for inventory panel) ----
 async function loadEquipmentDictionary() {
     try {
         const response = await fetch(`${API_URL}/equipment`);
@@ -109,6 +112,24 @@ async function loadEquipmentDictionary() {
         });
     } catch (err) {
         console.error('Ошибка загрузки оборудования:', err);
+    }
+}
+
+// ---- Brands for filter ----
+async function loadBrands() {
+    try {
+        const response = await fetch(`${EQUIPMENT_API_URL}/brands`);
+        if (!response.ok) throw new Error('Не удалось загрузить бренды');
+        const brands = await response.json();
+        filterBrand.innerHTML = '<option value="">Все бренды</option>';
+        brands.forEach(brand => {
+            const opt = document.createElement('option');
+            opt.value = brand;
+            opt.textContent = brand;
+            filterBrand.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Ошибка загрузки брендов:', err);
     }
 }
 
@@ -201,6 +222,8 @@ async function renderTable() {
         const params = new URLSearchParams();
         if (filterGymName.value) params.append('gymName', filterGymName.value.trim());
         if (filterHasEquipment.value) params.append('hasEquipment', filterHasEquipment.value);
+        if (filterEquipmentName.value) params.append('equipmentName', filterEquipmentName.value.trim());
+        if (filterBrand.value) params.append('brand', filterBrand.value);
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
@@ -334,6 +357,8 @@ async function onApplyFilters() {
 function onClearFilters() {
     filterGymName.value = '';
     filterHasEquipment.value = '';
+    filterEquipmentName.value = '';
+    filterBrand.value = '';
     renderTable();
 }
 
@@ -353,11 +378,8 @@ gymNameInput.addEventListener('keydown', function (e) { preventLeadingDigit(e, t
 // ---- Автоформатирование при вводе (input) ----
 gymNameInput.addEventListener('input', function () {
     let val = this.value;
-    // Разрешаем буквы, цифры, пробелы, дефис, кавычки, скобки
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
-    // Убираем двойные пробелы
     val = val.replace(/\s{2,}/g, ' ');
-    // Каждое слово с заглавной буквы
     val = val.replace(/([a-zA-Zа-яА-ЯёЁ]+)/g, function (match) {
         return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
     });
@@ -372,4 +394,5 @@ clearFiltersBtn.addEventListener('click', onClearFilters);
 addEquipmentBtn.addEventListener('click', addOrUpdateInventory);
 
 loadEquipmentDictionary();
+loadBrands();
 renderTable();

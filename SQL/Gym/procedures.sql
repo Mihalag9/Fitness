@@ -1,12 +1,9 @@
--- ==========================================
--- ПРОЦЕДУРЫ ДЛЯ ЗАЛОВ (Gym) + ИНВЕНТАРЬ (Inventory)
--- ==========================================
-
 -- Procedure: get_all_gyms
--- Возвращает залы с агрегированным списком оборудования
 CREATE OR REPLACE FUNCTION get_all_gyms(
     p_gymname VARCHAR DEFAULT NULL,
-    p_has_equipment BOOLEAN DEFAULT NULL
+    p_has_equipment BOOLEAN DEFAULT NULL,
+    p_equipmentname VARCHAR DEFAULT NULL,
+    p_brand VARCHAR DEFAULT NULL
 )
 RETURNS TABLE(
     "GymId" INTEGER,
@@ -40,6 +37,16 @@ BEGIN
               )
           END
       )
+      AND (p_equipmentname IS NULL OR EXISTS (
+          SELECT 1 FROM "Inventory" ii2
+          JOIN "Equipment" ee2 ON ii2."EquipmentId" = ee2."EquipmentId"
+          WHERE ii2."GymId" = g."GymId" AND ee2."EquipmentName" ILIKE '%' || p_equipmentname || '%'
+      ))
+      AND (p_brand IS NULL OR EXISTS (
+          SELECT 1 FROM "Inventory" ii3
+          JOIN "Equipment" ee3 ON ii3."EquipmentId" = ee3."EquipmentId"
+          WHERE ii3."GymId" = g."GymId" AND ee3."Brand" = p_brand
+      ))
     GROUP BY g."GymId", g."GymName"
     ORDER BY g."GymName" ASC;
 END;
@@ -108,7 +115,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: upsert_inventory
--- Добавляет или обновляет количество оборудования в зале
 CREATE OR REPLACE FUNCTION upsert_inventory(p_gymid INTEGER, p_equipmentid INTEGER, p_quantity INTEGER)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -150,10 +156,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_all_equipment
--- Справочник оборудования для dropdown
 -- Procedure: get_equipment_dictionary
--- Справочник оборудования для dropdown в инвентаре залов
 CREATE OR REPLACE FUNCTION get_equipment_dictionary()
 RETURNS TABLE(
     "EquipmentId" INTEGER,

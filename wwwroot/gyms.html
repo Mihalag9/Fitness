@@ -17,7 +17,6 @@
 
     <h1>Управление залами фитнес-клуба</h1>
 
-    <!-- Форма добавления/редактирования зала -->
     <div class="form-card">
         <h2 id="form-title">Добавить зал</h2>
         <input type="hidden" id="edit-id">
@@ -27,7 +26,6 @@
     </div>
     <div id="error-message" class="error hidden"></div>
 
-    <!-- Блок управления оборудованием (показывается при редактировании) -->
     <div id="inventory-card" class="form-card hidden">
         <h2>Оборудование в зале: <span id="inventory-gym-name"></span></h2>
 
@@ -58,7 +56,6 @@
         </div>
     </div>
 
-    <!-- Блок фильтров -->
     <div class="filter-card">
         <h2>Фильтры</h2>
         <input type="text" id="filter-gymName" placeholder="Название зала">
@@ -67,18 +64,20 @@
             <option value="true">С оборудованием</option>
             <option value="false">Без оборудования</option>
         </select>
+        <input type="text" id="filter-equipmentName" placeholder="Название оборудования">
+        <select id="filter-brand">
+            <option value="">Все бренды</option>
+        </select>
         <button id="apply-filters">Применить</button>
         <button id="clear-filters">Очистить</button>
     </div>
 
-    <!-- Блок статистики -->
     <div class="stats-card">
         <h2>Статистика</h2>
         <p>Всего залов: <span id="total-count">0</span></p>
         <p>Всего единиц оборудования: <span id="total-equipment">0</span></p>
     </div>
 
-    <!-- Таблица с данными -->
     <table id="gyms-table">
         <thead>
             <tr><th>ID</th><th>Название</th><th>Оборудование</th><th>Действия</th></tr>

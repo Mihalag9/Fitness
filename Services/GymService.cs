@@ -13,9 +13,7 @@ namespace Fitness.Services
             _context = context;
         }
 
-        // ---- Gyms ----
-
-        public async Task<IEnumerable<GymView>> GetAllAsync(string? gymName, bool? hasEquipment)
+        public async Task<IEnumerable<GymView>> GetAllAsync(string? gymName, bool? hasEquipment, string? equipmentName, string? brand)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -23,9 +21,11 @@ namespace Fitness.Services
             var gyms = new List<GymView>();
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT * FROM get_all_gyms(@p0, @p1)";
+                command.CommandText = "SELECT * FROM get_all_gyms(@p0, @p1, @p2, @p3)";
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = (object)gymName ?? DBNull.Value; command.Parameters.Add(p0);
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)hasEquipment ?? DBNull.Value; command.Parameters.Add(p1);
+                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)equipmentName ?? DBNull.Value; command.Parameters.Add(p2);
+                var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = (object)brand ?? DBNull.Value; command.Parameters.Add(p3);
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -102,8 +102,6 @@ namespace Fitness.Services
             }
         }
 
-        // ---- Inventory ----
-
         public async Task<IEnumerable<InventoryItemView>> GetInventoryByGymAsync(int gymId)
         {
             var connection = _context.Database.GetDbConnection();
@@ -168,8 +166,6 @@ namespace Fitness.Services
             }
         }
 
-        // ---- Equipment (справочник) ----
-
         public async Task<IEnumerable<EquipmentView>> GetAllEquipmentAsync()
         {
             var connection = _context.Database.GetDbConnection();
@@ -196,8 +192,6 @@ namespace Fitness.Services
             return items;
         }
 
-        // ---- Statistics ----
-
         public async Task<GymStatistics> GetStatisticsAsync()
         {
             var connection = _context.Database.GetDbConnection();
@@ -215,7 +209,6 @@ namespace Fitness.Services
             }
         }
 
-        // ---- DTOs ----
         public class GymView
         {
             public int GymId { get; set; }
