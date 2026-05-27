@@ -25,14 +25,6 @@ public class TrainersController : ControllerBase
         return Ok(new { Items = trainers, Statistics = stats });
     }
 
-    // GET: api/Trainers/roles (должен быть перед {trainerid})
-    [HttpGet("roles")]
-    public async Task<ActionResult<IEnumerable<TrainerRole>>> GetAllRoles()
-    {
-        var roles = await _trainerService.GetAllRolesAsync();
-        return Ok(roles);
-    }
-
     // GET: api/Trainers/5
     [HttpGet("{trainerid}")]
     public async Task<ActionResult<Trainer>> GetTrainer(int trainerid)
@@ -90,47 +82,4 @@ public class TrainersController : ControllerBase
 
         return NoContent();
     }
-
-    // ========== Роли тренера (sub-resource) ==========
-
-    // POST: api/Trainers/5/roles
-    [HttpPost("{trainerid}/roles")]
-    public async Task<IActionResult> AddRole(int trainerid, [FromBody] TrainerRoleDto dto)
-    {
-        var role = new TrainerRole
-        {
-            TrainerId = trainerid,
-            WorkoutId = dto.WorkoutId,
-            TRole = dto.TRole
-        };
-
-        var success = await _trainerService.AddRoleAsync(role);
-        if (!success) return Conflict(new { message = "Такая запись уже существует" });
-
-        return CreatedAtAction(nameof(GetTrainer), new { trainerid }, null);
-    }
-
-    // PUT: api/Trainers/5/roles/3
-    [HttpPut("{trainerid}/roles/{workoutid}")]
-    public async Task<IActionResult> UpdateRole(int trainerid, int workoutid, [FromBody] TrainerRoleDto dto)
-    {
-        var success = await _trainerService.UpdateRoleAsync(trainerid, workoutid, dto.TRole);
-        if (!success) return NotFound();
-        return NoContent();
-    }
-
-    // DELETE: api/Trainers/5/roles/3
-    [HttpDelete("{trainerid}/roles/{workoutid}")]
-    public async Task<IActionResult> DeleteRole(int trainerid, int workoutid)
-    {
-        var success = await _trainerService.DeleteRoleAsync(trainerid, workoutid);
-        if (!success) return NotFound();
-        return NoContent();
-    }
-}
-
-public class TrainerRoleDto
-{
-    public int WorkoutId { get; set; }
-    public string TRole { get; set; } = null!;
 }
