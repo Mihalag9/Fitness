@@ -52,10 +52,32 @@
     <!-- Таблица с данными -->
     <table id="trainers-table">
         <thead>
-            <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Действия</th></tr>
+            <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Роли</th><th>Действия</th></tr>
         </thead>
         <tbody id="trainers-body"></tbody>
     </table>
+    <!-- Модальное окно для управления ролями -->
+    <div id="roles-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h2 id="modal-title">Роли тренера</h2>
+
+            <div id="current-roles" class="current-roles-list"></div>
+
+            <div class="add-role-section">
+                <h3>Добавить роль</h3>
+                <div class="add-role-form">
+                    <select id="modal-workout">
+                        <option value="">— выберите тренировку —</option>
+                    </select>
+                    <input type="text" id="modal-trole" placeholder="Роль (стажер, ведущий...)" maxlength="100">
+                    <button id="modal-add-role">Добавить</button>
+                </div>
+                <div id="modal-error" class="error hidden" style="margin: 10px 0 0 0; width: auto;"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/trainers.js"></script>
 </body>
 </html>

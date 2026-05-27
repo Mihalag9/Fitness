@@ -82,4 +82,46 @@ public class TrainersController : ControllerBase
 
         return NoContent();
     }
+
+    // ---- Role sub-resources ----
+
+    // GET: api/Trainers/roles (all roles for badges)
+    [HttpGet("roles")]
+    public async Task<ActionResult<IEnumerable<TrainerService.TrainerRoleView>>> GetAllRoles()
+    {
+        var roles = await _trainerService.GetAllRolesAsync();
+        return Ok(roles);
+    }
+
+    // GET: api/Trainers/5/roles
+    [HttpGet("{trainerid}/roles")]
+    public async Task<ActionResult<IEnumerable<TrainerService.TrainerRoleView>>> GetRolesByTrainer(int trainerid)
+    {
+        var roles = await _trainerService.GetRolesByTrainerAsync(trainerid);
+        return Ok(roles);
+    }
+
+    // POST: api/Trainers/5/roles
+    [HttpPost("{trainerid}/roles")]
+    public async Task<IActionResult> PostRole(int trainerid, [FromBody] AddRoleDto dto)
+    {
+        var success = await _trainerService.AddRoleAsync(trainerid, dto.WorkoutId, dto.TRole);
+        if (!success) return BadRequest("Роль уже существует или данные некорректны");
+        return NoContent();
+    }
+
+    // DELETE: api/Trainers/5/roles/3
+    [HttpDelete("{trainerid}/roles/{workoutid}")]
+    public async Task<IActionResult> DeleteRole(int trainerid, int workoutid)
+    {
+        var success = await _trainerService.DeleteRoleAsync(trainerid, workoutid);
+        if (!success) return NotFound();
+        return NoContent();
+    }
+}
+
+public class AddRoleDto
+{
+    public int WorkoutId { get; set; }
+    public string TRole { get; set; } = null!;
 }

@@ -17,9 +17,35 @@ namespace Fitness.Controllers
 
         // GET: api/TrainerRoles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TrainerRole>>> GetTrainerRoles()
+        public async Task<ActionResult<IEnumerable<object>>> GetTrainerRoles()
         {
-            return await _context.TrainerRoles.ToListAsync();
+            return await _context.TrainerRoles
+                .Include(tr => tr.Workout)
+                .Include(tr => tr.Trainer)
+                .Select(tr => new {
+                    tr.TrainerId,
+                    tr.WorkoutId,
+                    tr.TRole,
+                    WorkoutName = tr.Workout.WorkoutName,
+                    TrainerName = tr.Trainer.FullName
+                })
+                .ToListAsync();
+        }
+
+        // GET: api/TrainerRoles/bytrainer/5
+        [HttpGet("bytrainer/{trainerId}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetTrainerRolesByTrainer(int trainerId)
+        {
+            return await _context.TrainerRoles
+                .Where(tr => tr.TrainerId == trainerId)
+                .Include(tr => tr.Workout)
+                .Select(tr => new {
+                    tr.TrainerId,
+                    tr.WorkoutId,
+                    tr.TRole,
+                    WorkoutName = tr.Workout.WorkoutName
+                })
+                .ToListAsync();
         }
 
         // GET: api/TrainerRoles/5/10
