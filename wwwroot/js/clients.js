@@ -276,17 +276,22 @@ function onClearFilters() {
     filterBirthDateTo.value = '';
     filterRangeToggle.checked = false;
     document.getElementById('filter-birthDateTo-group').classList.add('hidden');
+    const labelFrom = document.getElementById('filter-birthDateFrom-label');
+    if (labelFrom) labelFrom.textContent = 'Дата рождения';
     renderTable();
 }
 
 // ---- Переключение диапазона ----
 function onToggleRange() {
     const group = document.getElementById('filter-birthDateTo-group');
+    const labelFrom = document.getElementById('filter-birthDateFrom-label');
     if (filterRangeToggle.checked) {
         group.classList.remove('hidden');
+        if (labelFrom) labelFrom.textContent = 'Дата рождения (от)';
     } else {
         group.classList.add('hidden');
         filterBirthDateTo.value = '';
+        if (labelFrom) labelFrom.textContent = 'Дата рождения';
     }
 }
 
