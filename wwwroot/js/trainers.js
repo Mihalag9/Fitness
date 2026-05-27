@@ -1,5 +1,7 @@
 // API URL
 const API_URL = 'https://localhost:7159/api/Trainers';
+const API_URL_ROLES = 'https://localhost:7159/api/TrainerRoles';
+const API_URL_WORKOUTS = 'https://localhost:7159/api/Workouts';
 
 // DOM-элементы
 const tbody = document.getElementById('trainers-body');
@@ -20,13 +22,35 @@ const filterExperienceSort = document.getElementById('filter-experienceSort');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
+// Модальное окно ролей
+const roleModal = document.getElementById('role-modal');
+const modalTrainerName = document.getElementById('modal-trainer-name');
+const modalCloseBtn = document.getElementById('modal-close');
+const modalError = document.getElementById('modal-error');
+const modalWorkoutSelect = document.getElementById('modal-workout');
+const modalRoleInput = document.getElementById('modal-role');
+const modalAddBtn = document.getElementById('modal-add-btn');
+const modalRolesBody = document.getElementById('modal-roles-body');
+
 let currentEditId = null;
+
+// Роли и тренировки
+let allWorkouts = [];
+let allRoles = [];
+let currentModalTrainerId = null;
+let currentModalTrainerName = '';
 
 // ---- Вспомогательные функции ----
 function showError(text) {
     errorDiv.textContent = text;
     errorDiv.classList.remove('hidden');
     setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+}
+
+function showModalError(text) {
+    modalError.textContent = text;
+    modalError.classList.remove('hidden');
+    setTimeout(() => modalError.classList.add('hidden'), 5000);
 }
 
 function clearForm() {
@@ -88,42 +112,66 @@ async function renderTable() {
         const params = new URLSearchParams();
         if (filterFullName.value) params.append('fullName', filterFullName.value.trim());
         
-        // ВАЖНО: Если выбрана пустая опция, мы вообще не добавляем noExperience,
-        // чтобы бэкенд не фильтровал по умолчанию.
         if (filterExperienceSort.value === 'no_exp') {
             params.append('noExperience', 'true');
         } else if (filterExperienceSort.value === 'asc' || filterExperienceSort.value === 'desc') {
             params.append('experienceSort', filterExperienceSort.value);
         }
-        // Если выбрано "", ничего не добавляем, параметры не фильтруются.
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
+        const [trainersRes, rolesRes, workoutsRes] = await Promise.all([
+            fetch(url),
+            fetch(API_URL_ROLES),
+            fetch(API_URL_WORKOUTS)
+        ]);
+        if (!trainersRes.ok) throw new Error(`HTTP ${trainersRes.status}`);
+        const result = await trainersRes.json();
+        allRoles = await rolesRes.json();
+        allWorkouts = await workoutsRes.json();
         
-        // Обновляем таблицу
         tbody.innerHTML = '';
         result.items.forEach(trainer => {
             const row = tbody.insertRow();
             row.insertCell(0).textContent = trainer.trainerId;
             row.insertCell(1).textContent = trainer.fullName;
-            // ПРАВКА: 0 и null отображаются как прочерк
             row.insertCell(2).textContent = (trainer.experience != null && trainer.experience > 0) ? trainer.experience : '—';
-            const actionsCell = row.insertCell(3);
+
+            const specCell = row.insertCell(3);
+            specCell.className = 'spec-cell';
+            const trainerRoles = allRoles.filter(r => r.trainerId === trainer.trainerId);
+            if (trainerRoles.length > 0) {
+                const wrap = document.createElement('div');
+                wrap.className = 'role-tags-wrap';
+                trainerRoles.forEach(r => {
+                    const workout = allWorkouts.find(w => w.workoutId === r.workoutId);
+                    const tag = document.createElement('span');
+                    tag.className = 'role-tag';
+                    tag.textContent = `${workout ? workout.workoutName : '?'} (${r.tRole})`;
+                    wrap.appendChild(tag);
+                });
+                specCell.appendChild(wrap);
+            } else {
+                specCell.innerHTML = '<span class="role-empty">—</span>';
+            }
+
+            const actionsCell = row.insertCell(4);
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
             editBtn.onclick = () => fillFormForEdit(trainer);
+            const roleBtn = document.createElement('button');
+            roleBtn.textContent = '🎯';
+            roleBtn.title = 'Роли/специализация';
+            roleBtn.onclick = () => openRoleModal(trainer);
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '🗑️';
             deleteBtn.title = 'Удалить';
             deleteBtn.onclick = () => deleteTrainer(trainer.trainerId);
             actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(roleBtn);
             actionsCell.appendChild(deleteBtn);
         });
         
-        // Обновляем статистику
         const data = result.statistics;
         totalSpan.textContent = data.totalTrainers;
         expSpan.textContent = data.trainersWithExperience;
@@ -293,11 +341,116 @@ experienceInput.addEventListener('keydown', function (e) {
     }
 });
 
+// ---- Модальное окно: Специализация / Роли ----
+function openRoleModal(trainer) {
+    currentModalTrainerId = trainer.trainerId;
+    currentModalTrainerName = trainer.fullName;
+    modalTrainerName.textContent = trainer.fullName;
+    modalRoleInput.value = '';
+    roleModal.classList.remove('hidden');
+    loadModalRoles();
+}
+
+function closeRoleModal() {
+    roleModal.classList.add('hidden');
+    currentModalTrainerId = null;
+}
+
+async function loadModalRoles() {
+    try {
+        const [rolesRes, workoutsRes] = await Promise.all([
+            fetch(API_URL_ROLES),
+            fetch(API_URL_WORKOUTS)
+        ]);
+        allRoles = await rolesRes.json();
+        allWorkouts = await workoutsRes.json();
+
+        const trainerRoleIds = allRoles
+            .filter(r => r.trainerId === currentModalTrainerId)
+            .map(r => r.workoutId);
+
+        modalWorkoutSelect.innerHTML = '<option value="">-- Выберите --</option>';
+        allWorkouts.forEach(w => {
+            if (!trainerRoleIds.includes(w.workoutId)) {
+                const opt = document.createElement('option');
+                opt.value = w.workoutId;
+                opt.textContent = w.workoutName;
+                modalWorkoutSelect.appendChild(opt);
+            }
+        });
+
+        const trainerRoles = allRoles.filter(r => r.trainerId === currentModalTrainerId);
+        modalRolesBody.innerHTML = '';
+        trainerRoles.forEach(r => {
+            const workout = allWorkouts.find(w => w.workoutId === r.workoutId);
+            const row = modalRolesBody.insertRow();
+            row.insertCell(0).textContent = workout ? workout.workoutName : '?';
+            row.insertCell(1).textContent = r.tRole;
+            const delCell = row.insertCell(2);
+            const delBtn = document.createElement('button');
+            delBtn.textContent = '🗑️';
+            delBtn.title = 'Удалить';
+            delBtn.onclick = () => deleteTrainerRole(r.trainerId, r.workoutId);
+            delCell.appendChild(delBtn);
+        });
+    } catch (err) {
+        showModalError(`Ошибка загрузки: ${err.message}`);
+    }
+}
+
+async function addTrainerRole() {
+    const workoutId = parseInt(modalWorkoutSelect.value);
+    const role = modalRoleInput.value.trim();
+
+    if (!workoutId) { showModalError('Выберите тренировку'); return; }
+    if (!role) { showModalError('Укажите роль'); return; }
+
+    try {
+        const response = await fetch(`${API_URL}/${currentModalTrainerId}/roles`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                workoutId: workoutId,
+                tRole: role
+            })
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText);
+        }
+        modalRoleInput.value = '';
+        await loadModalRoles();
+        await renderTable();
+    } catch (err) {
+        showModalError(`Ошибка: ${err.message}`);
+    }
+}
+
+async function deleteTrainerRole(trainerId, workoutId) {
+    if (!confirm('Удалить эту специализацию?')) return;
+    try {
+        const response = await fetch(`${API_URL}/${trainerId}/roles/${workoutId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await loadModalRoles();
+        await renderTable();
+    } catch (err) {
+        showModalError(`Ошибка удаления: ${err.message}`);
+    }
+}
+
 // ---- Инициализация и обработчики событий ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
+
+modalCloseBtn.addEventListener('click', closeRoleModal);
+modalAddBtn.addEventListener('click', addTrainerRole);
+roleModal.addEventListener('click', function (e) {
+    if (e.target === roleModal) closeRoleModal();
+});
 
 // Загружаем данные при старте
 renderTable();

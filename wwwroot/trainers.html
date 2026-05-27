@@ -52,10 +52,45 @@
     <!-- Таблица с данными -->
     <table id="trainers-table">
         <thead>
-            <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Действия</th></tr>
+            <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Специализация</th><th>Действия</th></tr>
         </thead>
         <tbody id="trainers-body"></tbody>
     </table>
+
+    <!-- Модальное окно для управления ролями -->
+    <div id="role-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Специализация: <span id="modal-trainer-name"></span></h2>
+                <button id="modal-close" class="modal-close-btn">&times;</button>
+            </div>
+            <div id="modal-error" class="error hidden"></div>
+
+            <div class="form-card" style="margin:0 0 15px 0;width:100%;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Тренировка</label>
+                        <select id="modal-workout">
+                            <option value="">-- Выберите --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Роль</label>
+                        <input type="text" id="modal-role" placeholder="напр. инструктор" maxlength="100">
+                    </div>
+                    <button id="modal-add-btn">Добавить</button>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr><th>Тренировка</th><th>Роль</th><th>Действия</th></tr>
+                </thead>
+                <tbody id="modal-roles-body"></tbody>
+            </table>
+        </div>
+    </div>
+
     <script src="js/trainers.js"></script>
 </body>
 </html>
