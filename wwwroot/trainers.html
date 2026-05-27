@@ -27,6 +27,38 @@
         <button id="cancel-btn" style="display:none;">Отмена</button>
     </div>
     <div id="error-message" class="error hidden"></div>
+
+    <!-- Панель управления ролями (inline, как инвентарь в Gym) -->
+    <div id="roles-card" class="form-card hidden">
+        <h2>Роли тренера: <span id="roles-trainer-name"></span></h2>
+
+        <div class="inventory-controls">
+            <div class="form-group">
+                <label for="role-workout-select">Тренировка</label>
+                <select id="role-workout-select">
+                    <option value="">— Выберите тренировку —</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="role-name-input">Роль</label>
+                <input type="text" id="role-name-input" placeholder="стажер, ведущий..." maxlength="100">
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button id="add-role-btn">Добавить</button>
+            </div>
+        </div>
+
+        <div class="inventory-table-wrap">
+            <table id="role-table">
+                <thead>
+                    <tr><th>Тренировка</th><th>Роль</th><th>Действия</th></tr>
+                </thead>
+                <tbody id="role-body"></tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Блок фильтров -->
     <div class="filter-card">
         <h2>Фильтры</h2>
@@ -56,27 +88,6 @@
         </thead>
         <tbody id="trainers-body"></tbody>
     </table>
-    <!-- Модальное окно для управления ролями -->
-    <div id="roles-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <h2 id="modal-title">Роли тренера</h2>
-
-            <div id="current-roles" class="current-roles-list"></div>
-
-            <div class="add-role-section">
-                <h3>Добавить роль</h3>
-                <div class="add-role-form">
-                    <select id="modal-workout">
-                        <option value="">— выберите тренировку —</option>
-                    </select>
-                    <input type="text" id="modal-trole" placeholder="Роль (стажер, ведущий...)" maxlength="100">
-                    <button id="modal-add-role">Добавить</button>
-                </div>
-                <div id="modal-error" class="error hidden" style="margin: 10px 0 0 0; width: auto;"></div>
-            </div>
-        </div>
-    </div>
 
     <script src="js/trainers.js"></script>
 </body>
