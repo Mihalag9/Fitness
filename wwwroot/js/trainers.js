@@ -79,18 +79,8 @@ function validateTrainerForm() {
 }
 
 // ---- Статистика ----
-async function updateStats() {
-    try {
-        const response = await fetch(`${API_URL}/statistics`);
-        if (!response.ok) throw new Error('Не удалось загрузить статистику');
-        const data = await response.json();
-        totalSpan.textContent = data.totalTrainers;
-        expSpan.textContent = data.trainersWithExperience;
-        noExpSpan.textContent = data.trainersWithoutExperience;
-    } catch (err) {
-        console.error('Ошибка статистики:', err);
-    }
-}
+// (Функция updateStats была удалена)
+
 
 // ---- Отрисовка таблицы ----
 async function renderTable() {
@@ -110,9 +100,11 @@ async function renderTable() {
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const trainers = await response.json();
+        const result = await response.json();
+        
+        // Обновляем таблицу
         tbody.innerHTML = '';
-        trainers.forEach(trainer => {
+        result.items.forEach(trainer => {
             const row = tbody.insertRow();
             row.insertCell(0).textContent = trainer.trainerId;
             row.insertCell(1).textContent = trainer.fullName;
@@ -130,7 +122,12 @@ async function renderTable() {
             actionsCell.appendChild(editBtn);
             actionsCell.appendChild(deleteBtn);
         });
-        await updateStats();
+        
+        // Обновляем статистику
+        const data = result.statistics;
+        totalSpan.textContent = data.totalTrainers;
+        expSpan.textContent = data.trainersWithExperience;
+        noExpSpan.textContent = data.trainersWithoutExperience;
     } catch (err) {
         showError(`Ошибка загрузки: ${err.message}`);
     }

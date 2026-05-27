@@ -15,7 +15,7 @@ public class AbonnementsController : ControllerBase
 
     // GET: api/Abonnements
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Abonnement>>> GetAbonnements(
+    public async Task<ActionResult<object>> GetAbonnements(
         [FromQuery] string? abonnementType,
         [FromQuery] bool? weekdayAccess,
         [FromQuery] bool? weekendAccess,
@@ -23,7 +23,8 @@ public class AbonnementsController : ControllerBase
         [FromQuery] decimal? priceMax)
     {
         var abonnements = await _abonnementService.GetAllAsync(abonnementType, weekdayAccess, weekendAccess, priceMin, priceMax);
-        return Ok(abonnements);
+        var stats = await _abonnementService.GetStatisticsAsync();
+        return Ok(new { Items = abonnements, Statistics = stats });
     }
 
     // GET: api/Abonnements/5

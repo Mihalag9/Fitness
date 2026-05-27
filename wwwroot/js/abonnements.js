@@ -62,19 +62,8 @@ function formatCurrency(value) {
 }
 
 // ---- Статистика ----
-async function updateStats() {
-    try {
-        const response = await fetch(`${API_URL}/statistics`);
-        if (!response.ok) throw new Error('Не удалось загрузить статистику');
-        const data = await response.json();
-        totalSpan.textContent = data.totalAbonnements;
-        minPriceSpan.textContent = data.minPrice.toLocaleString('ru-RU');
-        maxPriceSpan.textContent = data.maxPrice.toLocaleString('ru-RU');
-        unlimitedPercentageSpan.textContent = data.unlimitedPercentage;
-    } catch (err) {
-        console.error('Ошибка статистики:', err);
-    }
-}
+// (Функция updateStats была удалена, так как статистика теперь приходит в общем ответе)
+
 
 // ---- Отрисовка таблицы ----
 async function renderTable() {
@@ -93,9 +82,11 @@ async function renderTable() {
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const abonnements = await response.json();
+        const result = await response.json();
+        
+        // Обновляем таблицу
         tbody.innerHTML = '';
-        abonnements.forEach(abonnement => {
+        result.items.forEach(abonnement => {
             const row = tbody.insertRow();
             row.insertCell(0).textContent = abonnement.abonnementId;
             row.insertCell(1).textContent = abonnement.abonnementType;
@@ -117,7 +108,13 @@ async function renderTable() {
             actionsCell.appendChild(editBtn);
             actionsCell.appendChild(deleteBtn);
         });
-        await updateStats();
+        
+        // Обновляем статистику
+        const data = result.statistics;
+        totalSpan.textContent = data.totalAbonnements;
+        minPriceSpan.textContent = data.minPrice.toLocaleString('ru-RU');
+        maxPriceSpan.textContent = data.maxPrice.toLocaleString('ru-RU');
+        unlimitedPercentageSpan.textContent = data.unlimitedPercentage;
     } catch (err) {
         showError(`Ошибка загрузки: ${err.message}`);
     }

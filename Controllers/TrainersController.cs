@@ -15,13 +15,14 @@ public class TrainersController : ControllerBase
 
     // GET: api/Trainers?fullName=...&noExperience=...
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Trainer>>> GetTrainers(
+    public async Task<ActionResult<object>> GetTrainers(
         [FromQuery] string? fullName,
         [FromQuery] string? experienceSort,
         [FromQuery] bool? noExperience)
     {
         var trainers = await _trainerService.GetAllAsync(fullName, experienceSort, noExperience);
-        return Ok(trainers);
+        var stats = await _trainerService.GetStatisticsAsync();
+        return Ok(new { Items = trainers, Statistics = stats });
     }
 
     // GET: api/Trainers/5

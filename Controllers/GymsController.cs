@@ -16,14 +16,15 @@ namespace Fitness.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GymService.GymView>>> GetGyms(
+        public async Task<ActionResult<object>> GetGyms(
             [FromQuery] string? gymName,
             [FromQuery] bool? hasEquipment,
             [FromQuery] string? equipmentName,
             [FromQuery] string? brand)
         {
             var gyms = await _gymService.GetAllAsync(gymName, hasEquipment, equipmentName, brand);
-            return Ok(gyms);
+            var stats = await _gymService.GetStatisticsAsync();
+            return Ok(new { Items = gyms, Statistics = stats });
         }
 
         [HttpGet("{gymid}")]

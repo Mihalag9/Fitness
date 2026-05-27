@@ -15,14 +15,15 @@ public class ClientsController : ControllerBase
 
     // GET: api/Clients?fullName=...&phone=...&birthDateFrom=...&birthDateTo=...
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Client>>> GetClients(
+    public async Task<ActionResult<object>> GetClients(
         [FromQuery] string? fullName,
         [FromQuery] string? phone,
         [FromQuery] DateOnly? birthDateFrom,
         [FromQuery] DateOnly? birthDateTo)
     {
         var clients = await _clientService.GetAllAsync(fullName, phone, birthDateFrom, birthDateTo);
-        return Ok(clients);
+        var stats = await _clientService.GetStatisticsAsync();
+        return Ok(new { Items = clients, Statistics = stats });
     }
 
     // GET: api/Clients/5

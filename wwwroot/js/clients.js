@@ -103,17 +103,7 @@ function validateClientForm() {
 }
 
 // ---- Статистика ----
-async function updateStats() {
-    try {
-        const response = await fetch(`${API_URL}/statistics`);
-        if (!response.ok) throw new Error('Не удалось загрузить статистику');
-        const data = await response.json();
-        totalSpan.textContent = data.totalClients;
-        activeAbonnementsSpan.textContent = data.activeAbonnements;
-    } catch (err) {
-        console.error('Ошибка статистики:', err);
-    }
-}
+// (Функция updateStats была удалена)
 
 // ---- Отрисовка таблицы ----
 async function renderTable() {
@@ -134,9 +124,11 @@ async function renderTable() {
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const clients = await response.json();
+        const result = await response.json();
+        
+        // Обновляем таблицу
         tbody.innerHTML = '';
-        clients.forEach(client => {
+        result.items.forEach(client => {
             const row = tbody.insertRow();
             row.insertCell(0).textContent = client.clientId;
             row.insertCell(1).textContent = client.fullName;
@@ -154,7 +146,11 @@ async function renderTable() {
             actionsCell.appendChild(editBtn);
             actionsCell.appendChild(deleteBtn);
         });
-        await updateStats();
+        
+        // Обновляем статистику
+        const data = result.statistics;
+        totalSpan.textContent = data.totalClients;
+        activeAbonnementsSpan.textContent = data.activeAbonnements;
     } catch (err) {
         showError(`Ошибка загрузки: ${err.message}`);
     }
