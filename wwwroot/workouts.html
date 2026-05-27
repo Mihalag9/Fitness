@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фитнес-клуб — Управление тренировками</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="clients.html">Клиенты</a>
+        <a href="trainers.html">Тренеры</a>
+        <a href="workouts.html" class="active">Тренировки</a>
+        <a href="abonnements.html">Абонементы</a>
+        <a href="gyms.html">Залы</a>
+        <a href="equipment.html">Оборудование</a>
+    </nav>
+
+    <h1>Управление тренировками</h1>
+
+    <!-- Форма добавления/редактирования -->
+    <div class="form-card">
+        <h2 id="form-title">Добавить тренировку</h2>
+        <input type="hidden" id="edit-id">
+        <div class="form-grid">
+            <input type="text" id="workoutName" placeholder="Название тренировки" required maxlength="50">
+            <div class="form-group">
+                <label>Длительность (мин)</label>
+                <input type="number" id="durationMinutes" placeholder="60" min="1" max="480">
+            </div>
+            <div class="form-group">
+                <label>Макс. участников</label>
+                <input type="number" id="maxParticipants" placeholder="20" min="1" max="1000">
+            </div>
+        </div>
+        <div class="form-actions" style="margin-top: 10px;">
+            <button id="submit-btn">Добавить</button>
+            <button id="cancel-btn" style="display:none;">Отмена</button>
+        </div>
+    </div>
+    <div id="error-message" class="error hidden"></div>
+
+    <!-- Блок фильтров -->
+    <div class="filter-card">
+        <h2>Фильтры</h2>
+        <div class="filter-grid">
+            <input type="text" id="filter-workoutName" placeholder="Название тренировки">
+
+            <div class="form-group">
+                <label id="filter-durationFrom-label">Длительность (мин)</label>
+                <input type="number" id="filter-durationFrom" placeholder="от" min="1" max="480">
+            </div>
+
+            <div class="form-group hidden" id="filter-durationTo-group">
+                <label>Длительность (до)</label>
+                <input type="number" id="filter-durationTo" placeholder="до" min="1" max="480">
+            </div>
+        </div>
+
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:5px;">
+            <input type="checkbox" id="filter-range-toggle"> Диапазон длительности
+        </label>
+
+        <div class="filter-actions" style="margin-top: 10px;">
+            <button id="apply-filters">Применить</button>
+            <button id="clear-filters">Очистить</button>
+        </div>
+    </div>
+
+    <!-- Блок статистики -->
+    <div class="stats-card">
+        <h2>Статистика</h2>
+        <p>Всего тренировок: <span id="total-count">0</span></p>
+        <p>Средняя длительность: <span id="avg-duration">0</span> мин</p>
+        <p>Тренеров задействовано: <span id="trainers-count">0</span></p>
+    </div>
+
+    <!-- Таблица с данными -->
+    <table id="workouts-table">
+        <thead>
+            <tr><th>ID</th><th>Название</th><th>Длительность (мин)</th><th>Макс. участников</th><th>Действия</th></tr>
+        </thead>
+        <tbody id="workouts-body"></tbody>
+    </table>
+    <script src="js/workouts.js"></script>
+</body>
+</html>

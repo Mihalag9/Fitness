@@ -1,29 +1,37 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Fitness.Models;
+using Fitness.Services;
 
 [Route("api/[controller]")]
 [ApiController]
 public class WorkoutsController : ControllerBase
 {
-    private readonly FitnessContext _context;
-    public WorkoutsController(FitnessContext context)
+    private readonly WorkoutService _workoutService;
+
+    public WorkoutsController(WorkoutService workoutService)
     {
-        _context = context;
+        _workoutService = workoutService;
     }
 
-    // GET: api/Workout
+    // GET: api/Workouts?workoutName=...&durationFrom=...&durationTo=...&maxParticipantsMin=...&maxParticipantsMax=...
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Workout>>> GetWorkout()
+    public async Task<ActionResult<object>> GetWorkouts(
+        [FromQuery] string? workoutName,
+        [FromQuery] int? durationFrom,
+        [FromQuery] int? durationTo,
+        [FromQuery] int? maxParticipantsMin,
+        [FromQuery] int? maxParticipantsMax)
     {
-        return await _context.Workouts.ToListAsync();
+        var workouts = await _workoutService.GetAllAsync(workoutName, durationFrom, durationTo, maxParticipantsMin, maxParticipantsMax);
+        var stats = await _workoutService.GetStatisticsAsync();
+        return Ok(new { Items = workouts, Statistics = stats });
     }
 
-    // GET: api/Workout/5
+    // GET: api/Workouts/5
     [HttpGet("{workoutid}")]
     public async Task<ActionResult<Workout>> GetWorkout(int workoutid)
     {
-        var workout = await _context.Workouts.FindAsync(workoutid);
+        var workout = await _workoutService.GetByIdAsync(workoutid);
 
         if (workout == null)
         {
@@ -33,66 +41,47 @@ public class WorkoutsController : ControllerBase
         return workout;
     }
 
-    // PUT: api/Workout/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{workoutid}")]
-    public async Task<IActionResult> PutWorkout(int? workoutid, Workout workout)
+    // GET: api/Workouts/statistics
+    [HttpGet("statistics")]
+    public async Task<ActionResult<WorkoutService.WorkoutStatistics>> GetStatistics()
     {
-        if (workoutid != workout.WorkoutId)
-        {
-            return BadRequest();
-        }
-
-        _context.Entry(workout).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!WorkoutExists(workoutid))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
-
-        return NoContent();
+        var stats = await _workoutService.GetStatisticsAsync();
+        return Ok(stats);
     }
 
-    // POST: api/Workout
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    // POST: api/Workouts
     [HttpPost]
     public async Task<ActionResult<Workout>> PostWorkout(Workout workout)
     {
-        _context.Workouts.Add(workout);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetWorkout", new { workoutid = workout.WorkoutId }, workout);
+        var createdWorkout = await _workoutService.CreateAsync(workout);
+        return CreatedAtAction(nameof(GetWorkout), new { workoutid = createdWorkout.WorkoutId }, createdWorkout);
     }
 
-    // DELETE: api/Workout/5
-    [HttpDelete("{workoutid}")]
-    public async Task<IActionResult> DeleteWorkout(int? workoutid)
+    // PUT: api/Workouts/5
+    [HttpPut("{workoutid}")]
+    public async Task<IActionResult> PutWorkout(int workoutid, Workout workout)
     {
-        var workout = await _context.Workouts.FindAsync(workoutid);
-        if (workout == null)
+        var success = await _workoutService.UpdateAsync(workoutid, workout);
+
+        if (!success)
         {
             return NotFound();
         }
 
-        _context.Workouts.Remove(workout);
-        await _context.SaveChangesAsync();
-
         return NoContent();
     }
 
-    private bool WorkoutExists(int? workoutid)
+    // DELETE: api/Workouts/5
+    [HttpDelete("{workoutid}")]
+    public async Task<IActionResult> DeleteWorkout(int workoutid)
     {
-        return _context.Workouts.Any(e => e.WorkoutId == workoutid);
+        var success = await _workoutService.DeleteAsync(workoutid);
+
+        if (!success)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
     }
 }
