@@ -4,7 +4,8 @@ CREATE OR REPLACE FUNCTION get_all_workouts(
     p_duration_from INTEGER DEFAULT NULL,
     p_duration_to INTEGER DEFAULT NULL,
     p_max_participants_min INTEGER DEFAULT NULL,
-    p_max_participants_max INTEGER DEFAULT NULL
+    p_max_participants_max INTEGER DEFAULT NULL,
+    p_participants_sort VARCHAR DEFAULT NULL
 )
 RETURNS TABLE("WorkoutId" INTEGER, "WorkoutName" VARCHAR, "DurationMinutes" INTEGER, "MaxParticipants" INTEGER) AS $$
 BEGIN
@@ -16,7 +17,10 @@ BEGIN
       AND (p_duration_to IS NULL OR w."DurationMinutes" <= p_duration_to)
       AND (p_max_participants_min IS NULL OR w."MaxParticipants" >= p_max_participants_min)
       AND (p_max_participants_max IS NULL OR w."MaxParticipants" <= p_max_participants_max)
-    ORDER BY w."WorkoutName" ASC;
+    ORDER BY
+        CASE WHEN p_participants_sort = 'asc' THEN w."MaxParticipants" END ASC NULLS LAST,
+        CASE WHEN p_participants_sort = 'desc' THEN w."MaxParticipants" END DESC NULLS LAST,
+        w."WorkoutName" ASC;
 END;
 $$ LANGUAGE plpgsql;
 

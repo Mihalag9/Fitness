@@ -19,6 +19,7 @@ const filterWorkoutName = document.getElementById('filter-workoutName');
 const filterDurationFrom = document.getElementById('filter-durationFrom');
 const filterDurationTo = document.getElementById('filter-durationTo');
 const filterRangeToggle = document.getElementById('filter-range-toggle');
+const filterParticipantsSort = document.getElementById('filter-participantsSort');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
@@ -113,6 +114,9 @@ async function renderTable() {
     try {
         const params = new URLSearchParams();
         if (filterWorkoutName.value) params.append('workoutName', filterWorkoutName.value.trim());
+        if (filterParticipantsSort.value === 'asc' || filterParticipantsSort.value === 'desc') {
+            params.append('participantsSort', filterParticipantsSort.value);
+        }
 
         if (filterDurationFrom.value) {
             const from = filterDurationFrom.value;
@@ -271,6 +275,7 @@ async function onApplyFilters() {
 
 function onClearFilters() {
     filterWorkoutName.value = '';
+    filterParticipantsSort.value = '';
     filterDurationFrom.value = '';
     filterDurationTo.value = '';
     filterRangeToggle.checked = false;

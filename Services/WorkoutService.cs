@@ -13,15 +13,16 @@ namespace Fitness.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Workout>> GetAllAsync(string? workoutName, int? durationFrom, int? durationTo, int? maxParticipantsMin, int? maxParticipantsMax)
+        public async Task<IEnumerable<Workout>> GetAllAsync(string? workoutName, int? durationFrom, int? durationTo, int? maxParticipantsMin, int? maxParticipantsMax, string? participantsSort)
         {
             return await _context.Workouts
-                .FromSqlRaw("SELECT * FROM get_all_workouts({0}, {1}, {2}, {3}, {4})",
+                .FromSqlRaw("SELECT * FROM get_all_workouts({0}, {1}, {2}, {3}, {4}, {5})",
                     (object)workoutName ?? DBNull.Value,
                     (object)durationFrom ?? DBNull.Value,
                     (object)durationTo ?? DBNull.Value,
                     (object)maxParticipantsMin ?? DBNull.Value,
-                    (object)maxParticipantsMax ?? DBNull.Value)
+                    (object)maxParticipantsMax ?? DBNull.Value,
+                    (object)participantsSort ?? DBNull.Value)
                 .ToListAsync();
         }
 

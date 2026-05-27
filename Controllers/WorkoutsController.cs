@@ -13,16 +13,17 @@ public class WorkoutsController : ControllerBase
         _workoutService = workoutService;
     }
 
-    // GET: api/Workouts?workoutName=...&durationFrom=...&durationTo=...&maxParticipantsMin=...&maxParticipantsMax=...
+    // GET: api/Workouts?workoutName=...&durationFrom=...&durationTo=...&maxParticipantsMin=...&maxParticipantsMax=...&participantsSort=...
     [HttpGet]
     public async Task<ActionResult<object>> GetWorkouts(
         [FromQuery] string? workoutName,
         [FromQuery] int? durationFrom,
         [FromQuery] int? durationTo,
         [FromQuery] int? maxParticipantsMin,
-        [FromQuery] int? maxParticipantsMax)
+        [FromQuery] int? maxParticipantsMax,
+        [FromQuery] string? participantsSort)
     {
-        var workouts = await _workoutService.GetAllAsync(workoutName, durationFrom, durationTo, maxParticipantsMin, maxParticipantsMax);
+        var workouts = await _workoutService.GetAllAsync(workoutName, durationFrom, durationTo, maxParticipantsMin, maxParticipantsMax, participantsSort);
         var stats = await _workoutService.GetStatisticsAsync();
         return Ok(new { Items = workouts, Statistics = stats });
     }
