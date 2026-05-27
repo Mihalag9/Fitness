@@ -90,10 +90,10 @@ tr:hover {
 
 /* Сетка форм и фильтров */
 .form-grid, .filter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 12px;
-    align-items: end;
+    align-items: flex-end;
 }
 
 /* Группа "подпись + инпут" */
@@ -110,10 +110,10 @@ tr:hover {
     }
 
 /* Сброс внешних отступов внутри сетки */
-.form-grid input, .form-grid select, .form-grid button,
-.filter-grid input, .filter-grid select, .filter-grid button {
-    margin: 0;
-    width: 100%;
+.form-grid input, .form-grid select,
+.filter-grid input, .filter-grid select {
+    margin: 5px 0;
+    width: 250px;
     box-sizing: border-box;
     height: 38px;
 }
