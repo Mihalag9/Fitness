@@ -26,11 +26,11 @@
             <input type="text" id="workoutName" placeholder="Название тренировки" required maxlength="50">
             <div class="form-group">
                 <label>Длительность (мин)</label>
-                <input type="number" id="durationMinutes" placeholder="60" min="1" max="480">
+                <input type="number" id="durationMinutes" placeholder="60" min="30" max="180">
             </div>
             <div class="form-group">
                 <label>Макс. участников</label>
-                <input type="number" id="maxParticipants" placeholder="20" min="1" max="1000">
+                <input type="number" id="maxParticipants" placeholder="20" min="1" max="50">
             </div>
         </div>
         <div class="form-actions" style="margin-top: 10px;">
@@ -48,12 +48,12 @@
 
             <div class="form-group">
                 <label id="filter-durationFrom-label">Длительность (мин)</label>
-                <input type="number" id="filter-durationFrom" placeholder="от" min="1" max="480">
+                <input type="number" id="filter-durationFrom" placeholder="от" min="30" max="180">
             </div>
 
             <div class="form-group hidden" id="filter-durationTo-group">
                 <label>Длительность (до)</label>
-                <input type="number" id="filter-durationTo" placeholder="до" min="1" max="480">
+                <input type="number" id="filter-durationTo" placeholder="до" min="30" max="180">
             </div>
         </div>
 

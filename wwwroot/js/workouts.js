@@ -82,12 +82,12 @@ function validateWorkoutForm() {
         return false;
     }
     const durNum = parseInt(duration, 10);
-    if (isNaN(durNum) || durNum < 1) {
-        showError('Длительность должна быть не менее 1 минуты');
+    if (isNaN(durNum) || durNum < 30) {
+        showError('Длительность должна быть от 30 минут');
         return false;
     }
-    if (durNum > 480) {
-        showError('Длительность не должна превышать 480 минут (8 часов)');
+    if (durNum > 180) {
+        showError('Длительность не должна превышать 180 минут');
         return false;
     }
 
@@ -100,8 +100,8 @@ function validateWorkoutForm() {
         showError('Максимум участников должен быть не менее 1');
         return false;
     }
-    if (maxNum > 1000) {
-        showError('Максимум участников не должен превышать 1000');
+    if (maxNum > 50) {
+        showError('Максимум участников не должен превышать 50');
         return false;
     }
 
