@@ -43,7 +43,7 @@ CREATE TABLE "Client" (
     "ClientId"       SERIAL PRIMARY KEY,
     "FullName"       VARCHAR(200) NOT NULL,
     "BirthDate"      DATE,
-    "Phone"          VARCHAR(20) NOT NULL UNIQUE
+    "Phone"          VARCHAR(20) NOT NULL UNIQUE,
 	
 	CONSTRAINT chk_phone_format CHECK ("Phone" ~ '^\+7[0-9]{10}$')
 );

@@ -11,7 +11,7 @@ public partial class Client
 
     public DateOnly? BirthDate { get; set; }
 
-    public string? Phone { get; set; }
+    public string Phone { get; set; } = null!;
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
