@@ -3,13 +3,6 @@ const API_URL = 'https://localhost:7159/api/Workouts';
 // DOM-элементы
 const tbody = document.getElementById('workouts-body');
 const errorDiv = document.getElementById('error-message');
-const workoutNameInput = document.getElementById('workoutName');
-const durationMinutesInput = document.getElementById('durationMinutes');
-const maxParticipantsInput = document.getElementById('maxParticipants');
-const submitBtn = document.getElementById('submit-btn');
-const cancelBtn = document.getElementById('cancel-btn');
-const editIdField = document.getElementById('edit-id');
-const formTitle = document.getElementById('form-title');
 const totalSpan = document.getElementById('total-count');
 const avgDurationSpan = document.getElementById('avg-duration');
 const trainersCountSpan = document.getElementById('trainers-count');
@@ -22,9 +15,22 @@ const filterRangeToggle = document.getElementById('filter-range-toggle');
 const filterParticipantsSort = document.getElementById('filter-participantsSort');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
+const addWorkoutBtn = document.getElementById('add-workout-btn');
 
-// Gym links
-const gymLinksCard = document.getElementById('gym-links-card');
+// Модальное окно
+const modal = document.getElementById('workout-modal');
+const modalClose = document.getElementById('modal-close');
+const modalTitle = document.getElementById('modal-title');
+const editIdField = document.getElementById('edit-id');
+const workoutNameInput = document.getElementById('workoutName');
+const durationMinutesInput = document.getElementById('durationMinutes');
+const maxParticipantsInput = document.getElementById('maxParticipants');
+const submitBtn = document.getElementById('submit-btn');
+const cancelBtn = document.getElementById('cancel-btn');
+
+// Gym section
+const gymSectionHint = document.getElementById('gym-section-hint');
+const gymControls = document.getElementById('gym-controls');
 const gymSelect = document.getElementById('gym-select');
 const addGymLinkBtn = document.getElementById('add-gym-link-btn');
 const gymLinksBody = document.getElementById('gym-links-body');
@@ -32,8 +38,9 @@ const gymLinksBody = document.getElementById('gym-links-body');
 let currentEditId = null;
 let allGyms = [];
 let currentLinkedGymIds = new Set();
+let justCreated = false;
 
-// ---- Вспомогательные функции ----
+// ---- Helpers ----
 function showError(text) {
     errorDiv.textContent = text;
     errorDiv.classList.remove('hidden');
@@ -46,81 +53,62 @@ function clearForm() {
     maxParticipantsInput.value = '';
     editIdField.value = '';
     currentEditId = null;
-    formTitle.textContent = 'Добавить тренировку';
-    submitBtn.textContent = 'Добавить';
-    cancelBtn.style.display = 'none';
-    gymLinksCard.classList.add('hidden');
+    justCreated = false;
+}
+
+function resetModal(isEdit) {
+    clearForm();
+    if (isEdit) {
+        modalTitle.textContent = 'Редактировать тренировку';
+        submitBtn.textContent = 'Сохранить';
+    } else {
+        modalTitle.textContent = 'Добавить тренировку';
+        submitBtn.textContent = 'Добавить';
+    }
+    gymControls.classList.add('hidden');
+    gymSectionHint.textContent = isEdit ? 'Загрузка...' : 'Сохраните тренировку, чтобы выбрать залы';
+    gymSectionHint.classList.remove('hidden');
     gymLinksBody.innerHTML = '';
     currentLinkedGymIds.clear();
 }
 
-// ---- Валидация формы перед отправкой ----
+function openModal() {
+    modal.classList.add('show');
+}
+
+function closeModal() {
+    modal.classList.remove('show');
+    resetModal(false);
+}
+
+// ---- Валидация формы ----
 function validateWorkoutForm() {
     const name = workoutNameInput.value.trim();
     const duration = durationMinutesInput.value.trim();
     const maxP = maxParticipantsInput.value.trim();
 
-    if (!name) {
-        showError('Название тренировки обязательно');
-        return false;
-    }
-    if (name.length > 50) {
-        showError('Название не должно превышать 50 символов');
-        return false;
-    }
-    if (name.length < 3) {
-        showError('Название должно содержать не менее 3 символов');
-        return false;
-    }
-    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) {
-        showError('Название не может состоять только из цифр и символов');
-        return false;
-    }
-    if (/^\d/.test(name)) {
-        showError('Название не может начинаться с цифры');
-        return false;
-    }
-    if (!/^[A-ZА-ЯЁ]/.test(name)) {
-        showError('Название должно начинаться с заглавной буквы');
-        return false;
-    }
-    if (/\s{2,}/.test(name)) {
-        showError('Пробелы не могут идти подряд');
-        return false;
-    }
+    if (!name) { showError('Название тренировки обязательно'); return false; }
+    if (name.length > 50) { showError('Название не должно превышать 50 символов'); return false; }
+    if (name.length < 3) { showError('Название должно содержать не менее 3 символов'); return false; }
+    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) { showError('Название не может состоять только из цифр и символов'); return false; }
+    if (/^\d/.test(name)) { showError('Название не может начинаться с цифры'); return false; }
+    if (!/^[A-ZА-ЯЁ]/.test(name)) { showError('Название должно начинаться с заглавной буквы'); return false; }
+    if (/\s{2,}/.test(name)) { showError('Пробелы не могут идти подряд'); return false; }
 
-    if (!duration) {
-        showError('Укажите длительность');
-        return false;
-    }
+    if (!duration) { showError('Укажите длительность'); return false; }
     const durNum = parseInt(duration, 10);
-    if (isNaN(durNum) || durNum < 30) {
-        showError('Длительность должна быть от 30 минут');
-        return false;
-    }
-    if (durNum > 180) {
-        showError('Длительность не должна превышать 180 минут');
-        return false;
-    }
+    if (isNaN(durNum) || durNum < 30) { showError('Длительность должна быть от 30 минут'); return false; }
+    if (durNum > 180) { showError('Длительность не должна превышать 180 минут'); return false; }
 
-    if (!maxP) {
-        showError('Укажите максимальное количество участников');
-        return false;
-    }
+    if (!maxP) { showError('Укажите максимальное количество участников'); return false; }
     const maxNum = parseInt(maxP, 10);
-    if (isNaN(maxNum) || maxNum < 1) {
-        showError('Максимум участников должен быть не менее 1');
-        return false;
-    }
-    if (maxNum > 50) {
-        showError('Максимум участников не должен превышать 50');
-        return false;
-    }
+    if (isNaN(maxNum) || maxNum < 1) { showError('Максимум участников должен быть не менее 1'); return false; }
+    if (maxNum > 50) { showError('Максимум участников не должен превышать 50'); return false; }
 
     return true;
 }
 
-// ---- Gym links management ----
+// ---- Gym links ----
 function refreshGymSelect() {
     gymSelect.innerHTML = '<option value="">— Выберите зал —</option>';
     allGyms.forEach(gym => {
@@ -162,7 +150,7 @@ async function loadGymLinks(workoutId) {
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '🗑️';
             deleteBtn.title = 'Отвязать зал';
-            deleteBtn.onclick = () => removeGymLink(currentEditId, gym.gymId);
+            deleteBtn.onclick = () => removeGymLink(workoutId, gym.gymId);
             actionsCell.appendChild(deleteBtn);
         });
     } catch (err) {
@@ -170,13 +158,18 @@ async function loadGymLinks(workoutId) {
     }
 }
 
+function enableGymSection(workoutId) {
+    currentEditId = workoutId;
+    gymSectionHint.classList.add('hidden');
+    gymControls.classList.remove('hidden');
+    loadGymDictionary();
+    loadGymLinks(workoutId);
+}
+
 async function addGymLink() {
     if (!currentEditId) return;
     const gymId = parseInt(gymSelect.value, 10);
-    if (!gymId) {
-        showError('Выберите зал');
-        return;
-    }
+    if (!gymId) { showError('Выберите зал'); return; }
 
     try {
         const response = await fetch(`${API_URL}/${currentEditId}/gyms`, {
@@ -207,7 +200,7 @@ async function removeGymLink(workoutId, gymId) {
     }
 }
 
-// ---- Отрисовка таблицы ----
+// ---- Таблица ----
 async function renderTable() {
     try {
         const params = new URLSearchParams();
@@ -215,12 +208,9 @@ async function renderTable() {
         if (filterParticipantsSort.value === 'asc' || filterParticipantsSort.value === 'desc') {
             params.append('participantsSort', filterParticipantsSort.value);
         }
-
         if (filterDurationFrom.value) {
             const from = filterDurationFrom.value;
-            const to = (filterRangeToggle.checked && filterDurationTo.value)
-                ? filterDurationTo.value
-                : from;
+            const to = (filterRangeToggle.checked && filterDurationTo.value) ? filterDurationTo.value : from;
             params.append('durationFrom', from);
             params.append('durationTo', to);
         }
@@ -238,14 +228,22 @@ async function renderTable() {
             row.insertCell(2).textContent = workout.durationMinutes;
             row.insertCell(3).textContent = workout.maxParticipants;
             const gymCell = row.insertCell(4);
-            gymCell.textContent = workout.gymList || '—';
             gymCell.style.whiteSpace = 'normal';
             gymCell.style.maxWidth = '300px';
+            if (workout.gymList) {
+                gymCell.innerHTML = `<a href="#" class="gym-link-btn" title="Управлять залами">${workout.gymList}</a>`;
+                gymCell.querySelector('.gym-link-btn').onclick = (e) => {
+                    e.preventDefault();
+                    openEditModal(workout);
+                };
+            } else {
+                gymCell.innerHTML = '<span style="color:#999;">—</span>';
+            }
             const actionsCell = row.insertCell(5);
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
-            editBtn.onclick = () => fillFormForEdit(workout);
+            editBtn.onclick = () => openEditModal(workout);
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '🗑️';
             deleteBtn.title = 'Удалить';
@@ -263,23 +261,27 @@ async function renderTable() {
     }
 }
 
-// ---- Заполнение формы для редактирования ----
-function fillFormForEdit(workout) {
+// ---- Открыть модалку для создания ----
+function openCreateModal() {
+    resetModal(false);
+    openModal();
+}
+
+// ---- Открыть модалку для редактирования ----
+function openEditModal(workout) {
+    resetModal(true);
     workoutNameInput.value = workout.workoutName;
     durationMinutesInput.value = workout.durationMinutes;
     maxParticipantsInput.value = workout.maxParticipants;
     editIdField.value = workout.workoutId;
     currentEditId = workout.workoutId;
-    formTitle.textContent = 'Редактировать тренировку';
-    submitBtn.textContent = 'Сохранить';
-    cancelBtn.style.display = 'inline-block';
 
-    gymLinksCard.classList.remove('hidden');
-    loadGymDictionary();
-    loadGymLinks(workout.workoutId);
+    gymSectionHint.textContent = 'Загрузка...';
+    openModal();
+    enableGymSection(workout.workoutId);
 }
 
-// ---- Добавление новой ----
+// ---- Создание ----
 async function createWorkout() {
     if (!validateWorkoutForm()) return false;
 
@@ -299,7 +301,11 @@ async function createWorkout() {
             const errText = await response.text();
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
-        clearForm();
+        const created = await response.json();
+        editIdField.value = created.workoutId;
+        submitBtn.textContent = 'Готово';
+        justCreated = true;
+        enableGymSection(created.workoutId);
         await renderTable();
         return true;
     } catch (err) {
@@ -308,7 +314,7 @@ async function createWorkout() {
     }
 }
 
-// ---- Обновление существующей ----
+// ---- Обновление ----
 async function updateWorkout(id) {
     if (!validateWorkoutForm()) return false;
 
@@ -325,12 +331,9 @@ async function updateWorkout(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
-        if (response.status === 400) {
-            showError('Неверный запрос (несоответствие ID)');
-            return false;
-        }
+        if (response.status === 400) { showError('Неверный запрос (несоответствие ID)'); return false; }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        clearForm();
+        closeModal();
         await renderTable();
         return true;
     } catch (err) {
@@ -344,24 +347,21 @@ async function deleteWorkout(id) {
     if (!confirm('Удалить эту тренировку?')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (response.status === 404) {
-            showError('Тренировка не найдена (возможно, уже удалена)');
-        } else if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        if (id === currentEditId) {
-            clearForm();
-        }
-
+        if (response.status === 404) { showError('Тренировка не найдена (возможно, уже удалена)'); }
+        else if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (id === currentEditId) closeModal();
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
     }
 }
 
-// ---- Обработчик кнопки "Добавить/Сохранить" ----
+// ---- Submit ----
 async function onSubmit() {
+    if (justCreated) {
+        closeModal();
+        return;
+    }
     if (currentEditId !== null) {
         await updateWorkout(currentEditId);
     } else {
@@ -369,15 +369,8 @@ async function onSubmit() {
     }
 }
 
-// ---- Отмена редактирования ----
-function onCancel() {
-    clearForm();
-}
-
 // ---- Фильтры ----
-async function onApplyFilters() {
-    await renderTable();
-}
+async function onApplyFilters() { await renderTable(); }
 
 function onClearFilters() {
     filterWorkoutName.value = '';
@@ -391,7 +384,6 @@ function onClearFilters() {
     renderTable();
 }
 
-// ---- Переключение диапазона ----
 function onToggleRange() {
     const group = document.getElementById('filter-durationTo-group');
     const labelFrom = document.getElementById('filter-durationFrom-label');
@@ -405,7 +397,7 @@ function onToggleRange() {
     }
 }
 
-// ---- Автоформатирование названия при вводе ----
+// ---- Автоформатирование ----
 workoutNameInput.addEventListener('input', function () {
     let val = this.value;
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\(\)]/g, '');
@@ -419,23 +411,15 @@ workoutNameInput.addEventListener('input', function () {
 workoutNameInput.addEventListener('keydown', function (e) {
     if (e.key === ' ') {
         const val = this.value;
-        if (val.length > 0 && val[val.length - 1] === ' ') {
-            e.preventDefault();
-            return;
-        }
+        if (val.length > 0 && val[val.length - 1] === ' ') { e.preventDefault(); return; }
         const spaceCount = (val.match(/\s/g) || []).length;
-        if (spaceCount >= 2) {
-            e.preventDefault();
-        }
+        if (spaceCount >= 2) e.preventDefault();
     }
 });
 
-// ---- Валидация числовых полей при вводе ----
 durationMinutesInput.addEventListener('input', function () {
     let val = this.value.replace(/\D/g, '');
-    if (val.length > 1) {
-        val = val.replace(/^0+/, '');
-    }
+    if (val.length > 1) val = val.replace(/^0+/, '');
     if (val.length > 3) val = val.substring(0, 3);
     this.value = val;
 });
@@ -444,18 +428,13 @@ durationMinutesInput.addEventListener('keydown', function (e) {
     const isDigit = /^\d$/.test(e.key);
     const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
     const isCtrlCmd = e.ctrlKey || e.metaKey;
-
     if (isCtrlCmd || isNav) return;
-    if (!isDigit) {
-        e.preventDefault();
-    }
+    if (!isDigit) e.preventDefault();
 });
 
 maxParticipantsInput.addEventListener('input', function () {
     let val = this.value.replace(/\D/g, '');
-    if (val.length > 1) {
-        val = val.replace(/^0+/, '');
-    }
+    if (val.length > 1) val = val.replace(/^0+/, '');
     if (val.length > 4) val = val.substring(0, 4);
     this.value = val;
 });
@@ -464,20 +443,20 @@ maxParticipantsInput.addEventListener('keydown', function (e) {
     const isDigit = /^\d$/.test(e.key);
     const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
     const isCtrlCmd = e.ctrlKey || e.metaKey;
-
     if (isCtrlCmd || isNav) return;
-    if (!isDigit) {
-        e.preventDefault();
-    }
+    if (!isDigit) e.preventDefault();
 });
 
-// ---- Инициализация и обработчики событий ----
+// ---- Инициализация ----
 submitBtn.addEventListener('click', onSubmit);
-cancelBtn.addEventListener('click', onCancel);
+cancelBtn.addEventListener('click', closeModal);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
 filterRangeToggle.addEventListener('change', onToggleRange);
+addWorkoutBtn.addEventListener('click', openCreateModal);
 addGymLinkBtn.addEventListener('click', addGymLink);
 
-// Загружаем данные при старте
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
 renderTable();

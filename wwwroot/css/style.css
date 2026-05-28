@@ -239,3 +239,69 @@ button {
             margin: 0 2px;
             min-width: 36px;
         }
+
+/* ==========================================
+   МОДАЛЬНОЕ ОКНО
+   ========================================== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    width: 600px;
+    max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+.modal-close {
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #007bff;
+}
+
+/* Кнопка "Связать с залом" в таблице */
+.gym-link-btn {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    color: #007bff;
+    text-decoration: underline;
+    margin: 0;
+}
+
+.gym-link-btn:hover {
+    color: #0056b3;
+}
