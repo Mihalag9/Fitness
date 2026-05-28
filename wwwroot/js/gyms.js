@@ -28,6 +28,33 @@ const addEquipmentBtn = document.getElementById('add-equipment-btn');
 const inventoryBody = document.getElementById('inventory-body');
 
 let currentEditId = null;
+
+let appliedFilters = {};
+
+function snapshotFilters() {
+    appliedFilters = {
+        gymName: filterGymName.value,
+        hasEquipment: filterHasEquipment.value,
+        equipmentName: filterEquipmentName.value,
+        brand: filterBrand.value
+    };
+}
+
+function restoreFiltersToDOM() {
+    filterGymName.value = appliedFilters.gymName || '';
+    filterHasEquipment.value = appliedFilters.hasEquipment || '';
+    filterEquipmentName.value = appliedFilters.equipmentName || '';
+    filterBrand.value = appliedFilters.brand || '';
+}
+
+function clearAllFilters() {
+    appliedFilters = {};
+    filterGymName.value = '';
+    filterHasEquipment.value = '';
+    filterEquipmentName.value = '';
+    filterBrand.value = '';
+}
+
 let allEquipment = [];
 let currentInventoryIds = new Set();
 
@@ -226,6 +253,7 @@ async function saveInventoryQuantity(equipmentId, newQuantity) {
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         await loadInventory(currentEditId);
+        restoreFiltersToDOM();
         await renderTable();
         await updateStats();
     } catch (err) {
@@ -263,6 +291,7 @@ async function addInventoryItem() {
         equipmentSelect.value = '';
         equipmentQuantity.value = '1';
         await loadInventory(currentEditId);
+        restoreFiltersToDOM();
         await renderTable();
         await updateStats();
     } catch (err) {
@@ -278,6 +307,7 @@ async function deleteInventoryItem(gymId, equipmentId) {
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         await loadInventory(gymId);
+        restoreFiltersToDOM();
         await renderTable();
         await updateStats();
     } catch (err) {
@@ -289,10 +319,10 @@ async function deleteInventoryItem(gymId, equipmentId) {
 async function renderTable() {
     try {
         const params = new URLSearchParams();
-        if (filterGymName.value) params.append('gymName', filterGymName.value.trim());
-        if (filterHasEquipment.value) params.append('hasEquipment', filterHasEquipment.value);
-        if (filterEquipmentName.value) params.append('equipmentName', filterEquipmentName.value.trim());
-        if (filterBrand.value) params.append('brand', filterBrand.value);
+        if (appliedFilters.gymName) params.append('gymName', appliedFilters.gymName.trim());
+        if (appliedFilters.hasEquipment) params.append('hasEquipment', appliedFilters.hasEquipment);
+        if (appliedFilters.equipmentName) params.append('equipmentName', appliedFilters.equipmentName.trim());
+        if (appliedFilters.brand) params.append('brand', appliedFilters.brand);
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
@@ -363,6 +393,7 @@ async function createGym() {
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
         clearForm();
+        clearAllFilters();
         await renderTable();
         return true;
     } catch (err) {
@@ -387,6 +418,7 @@ async function updateGym(id) {
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
+        restoreFiltersToDOM();
         await renderTable();
         return true;
     } catch (err) {
@@ -405,6 +437,7 @@ async function deleteGym(id) {
             throw new Error(`HTTP ${response.status}`);
         }
         if (id === currentEditId) clearForm();
+        restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
@@ -424,15 +457,13 @@ function onCancel() {
     clearForm();
 }
 
-async function onApplyFilters() {
-    await renderTable();
+function onApplyFilters() {
+    snapshotFilters();
+    renderTable();
 }
 
 function onClearFilters() {
-    filterGymName.value = '';
-    filterHasEquipment.value = '';
-    filterEquipmentName.value = '';
-    filterBrand.value = '';
+    clearAllFilters();
     renderTable();
 }
 

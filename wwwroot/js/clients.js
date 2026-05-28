@@ -24,6 +24,49 @@ const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
 let currentEditId = null;
+
+let appliedFilters = {};
+
+function snapshotFilters() {
+    appliedFilters = {
+        fullName: filterFullName.value,
+        phone: filterPhone.value,
+        birthDateFrom: filterBirthDateFrom.value,
+        birthDateTo: filterBirthDateTo.value,
+        rangeToggle: filterRangeToggle.checked
+    };
+}
+
+function restoreFiltersToDOM() {
+    filterFullName.value = appliedFilters.fullName || '';
+    filterPhone.value = appliedFilters.phone || '';
+    filterBirthDateFrom.value = appliedFilters.birthDateFrom || '';
+    filterBirthDateTo.value = appliedFilters.birthDateTo || '';
+    filterRangeToggle.checked = appliedFilters.rangeToggle || false;
+    const group = document.getElementById('filter-birthDateTo-group');
+    const labelFrom = document.getElementById('filter-birthDateFrom-label');
+    if (filterRangeToggle.checked) {
+        group.classList.remove('hidden');
+        if (labelFrom) labelFrom.textContent = 'Дата рождения (от)';
+    } else {
+        group.classList.add('hidden');
+        filterBirthDateTo.value = '';
+        if (labelFrom) labelFrom.textContent = 'Дата рождения';
+    }
+}
+
+function clearAllFilters() {
+    appliedFilters = {};
+    filterFullName.value = '';
+    filterPhone.value = '';
+    filterBirthDateFrom.value = '';
+    filterBirthDateTo.value = '';
+    filterRangeToggle.checked = false;
+    document.getElementById('filter-birthDateTo-group').classList.add('hidden');
+    const labelFrom = document.getElementById('filter-birthDateFrom-label');
+    if (labelFrom) labelFrom.textContent = 'Дата рождения';
+}
+
 const PHONE_MAX_LEN = 12; // +7 + 10 цифр
 
 // ---- Вспомогательные функции ----
@@ -109,13 +152,13 @@ function validateClientForm() {
 async function renderTable() {
     try {
         const params = new URLSearchParams();
-        if (filterFullName.value) params.append('fullName', filterFullName.value.trim());
-        if (filterPhone.value) params.append('phone', filterPhone.value.trim());
+        if (appliedFilters.fullName) params.append('fullName', appliedFilters.fullName.trim());
+        if (appliedFilters.phone) params.append('phone', appliedFilters.phone.trim());
 
-        if (filterBirthDateFrom.value) {
-            const from = filterBirthDateFrom.value;
-            const to = (filterRangeToggle.checked && filterBirthDateTo.value)
-                ? filterBirthDateTo.value
+        if (appliedFilters.birthDateFrom) {
+            const from = appliedFilters.birthDateFrom;
+            const to = (appliedFilters.rangeToggle && appliedFilters.birthDateTo)
+                ? appliedFilters.birthDateTo
                 : from;
             params.append('birthDateFrom', from);
             params.append('birthDateTo', to);
@@ -189,6 +232,7 @@ async function createClient() {
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
         clearForm();
+        clearAllFilters();
         await renderTable();
         return true;
     } catch (err) {
@@ -220,6 +264,7 @@ async function updateClient(id) {
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
+        restoreFiltersToDOM();
         await renderTable();
         return true;
     } catch (err) {
@@ -244,6 +289,7 @@ async function deleteClient(id) {
             clearForm();
         }
 
+        restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
@@ -265,19 +311,13 @@ function onCancel() {
 }
 
 // ---- Фильтры ----
-async function onApplyFilters() {
-    await renderTable();
+function onApplyFilters() {
+    snapshotFilters();
+    renderTable();
 }
 
 function onClearFilters() {
-    filterFullName.value = '';
-    filterPhone.value = '';
-    filterBirthDateFrom.value = '';
-    filterBirthDateTo.value = '';
-    filterRangeToggle.checked = false;
-    document.getElementById('filter-birthDateTo-group').classList.add('hidden');
-    const labelFrom = document.getElementById('filter-birthDateFrom-label');
-    if (labelFrom) labelFrom.textContent = 'Дата рождения';
+    clearAllFilters();
     renderTable();
 }
 

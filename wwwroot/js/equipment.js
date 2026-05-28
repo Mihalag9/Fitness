@@ -20,6 +20,26 @@ const modelSpan = document.getElementById('model-count');
 
 let currentEditId = null;
 
+let appliedFilters = {};
+
+function snapshotFilters() {
+    appliedFilters = {
+        equipmentName: filterEquipmentName.value,
+        brand: filterBrand.value
+    };
+}
+
+function restoreFiltersToDOM() {
+    filterEquipmentName.value = appliedFilters.equipmentName || '';
+    filterBrand.value = appliedFilters.brand || '';
+}
+
+function clearAllFilters() {
+    appliedFilters = {};
+    filterEquipmentName.value = '';
+    filterBrand.value = '';
+}
+
 // ---- Helpers ----
 function showError(text) {
     errorDiv.textContent = text;
@@ -123,10 +143,6 @@ function validateForm() {
     return true;
 }
 
-// ---- Статистика ----
-// (Функция updateStats была удалена)
-
-
 // ---- Справочник брендов ----
 async function loadBrands() {
     try {
@@ -149,8 +165,8 @@ async function loadBrands() {
 async function renderTable() {
     try {
         const params = new URLSearchParams();
-        if (filterEquipmentName.value) params.append('equipmentName', filterEquipmentName.value.trim());
-        if (filterBrand.value) params.append('brand', filterBrand.value);
+        if (appliedFilters.equipmentName) params.append('equipmentName', appliedFilters.equipmentName.trim());
+        if (appliedFilters.brand) params.append('brand', appliedFilters.brand);
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
@@ -177,7 +193,6 @@ async function renderTable() {
             actionsCell.appendChild(deleteBtn);
         });
         
-        // Обновляем статистику
         const data = result.statistics;
         totalSpan.textContent = data.totalEquipment;
         modelSpan.textContent = data.withModel;
@@ -218,6 +233,7 @@ async function createEquipment() {
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
         clearForm();
+        clearAllFilters();
         await renderTable();
         await loadBrands();
         return true;
@@ -249,6 +265,7 @@ async function updateEquipment(id) {
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
+        restoreFiltersToDOM();
         await renderTable();
         await loadBrands();
         return true;
@@ -269,6 +286,7 @@ async function deleteEquipment(id) {
             throw new Error(`HTTP ${response.status}`);
         }
         if (id === currentEditId) clearForm();
+        restoreFiltersToDOM();
         await renderTable();
         await loadBrands();
     } catch (err) {
@@ -289,13 +307,13 @@ function onCancel() {
     clearForm();
 }
 
-async function onApplyFilters() {
-    await renderTable();
+function onApplyFilters() {
+    snapshotFilters();
+    renderTable();
 }
 
 function onClearFilters() {
-    filterEquipmentName.value = '';
-    filterBrand.value = '';
+    clearAllFilters();
     renderTable();
 }
 

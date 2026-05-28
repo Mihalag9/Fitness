@@ -22,6 +22,26 @@ const clearFiltersBtn = document.getElementById('clear-filters');
 
 let currentEditId = null;
 
+let appliedFilters = {};
+
+function snapshotFilters() {
+    appliedFilters = {
+        fullName: filterFullName.value,
+        experienceSort: filterExperienceSort.value
+    };
+}
+
+function restoreFiltersToDOM() {
+    filterFullName.value = appliedFilters.fullName || '';
+    filterExperienceSort.value = appliedFilters.experienceSort || '';
+}
+
+function clearAllFilters() {
+    appliedFilters = {};
+    filterFullName.value = '';
+    filterExperienceSort.value = '';
+}
+
 // ---- Вспомогательные функции ----
 function showError(text) {
     errorDiv.textContent = text;
@@ -67,48 +87,31 @@ function validateTrainerForm() {
         return false;
     }
 
-    if (experience !== '') {
-        const expNum = parseInt(experience, 10);
-        if (isNaN(expNum) || expNum < 0) {
-            showError('Стаж должен быть неотрицательным числом');
-            return false;
-        }
-    }
-
     return true;
 }
-
-// ---- Статистика ----
-// (Функция updateStats была удалена)
-
 
 // ---- Отрисовка таблицы ----
 async function renderTable() {
     try {
         const params = new URLSearchParams();
-        if (filterFullName.value) params.append('fullName', filterFullName.value.trim());
+        if (appliedFilters.fullName) params.append('fullName', appliedFilters.fullName.trim());
         
-        // ВАЖНО: Если выбрана пустая опция, мы вообще не добавляем noExperience,
-        // чтобы бэкенд не фильтровал по умолчанию.
-        if (filterExperienceSort.value === 'no_exp') {
+        if (appliedFilters.experienceSort === 'no_exp') {
             params.append('noExperience', 'true');
-        } else if (filterExperienceSort.value === 'asc' || filterExperienceSort.value === 'desc') {
-            params.append('experienceSort', filterExperienceSort.value);
+        } else if (appliedFilters.experienceSort === 'asc' || appliedFilters.experienceSort === 'desc') {
+            params.append('experienceSort', appliedFilters.experienceSort);
         }
-        // Если выбрано "", ничего не добавляем, параметры не фильтруются.
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
         
-        // Обновляем таблицу
         tbody.innerHTML = '';
         result.items.forEach(trainer => {
             const row = tbody.insertRow();
             row.insertCell(0).textContent = trainer.trainerId;
             row.insertCell(1).textContent = trainer.fullName;
-            // ПРАВКА: 0 и null отображаются как прочерк
             row.insertCell(2).textContent = (trainer.experience != null && trainer.experience > 0) ? trainer.experience : '—';
             const actionsCell = row.insertCell(3);
             const editBtn = document.createElement('button');
@@ -123,7 +126,6 @@ async function renderTable() {
             actionsCell.appendChild(deleteBtn);
         });
         
-        // Обновляем статистику
         const data = result.statistics;
         totalSpan.textContent = data.totalTrainers;
         expSpan.textContent = data.trainersWithExperience;
@@ -164,6 +166,7 @@ async function createTrainer() {
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
         clearForm();
+        clearAllFilters();
         await renderTable();
         return true;
     } catch (err) {
@@ -194,6 +197,7 @@ async function updateTrainer(id) {
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
+        restoreFiltersToDOM();
         await renderTable();
         return true;
     } catch (err) {
@@ -217,6 +221,7 @@ async function deleteTrainer(id) {
             clearForm();
         }
 
+        restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
@@ -238,13 +243,13 @@ function onCancel() {
 }
 
 // ---- Фильтры ----
-async function onApplyFilters() {
-    await renderTable();
+function onApplyFilters() {
+    snapshotFilters();
+    renderTable();
 }
 
 function onClearFilters() {
-    filterFullName.value = '';
-    filterExperienceSort.value = '';
+    clearAllFilters();
     renderTable();
 }
 

@@ -39,6 +39,49 @@ const gymLimitHint = document.getElementById('gym-limit-hint');
 const MAX_GYMS = 5;
 
 let currentEditId = null;
+
+let appliedFilters = {};
+
+function snapshotFilters() {
+    appliedFilters = {
+        workoutName: filterWorkoutName.value,
+        durationFrom: filterDurationFrom.value,
+        durationTo: filterDurationTo.value,
+        rangeToggle: filterRangeToggle.checked,
+        participantsSort: filterParticipantsSort.value
+    };
+}
+
+function restoreFiltersToDOM() {
+    filterWorkoutName.value = appliedFilters.workoutName || '';
+    filterDurationFrom.value = appliedFilters.durationFrom || '';
+    filterDurationTo.value = appliedFilters.durationTo || '';
+    filterRangeToggle.checked = appliedFilters.rangeToggle || false;
+    filterParticipantsSort.value = appliedFilters.participantsSort || '';
+    const group = document.getElementById('filter-durationTo-group');
+    const labelFrom = document.getElementById('filter-durationFrom-label');
+    if (filterRangeToggle.checked) {
+        group.classList.remove('hidden');
+        if (labelFrom) labelFrom.textContent = 'Длительность (от)';
+    } else {
+        group.classList.add('hidden');
+        filterDurationTo.value = '';
+        if (labelFrom) labelFrom.textContent = 'Длительность (мин)';
+    }
+}
+
+function clearAllFilters() {
+    appliedFilters = {};
+    filterWorkoutName.value = '';
+    filterDurationFrom.value = '';
+    filterDurationTo.value = '';
+    filterRangeToggle.checked = false;
+    filterParticipantsSort.value = '';
+    document.getElementById('filter-durationTo-group').classList.add('hidden');
+    const labelFrom = document.getElementById('filter-durationFrom-label');
+    if (labelFrom) labelFrom.textContent = 'Длительность (мин)';
+}
+
 let allGyms = [];
 let currentLinkedGymIds = new Set();
 let justCreated = false;
@@ -292,6 +335,7 @@ async function addGymLink() {
         gymInput.value = '';
         selectedGymId = null;
         await loadGymLinks(currentEditId);
+        restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
         showError(`Ошибка добавления: ${err.message}`);
@@ -306,6 +350,7 @@ async function removeGymLink(workoutId, gymId) {
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         await loadGymLinks(workoutId);
+        restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
@@ -316,13 +361,13 @@ async function removeGymLink(workoutId, gymId) {
 async function renderTable() {
     try {
         const params = new URLSearchParams();
-        if (filterWorkoutName.value) params.append('workoutName', filterWorkoutName.value.trim());
-        if (filterParticipantsSort.value === 'asc' || filterParticipantsSort.value === 'desc') {
-            params.append('participantsSort', filterParticipantsSort.value);
+        if (appliedFilters.workoutName) params.append('workoutName', appliedFilters.workoutName.trim());
+        if (appliedFilters.participantsSort === 'asc' || appliedFilters.participantsSort === 'desc') {
+            params.append('participantsSort', appliedFilters.participantsSort);
         }
-        if (filterDurationFrom.value) {
-            const from = filterDurationFrom.value;
-            const to = (filterRangeToggle.checked && filterDurationTo.value) ? filterDurationTo.value : from;
+        if (appliedFilters.durationFrom) {
+            const from = appliedFilters.durationFrom;
+            const to = (appliedFilters.rangeToggle && appliedFilters.durationTo) ? appliedFilters.durationTo : from;
             params.append('durationFrom', from);
             params.append('durationTo', to);
         }
@@ -418,6 +463,7 @@ async function createWorkout() {
         submitBtn.textContent = 'Готово';
         justCreated = true;
         enableGymSection(created.workoutId);
+        clearAllFilters();
         await renderTable();
         return true;
     } catch (err) {
@@ -446,6 +492,7 @@ async function updateWorkout(id) {
         if (response.status === 400) { showError('Неверный запрос (несоответствие ID)'); return false; }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         closeModal();
+        restoreFiltersToDOM();
         await renderTable();
         return true;
     } catch (err) {
@@ -462,6 +509,7 @@ async function deleteWorkout(id) {
         if (response.status === 404) { showError('Тренировка не найдена (возможно, уже удалена)'); }
         else if (!response.ok) throw new Error(`HTTP ${response.status}`);
         if (id === currentEditId) closeModal();
+        restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
@@ -482,17 +530,13 @@ async function onSubmit() {
 }
 
 // ---- Фильтры ----
-async function onApplyFilters() { await renderTable(); }
+function onApplyFilters() {
+    snapshotFilters();
+    renderTable();
+}
 
 function onClearFilters() {
-    filterWorkoutName.value = '';
-    filterParticipantsSort.value = '';
-    filterDurationFrom.value = '';
-    filterDurationTo.value = '';
-    filterRangeToggle.checked = false;
-    document.getElementById('filter-durationTo-group').classList.add('hidden');
-    const labelFrom = document.getElementById('filter-durationFrom-label');
-    if (labelFrom) labelFrom.textContent = 'Длительность (мин)';
+    clearAllFilters();
     renderTable();
 }
 

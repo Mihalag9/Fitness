@@ -32,6 +32,41 @@ const clearFiltersBtn = document.getElementById('clear-filters');
 
 let currentEditId = null;
 
+let appliedFilters = {};
+
+function snapshotFilters() {
+    appliedFilters = {
+        abonnementType: filterAbonnementType.value,
+        weekdayAccess: filterWeekdayAccess.value,
+        weekendAccess: filterWeekendAccess.value,
+        priceMin: filterPriceMin.value,
+        priceMax: filterPriceMax.value,
+        sortField: filterSortField.value,
+        sortDirection: filterSortDirection.value
+    };
+}
+
+function restoreFiltersToDOM() {
+    filterAbonnementType.value = appliedFilters.abonnementType || '';
+    filterWeekdayAccess.value = appliedFilters.weekdayAccess || '';
+    filterWeekendAccess.value = appliedFilters.weekendAccess || '';
+    filterPriceMin.value = appliedFilters.priceMin || '';
+    filterPriceMax.value = appliedFilters.priceMax || '';
+    filterSortField.value = appliedFilters.sortField || '';
+    filterSortDirection.value = appliedFilters.sortDirection || 'asc';
+}
+
+function clearAllFilters() {
+    appliedFilters = {};
+    filterAbonnementType.value = '';
+    filterWeekdayAccess.value = '';
+    filterWeekendAccess.value = '';
+    filterPriceMin.value = '';
+    filterPriceMax.value = '';
+    filterSortField.value = '';
+    filterSortDirection.value = 'asc';
+}
+
 // ---- Вспомогательные функции ----
 function showError(text) {
     errorDiv.textContent = text;
@@ -69,14 +104,14 @@ function formatCurrency(value) {
 async function renderTable() {
     try {
         const params = new URLSearchParams();
-        if (filterAbonnementType.value) params.append('abonnementType', filterAbonnementType.value.trim());
-        if (filterWeekdayAccess.value !== '') params.append('weekdayAccess', filterWeekdayAccess.value === 'true');
-        if (filterWeekendAccess.value !== '') params.append('weekendAccess', filterWeekendAccess.value === 'true');
-        if (filterPriceMin.value) params.append('priceMin', filterPriceMin.value);
-        if (filterPriceMax.value) params.append('priceMax', filterPriceMax.value);
-        if (filterSortField.value) {
-            params.append('sortField', filterSortField.value);
-            params.append('sortDirection', filterSortDirection.value);
+        if (appliedFilters.abonnementType) params.append('abonnementType', appliedFilters.abonnementType.trim());
+        if (appliedFilters.weekdayAccess !== '') params.append('weekdayAccess', appliedFilters.weekdayAccess === 'true');
+        if (appliedFilters.weekendAccess !== '') params.append('weekendAccess', appliedFilters.weekendAccess === 'true');
+        if (appliedFilters.priceMin) params.append('priceMin', appliedFilters.priceMin);
+        if (appliedFilters.priceMax) params.append('priceMax', appliedFilters.priceMax);
+        if (appliedFilters.sortField) {
+            params.append('sortField', appliedFilters.sortField);
+            params.append('sortDirection', appliedFilters.sortDirection);
         }
 
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
@@ -155,6 +190,7 @@ async function createAbonnement() {
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
         clearForm();
+        clearAllFilters();
         await renderTable();
         return true;
     } catch (err) {
@@ -180,6 +216,7 @@ async function updateAbonnement(id) {
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
+        restoreFiltersToDOM();
         await renderTable();
         return true;
     } catch (err) {
@@ -208,57 +245,6 @@ function collectFormData() {
     };
 }
 
-function validateForm(data) {
-    const name = data.abonnementType;
-    if (!name) {
-        showError('Название обязательно');
-        return false;
-    }
-    if (name[0] !== name[0].toUpperCase()) {
-        showError('Название должно начинаться с большой буквы');
-        return false;
-    }
-    const digitCount = (name.match(/\d/g) || []).length;
-    if (digitCount > 2) {
-        showError('Название не должно содержать более 2 цифр');
-        return false;
-    }
-    if (name.length < 4 || !/[a-zA-Zа-яА-ЯёЁ]{4,}/.test(name.replace(/[^a-zA-Zа-яА-ЯёЁ]/g, ''))) {
-        showError('Название должно содержать не менее 4 букв');
-        return false;
-    }
-    if (/[^a-zA-Zа-яА-ЯёЁ0-9\s]/.test(name)) {
-        showError('Название может содержать только буквы, цифры и пробелы');
-        return false;
-    }
-    if (isNaN(data.price) || data.price < 1000) {
-        showError('Цена должна быть не меньше 1000');
-        return false;
-    }
-    if (isNaN(data.durationMonths) || data.durationMonths < 1 || data.durationMonths > 18) {
-        showError('Длительность должна быть целым числом от 1 до 18');
-        return false;
-    }
-
-    // Проверка формата времени ЧЧ:ММ (регулярное выражение)
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    const startShort = data.accessStartTime.substring(0, 5);
-    const endShort = data.accessEndTime.substring(0, 5);
-
-    if (!timeRegex.test(startShort) || !timeRegex.test(endShort)) {
-        showError('Время должно быть в формате ЧЧ:ММ - ЧЧ:ММ (например, 08:00 - 23:00)');
-        return false;
-    }
-
-    // Проверка диапазона 08:00 - 23:00
-    if (startShort < '08:00' || endShort > '23:00' || startShort >= endShort) {
-        showError('Время посещения должно быть в диапазоне от 08:00 до 23:00, и начало должно быть раньше конца');
-        return false;
-    }
-
-    return true;
-}
-
 // ---- Удаление ----
 async function deleteAbonnement(id) {
     if (!confirm('Удалить этот абонемент?')) return;
@@ -275,6 +261,7 @@ async function deleteAbonnement(id) {
             clearForm();
         }
 
+        restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
         showError(`Ошибка удаления: ${err.message}`);
@@ -296,19 +283,14 @@ function onCancel() {
 }
 
 // ---- Фильтры ----
-async function onApplyFilters() {
-    await renderTable();
+function onApplyFilters() {
+    snapshotFilters();
+    renderTable();
 }
 
 // ---- Очистка фильтров ----
 function onClearFilters() {
-    filterAbonnementType.value = '';
-    filterWeekdayAccess.value = '';
-    filterWeekendAccess.value = '';
-    filterPriceMin.value = '';
-    filterPriceMax.value = '';
-    filterSortField.value = '';
-    filterSortDirection.value = 'asc';
+    clearAllFilters();
     renderTable();
 }
 
