@@ -517,7 +517,6 @@ async function deleteWorkout(id) {
 // ---- Submit ----
 async function onSubmit() {
     if (justCreated) {
-        showToast('Тренировка создана', 'success');
         closeModal();
         return;
     }

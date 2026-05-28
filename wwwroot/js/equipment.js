@@ -291,14 +291,6 @@ async function deleteEquipment(id) {
         showToast(`Ошибка удаления: ${err.message}`);
     }
 }
-        if (id === currentEditId) clearForm();
-        restoreFiltersToDOM();
-        await renderTable();
-        await loadBrands();
-    } catch (err) {
-        showToast(`Ошибка удаления: ${err.message}`);
-    }
-}
 
 // ---- Обработчики кнопок ----
 async function onSubmit() {

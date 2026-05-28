@@ -89,6 +89,31 @@ function formatCurrency(value) {
     return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(value);
 }
 
+// ---- Валидация формы ----
+function validateForm(data) {
+    if (!data.abonnementType) {
+        showToast('Название абонемента обязательно');
+        return false;
+    }
+    if (data.abonnementType.length < 3) {
+        showToast('Название должно содержать не менее 3 символов');
+        return false;
+    }
+    if (data.abonnementType.length > 100) {
+        showToast('Название не должно превышать 100 символов');
+        return false;
+    }
+    if (isNaN(data.price) || data.price <= 0) {
+        showToast('Цена должна быть положительным числом');
+        return false;
+    }
+    if (isNaN(data.durationMonths) || data.durationMonths <= 0) {
+        showToast('Срок действия должен быть положительным числом');
+        return false;
+    }
+    return true;
+}
+
 // ---- Статистика ----
 // (Функция updateStats была удалена, так как статистика теперь приходит в общем ответе)
 
@@ -98,8 +123,8 @@ async function renderTable() {
     try {
         const params = new URLSearchParams();
         if (appliedFilters.abonnementType) params.append('abonnementType', appliedFilters.abonnementType.trim());
-        if (appliedFilters.weekdayAccess !== '') params.append('weekdayAccess', appliedFilters.weekdayAccess === 'true');
-        if (appliedFilters.weekendAccess !== '') params.append('weekendAccess', appliedFilters.weekendAccess === 'true');
+        if (appliedFilters.weekdayAccess != null && appliedFilters.weekdayAccess !== '') params.append('weekdayAccess', appliedFilters.weekdayAccess === 'true');
+        if (appliedFilters.weekendAccess != null && appliedFilters.weekendAccess !== '') params.append('weekendAccess', appliedFilters.weekendAccess === 'true');
         if (appliedFilters.priceMin) params.append('priceMin', appliedFilters.priceMin);
         if (appliedFilters.priceMax) params.append('priceMax', appliedFilters.priceMax);
         if (appliedFilters.sortField) {
@@ -186,12 +211,12 @@ async function createAbonnement() {
         clearForm();
         clearAllFilters();
         await renderTable();
+        showToast('Абонемент добавлен', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
         return false;
     }
-    showToast('Абонемент добавлен', 'success');
 }
 
 // ---- Обновление существующего ----
