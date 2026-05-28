@@ -3,7 +3,6 @@ const API_URL = 'https://localhost:7159/api/Clients';
 
 // DOM-элементы
 const tbody = document.getElementById('clients-body');
-const errorDiv = document.getElementById('error-message');
 const fullNameInput = document.getElementById('fullName');
 const birthDateInput = document.getElementById('birthDate');
 const phoneInput = document.getElementById('phone');
@@ -70,12 +69,6 @@ function clearAllFilters() {
 const PHONE_MAX_LEN = 12; // +7 + 10 цифр
 
 // ---- Вспомогательные функции ----
-function showError(text) {
-    errorDiv.textContent = text;
-    errorDiv.classList.remove('hidden');
-    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
-}
-
 function clearForm() {
     fullNameInput.value = '';
     birthDateInput.value = '';
@@ -108,37 +101,37 @@ function validateClientForm() {
 
     // ФИО
     if (!fullName) {
-        showError('ФИО обязательно');
+        showToast('ФИО обязательно');
         return false;
     }
     if (fullName.length > 50) {
-        showError('ФИО не должно превышать 50 символов');
+        showToast('ФИО не должно превышать 50 символов');
         return false;
     }
 
     const nameParts = fullName.split(' ').filter(p => p.length > 0);
     if (nameParts.length < 2) {
-        showError('Укажите фамилию и имя (минимум 2 слова)');
+        showToast('Укажите фамилию и имя (минимум 2 слова)');
         return false;
     }
     if (nameParts.length > 3) {
-        showError('ФИО должно содержать не более 3 слов');
+        showToast('ФИО должно содержать не более 3 слов');
         return false;
     }
     if (/\s{2,}/.test(fullName)) {
-        showError('Пробелы не могут идти подряд');
+        showToast('Пробелы не могут идти подряд');
         return false;
     }
 
     // Телефон (если указан)
     if (phone && !/^\+7\d{10}$/.test(phone)) {
-        showError('Телефон должен быть в формате +79001234501');
+        showToast('Телефон должен быть в формате +79001234501');
         return false;
     }
 
     // Дата рождения
     if (!isValidBirthDate(birthDate)) {
-        showError('Дата рождения должна быть в диапазоне с 1939 по 2019 год');
+        showToast('Дата рождения должна быть в диапазоне с 1939 по 2019 год');
         return false;
     }
 
@@ -195,7 +188,7 @@ async function renderTable() {
         totalSpan.textContent = data.totalClients;
         activeAbonnementsSpan.textContent = data.activeAbonnements;
     } catch (err) {
-        showError(`Ошибка загрузки: ${err.message}`);
+        showToast(`Ошибка загрузки: ${err.message}`);
     }
 }
 
@@ -234,9 +227,10 @@ async function createClient() {
         clearForm();
         clearAllFilters();
         await renderTable();
+        showToast('Клиент добавлен', 'success');
         return true;
     } catch (err) {
-        showError(`Не удалось добавить: ${err.message}`);
+        showToast(`Не удалось добавить: ${err.message}`);
         return false;
     }
 }
@@ -259,16 +253,17 @@ async function updateClient(id) {
             body: JSON.stringify(updated)
         });
         if (response.status === 400) {
-            showError('Неверный запрос (несоответствие ID)');
+            showToast('Неверный запрос (несоответствие ID)');
             return false;
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
         restoreFiltersToDOM();
         await renderTable();
+        showToast('Клиент обновлён', 'success');
         return true;
     } catch (err) {
-        showError(`Ошибка обновления: ${err.message}`);
+        showToast(`Ошибка обновления: ${err.message}`);
         return false;
     }
 }
@@ -279,8 +274,10 @@ async function deleteClient(id) {
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (response.status === 404) {
-            showError('Клиент не найден (возможно, уже удалён)');
-        } else if (!response.ok) {
+            showToast('Клиент не найден (возможно, уже удалён)');
+            return;
+        }
+        if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
 
@@ -292,8 +289,10 @@ async function deleteClient(id) {
         restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
-        showError(`Ошибка удаления: ${err.message}`);
+        showToast(`Ошибка удаления: ${err.message}`);
+        return;
     }
+    showToast('Клиент удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----

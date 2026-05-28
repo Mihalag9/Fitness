@@ -2,7 +2,6 @@
 const EQUIPMENT_API_URL = 'https://localhost:7159/api/Equipment';
 
 const tbody = document.getElementById('gyms-body');
-const errorDiv = document.getElementById('error-message');
 const gymNameInput = document.getElementById('gymName');
 const submitBtn = document.getElementById('submit-btn');
 const cancelBtn = document.getElementById('cancel-btn');
@@ -59,12 +58,6 @@ let allEquipment = [];
 let currentInventoryIds = new Set();
 
 // ---- Helpers ----
-function showError(text) {
-    errorDiv.textContent = text;
-    errorDiv.classList.remove('hidden');
-    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
-}
-
 function clearForm() {
     gymNameInput.value = '';
     editIdField.value = '';
@@ -81,31 +74,31 @@ function validateGymForm() {
     const name = gymNameInput.value.trim();
 
     if (!name) {
-        showError('Название зала обязательно');
+        showToast('Название зала обязательно');
         return false;
     }
     if (name.length < 3) {
-        showError('Название зала должно содержать не менее 3 символов');
+        showToast('Название зала должно содержать не менее 3 символов');
         return false;
     }
     if (name.length > 30) {
-        showError('Название зала не должно превышать 30 символов');
+        showToast('Название зала не должно превышать 30 символов');
         return false;
     }
     if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) {
-        showError('Название зала не может состоять только из цифр');
+        showToast('Название зала не может состоять только из цифр');
         return false;
     }
     if (/^\d/.test(name)) {
-        showError('Название зала не может начинаться с цифры');
+        showToast('Название зала не может начинаться с цифры');
         return false;
     }
     if (!/^[A-ZА-ЯЁ]/.test(name)) {
-        showError('Название зала должно начинаться с заглавной буквы');
+        showToast('Название зала должно начинаться с заглавной буквы');
         return false;
     }
     if (/\s{2,}/.test(name)) {
-        showError('Пробелы не могут идти подряд');
+        showToast('Пробелы не могут идти подряд');
         return false;
     }
 
@@ -207,7 +200,7 @@ async function loadInventory(gymId) {
             actionsCell.appendChild(deleteBtn);
         });
     } catch (err) {
-        showError(`Ошибка инвентаря: ${err.message}`);
+        showToast(`Ошибка инвентаря: ${err.message}`);
     }
 }
 
@@ -251,7 +244,7 @@ function startEditInventory(item) {
 
 async function saveInventoryQuantity(equipmentId, newQuantity) {
     if (isNaN(newQuantity) || newQuantity < 1) {
-        showError('Количество должно быть не менее 1');
+        showToast('Количество должно быть не менее 1');
         return;
     }
 
@@ -266,8 +259,9 @@ async function saveInventoryQuantity(equipmentId, newQuantity) {
         restoreFiltersToDOM();
         await renderTable();
         await updateStats();
+        showToast('Количество обновлено', 'success');
     } catch (err) {
-        showError(`Ошибка обновления: ${err.message}`);
+        showToast(`Ошибка обновления: ${err.message}`);
     }
 }
 
@@ -278,16 +272,16 @@ async function addInventoryItem() {
     const quantity = parseInt(equipmentQuantity.value, 10);
 
     if (!equipmentId) {
-        showError('Выберите оборудование');
+        showToast('Выберите оборудование');
         return;
     }
     if (isNaN(quantity) || quantity < 1) {
-        showError('Количество должно быть не менее 1');
+        showToast('Количество должно быть не менее 1');
         return;
     }
     // Дополнительная проверка: оборудование уже есть в зале
     if (currentInventoryIds.has(equipmentId)) {
-        showError('Это оборудование уже есть в зале. Используйте редактирование для изменения количества.');
+        showToast('Это оборудование уже есть в зале. Используйте редактирование для изменения количества.');
         return;
     }
 
@@ -304,8 +298,9 @@ async function addInventoryItem() {
         restoreFiltersToDOM();
         await renderTable();
         await updateStats();
+        showToast('Оборудование добавлено в зал', 'success');
     } catch (err) {
-        showError(`Ошибка добавления: ${err.message}`);
+        showToast(`Ошибка добавления: ${err.message}`);
     }
 }
 
@@ -320,8 +315,9 @@ async function deleteInventoryItem(gymId, equipmentId) {
         restoreFiltersToDOM();
         await renderTable();
         await updateStats();
+        showToast('Оборудование удалено из зала', 'success');
     } catch (err) {
-        showError(`Ошибка удаления: ${err.message}`);
+        showToast(`Ошибка удаления: ${err.message}`);
     }
 }
 
@@ -369,7 +365,7 @@ async function renderTable() {
         totalSpan.textContent = data.totalGyms;
         totalEquipmentSpan.textContent = data.totalEquipmentUnits;
     } catch (err) {
-        showError(`Ошибка загрузки: ${err.message}`);
+        showToast(`Ошибка загрузки: ${err.message}`);
     }
 }
 
@@ -405,9 +401,10 @@ async function createGym() {
         clearForm();
         clearAllFilters();
         await renderTable();
+        showToast('Зал добавлен', 'success');
         return true;
     } catch (err) {
-        showError(`Не удалось добавить: ${err.message}`);
+        showToast(`Не удалось добавить: ${err.message}`);
         return false;
     }
 }
@@ -423,16 +420,17 @@ async function updateGym(id) {
             body: JSON.stringify(updated)
         });
         if (response.status === 400) {
-            showError('Неверный запрос (несоответствие ID)');
+            showToast('Неверный запрос (несоответствие ID)');
             return false;
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
         restoreFiltersToDOM();
         await renderTable();
+        showToast('Зал обновлён', 'success');
         return true;
     } catch (err) {
-        showError(`Ошибка обновления: ${err.message}`);
+        showToast(`Ошибка обновления: ${err.message}`);
         return false;
     }
 }
@@ -442,15 +440,18 @@ async function deleteGym(id) {
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (response.status === 404) {
-            showError('Зал не найден (возможно, уже удалён)');
-        } else if (!response.ok) {
+            showToast('Зал не найден (возможно, уже удалён)');
+            return;
+        }
+        if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
+        showToast('Зал удалён', 'success');
         if (id === currentEditId) clearForm();
         restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
-        showError(`Ошибка удаления: ${err.message}`);
+        showToast(`Ошибка удаления: ${err.message}`);
     }
 }
 

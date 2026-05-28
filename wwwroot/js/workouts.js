@@ -2,7 +2,6 @@ const API_URL = 'https://localhost:7159/api/Workouts';
 
 // DOM-элементы
 const tbody = document.getElementById('workouts-body');
-const errorDiv = document.getElementById('error-message');
 const totalSpan = document.getElementById('total-count');
 const avgDurationSpan = document.getElementById('avg-duration');
 const trainersCountSpan = document.getElementById('trainers-count');
@@ -89,12 +88,6 @@ let selectedGymId = null;
 let dropdownIndex = -1;
 
 // ---- Helpers ----
-function showError(text) {
-    errorDiv.textContent = text;
-    errorDiv.classList.remove('hidden');
-    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
-}
-
 function clearForm() {
     workoutNameInput.value = '';
     durationMinutesInput.value = '';
@@ -136,23 +129,23 @@ function validateWorkoutForm() {
     const duration = durationMinutesInput.value.trim();
     const maxP = maxParticipantsInput.value.trim();
 
-    if (!name) { showError('Название тренировки обязательно'); return false; }
-    if (name.length > 50) { showError('Название не должно превышать 50 символов'); return false; }
-    if (name.length < 3) { showError('Название должно содержать не менее 3 символов'); return false; }
-    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) { showError('Название не может состоять только из цифр и символов'); return false; }
-    if (/^\d/.test(name)) { showError('Название не может начинаться с цифры'); return false; }
-    if (!/^[A-ZА-ЯЁ]/.test(name)) { showError('Название должно начинаться с заглавной буквы'); return false; }
-    if (/\s{2,}/.test(name)) { showError('Пробелы не могут идти подряд'); return false; }
+    if (!name) { showToast('Название тренировки обязательно'); return false; }
+    if (name.length > 50) { showToast('Название не должно превышать 50 символов'); return false; }
+    if (name.length < 3) { showToast('Название должно содержать не менее 3 символов'); return false; }
+    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) { showToast('Название не может состоять только из цифр и символов'); return false; }
+    if (/^\d/.test(name)) { showToast('Название не может начинаться с цифры'); return false; }
+    if (!/^[A-ZА-ЯЁ]/.test(name)) { showToast('Название должно начинаться с заглавной буквы'); return false; }
+    if (/\s{2,}/.test(name)) { showToast('Пробелы не могут идти подряд'); return false; }
 
-    if (!duration) { showError('Укажите длительность'); return false; }
+    if (!duration) { showToast('Укажите длительность'); return false; }
     const durNum = parseInt(duration, 10);
-    if (isNaN(durNum) || durNum < 30) { showError('Длительность должна быть от 30 минут'); return false; }
-    if (durNum > 180) { showError('Длительность не должна превышать 180 минут'); return false; }
+    if (isNaN(durNum) || durNum < 30) { showToast('Длительность должна быть от 30 минут'); return false; }
+    if (durNum > 180) { showToast('Длительность не должна превышать 180 минут'); return false; }
 
-    if (!maxP) { showError('Укажите максимальное количество участников'); return false; }
+    if (!maxP) { showToast('Укажите максимальное количество участников'); return false; }
     const maxNum = parseInt(maxP, 10);
-    if (isNaN(maxNum) || maxNum < 1) { showError('Максимум участников должен быть не менее 1'); return false; }
-    if (maxNum > 50) { showError('Максимум участников не должен превышать 50'); return false; }
+    if (isNaN(maxNum) || maxNum < 1) { showToast('Максимум участников должен быть не менее 1'); return false; }
+    if (maxNum > 50) { showToast('Максимум участников не должен превышать 50'); return false; }
 
     return true;
 }
@@ -294,7 +287,7 @@ async function loadGymLinks(workoutId) {
 
         updateGymLimitState();
     } catch (err) {
-        showError(`Ошибка загрузки залов: ${err.message}`);
+        showToast(`Ошибка загрузки залов: ${err.message}`);
     }
 }
 
@@ -311,7 +304,7 @@ function enableGymSection(workoutId) {
 async function addGymLink() {
     if (!currentEditId) return;
     const name = gymInput.value.trim();
-    if (!name) { showError('Введите название зала'); return; }
+    if (!name) { showToast('Введите название зала'); return; }
 
     let gym = null;
     if (selectedGymId) {
@@ -319,8 +312,8 @@ async function addGymLink() {
     } else {
         gym = findGymByName(name);
     }
-    if (!gym) { showError('Зал с таким названием не найден'); return; }
-    if (currentLinkedGymIds.has(gym.gymId)) { showError('Этот зал уже связан с тренировкой'); return; }
+    if (!gym) { showToast('Зал с таким названием не найден'); return; }
+    if (currentLinkedGymIds.has(gym.gymId)) { showToast('Этот зал уже связан с тренировкой'); return; }
 
     try {
         const response = await fetch(`${API_URL}/${currentEditId}/gyms`, {
@@ -337,8 +330,9 @@ async function addGymLink() {
         await loadGymLinks(currentEditId);
         restoreFiltersToDOM();
         await renderTable();
+        showToast('Зал связан с тренировкой', 'success');
     } catch (err) {
-        showError(`Ошибка добавления: ${err.message}`);
+        showToast(`Ошибка добавления: ${err.message}`);
     }
 }
 
@@ -352,8 +346,9 @@ async function removeGymLink(workoutId, gymId) {
         await loadGymLinks(workoutId);
         restoreFiltersToDOM();
         await renderTable();
+        showToast('Зал отвязан от тренировки', 'success');
     } catch (err) {
-        showError(`Ошибка удаления: ${err.message}`);
+        showToast(`Ошибка удаления: ${err.message}`);
     }
 }
 
@@ -414,7 +409,7 @@ async function renderTable() {
         avgDurationSpan.textContent = data.avgDuration;
         trainersCountSpan.textContent = data.totalTrainersAssigned;
     } catch (err) {
-        showError(`Ошибка загрузки: ${err.message}`);
+        showToast(`Ошибка загрузки: ${err.message}`);
     }
 }
 
@@ -465,9 +460,10 @@ async function createWorkout() {
         enableGymSection(created.workoutId);
         clearAllFilters();
         await renderTable();
+        showToast('Тренировка создана. Теперь можно связать залы.', 'success');
         return true;
     } catch (err) {
-        showError(`Не удалось добавить: ${err.message}`);
+        showToast(`Не удалось добавить: ${err.message}`);
         return false;
     }
 }
@@ -489,14 +485,15 @@ async function updateWorkout(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
-        if (response.status === 400) { showError('Неверный запрос (несоответствие ID)'); return false; }
+        if (response.status === 400) { showToast('Неверный запрос (несоответствие ID)'); return false; }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         closeModal();
         restoreFiltersToDOM();
         await renderTable();
+        showToast('Тренировка обновлена', 'success');
         return true;
     } catch (err) {
-        showError(`Ошибка обновления: ${err.message}`);
+        showToast(`Ошибка обновления: ${err.message}`);
         return false;
     }
 }
@@ -506,19 +503,21 @@ async function deleteWorkout(id) {
     if (!confirm('Удалить эту тренировку?')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (response.status === 404) { showError('Тренировка не найдена (возможно, уже удалена)'); }
-        else if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (response.status === 404) { showToast('Тренировка не найдена (возможно, уже удалена)'); return; }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        showToast('Тренировка удалена', 'success');
         if (id === currentEditId) closeModal();
         restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
-        showError(`Ошибка удаления: ${err.message}`);
+        showToast(`Ошибка удаления: ${err.message}`);
     }
 }
 
 // ---- Submit ----
 async function onSubmit() {
     if (justCreated) {
+        showToast('Тренировка создана', 'success');
         closeModal();
         return;
     }

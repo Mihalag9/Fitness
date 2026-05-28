@@ -3,7 +3,6 @@ const API_URL = 'https://localhost:7159/api/Trainers';
 
 // DOM-элементы
 const tbody = document.getElementById('trainers-body');
-const errorDiv = document.getElementById('error-message');
 const fullNameInput = document.getElementById('fullName');
 const experienceInput = document.getElementById('experience');
 const submitBtn = document.getElementById('submit-btn');
@@ -43,12 +42,6 @@ function clearAllFilters() {
 }
 
 // ---- Вспомогательные функции ----
-function showError(text) {
-    errorDiv.textContent = text;
-    errorDiv.classList.remove('hidden');
-    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
-}
-
 function clearForm() {
     fullNameInput.value = '';
     experienceInput.value = '';
@@ -65,25 +58,25 @@ function validateTrainerForm() {
     const experience = experienceInput.value.trim();
 
     if (!fullName) {
-        showError('ФИО обязательно');
+        showToast('ФИО обязательно');
         return false;
     }
     if (fullName.length > 50) {
-        showError('ФИО не должно превышать 50 символов');
+        showToast('ФИО не должно превышать 50 символов');
         return false;
     }
 
     const nameParts = fullName.split(' ').filter(p => p.length > 0);
     if (nameParts.length < 2) {
-        showError('Укажите фамилию и имя (минимум 2 слова)');
+        showToast('Укажите фамилию и имя (минимум 2 слова)');
         return false;
     }
     if (nameParts.length > 3) {
-        showError('ФИО должно содержать не более 3 слов');
+        showToast('ФИО должно содержать не более 3 слов');
         return false;
     }
     if (/\s{2,}/.test(fullName)) {
-        showError('Пробелы не могут идти подряд');
+        showToast('Пробелы не могут идти подряд');
         return false;
     }
 
@@ -131,7 +124,7 @@ async function renderTable() {
         expSpan.textContent = data.trainersWithExperience;
         noExpSpan.textContent = data.trainersWithoutExperience;
     } catch (err) {
-        showError(`Ошибка загрузки: ${err.message}`);
+        showToast(`Ошибка загрузки: ${err.message}`);
     }
 }
 
@@ -168,9 +161,10 @@ async function createTrainer() {
         clearForm();
         clearAllFilters();
         await renderTable();
+        showToast('Тренер добавлен', 'success');
         return true;
     } catch (err) {
-        showError(`Не удалось добавить: ${err.message}`);
+        showToast(`Не удалось добавить: ${err.message}`);
         return false;
     }
 }
@@ -192,16 +186,17 @@ async function updateTrainer(id) {
             body: JSON.stringify(updated)
         });
         if (response.status === 400) {
-            showError('Неверный запрос (несоответствие ID)');
+            showToast('Неверный запрос (несоответствие ID)');
             return false;
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
         restoreFiltersToDOM();
         await renderTable();
+        showToast('Тренер обновлён', 'success');
         return true;
     } catch (err) {
-        showError(`Ошибка обновления: ${err.message}`);
+        showToast(`Ошибка обновления: ${err.message}`);
         return false;
     }
 }
@@ -212,8 +207,10 @@ async function deleteTrainer(id) {
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (response.status === 404) {
-            showError('Тренер не найден (возможно, уже удалён)');
-        } else if (!response.ok) {
+            showToast('Тренер не найден (возможно, уже удалён)');
+            return;
+        }
+        if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
 
@@ -224,8 +221,10 @@ async function deleteTrainer(id) {
         restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
-        showError(`Ошибка удаления: ${err.message}`);
+        showToast(`Ошибка удаления: ${err.message}`);
+        return;
     }
+    showToast('Тренер удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----

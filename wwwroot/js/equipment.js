@@ -1,7 +1,6 @@
 ﻿const API_URL = 'https://localhost:7159/api/Equipment';
 
 const tbody = document.getElementById('equipment-body');
-const errorDiv = document.getElementById('error-message');
 const equipmentNameInput = document.getElementById('equipmentName');
 const brandInput = document.getElementById('brand');
 const modelInput = document.getElementById('model');
@@ -41,12 +40,6 @@ function clearAllFilters() {
 }
 
 // ---- Helpers ----
-function showError(text) {
-    errorDiv.textContent = text;
-    errorDiv.classList.remove('hidden');
-    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
-}
-
 function clearForm() {
     equipmentNameInput.value = '';
     brandInput.value = '';
@@ -66,76 +59,76 @@ function validateForm() {
 
     // Название (обязательное)
     if (!name) {
-        showError('Название оборудования обязательно');
+        showToast('Название оборудования обязательно');
         return false;
     }
     if (name.length < 3) {
-        showError('Название должно содержать не менее 3 символов');
+        showToast('Название должно содержать не менее 3 символов');
         return false;
     }
     if (name.length > 40) {
-        showError('Название не должно превышать 40 символов');
+        showToast('Название не должно превышать 40 символов');
         return false;
     }
     if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) {
-        showError('Название не может состоять только из цифр');
+        showToast('Название не может состоять только из цифр');
         return false;
     }
     if (/^\d/.test(name)) {
-        showError('Название не может начинаться с цифры');
+        showToast('Название не может начинаться с цифры');
         return false;
     }
     if (/\s{2,}/.test(name)) {
-        showError('Пробелы не могут идти подряд');
+        showToast('Пробелы не могут идти подряд');
         return false;
     }
 
     // Бренд (обязательный)
     if (!brand) {
-        showError('Бренд обязателен');
+        showToast('Бренд обязателен');
         return false;
     }
     if (brand.length < 3) {
-        showError('Бренд должен содержать не менее 3 символов');
+        showToast('Бренд должен содержать не менее 3 символов');
         return false;
     }
     if (brand.length > 20) {
-        showError('Бренд не должен превышать 20 символов');
+        showToast('Бренд не должен превышать 20 символов');
         return false;
     }
     if (!/[a-zA-Zа-яА-ЯёЁ]/.test(brand)) {
-        showError('Бренд не может состоять только из цифр');
+        showToast('Бренд не может состоять только из цифр');
         return false;
     }
     if (/^\d/.test(brand)) {
-        showError('Бренд не может начинаться с цифры');
+        showToast('Бренд не может начинаться с цифры');
         return false;
     }
     if (/\s{2,}/.test(brand)) {
-        showError('Пробелы не могут идти подряд');
+        showToast('Пробелы не могут идти подряд');
         return false;
     }
 
     // Модель (если заполнена)
     if (model) {
         if (model.length < 3) {
-            showError('Модель должна содержать не менее 3 символов');
+            showToast('Модель должна содержать не менее 3 символов');
             return false;
         }
         if (model.length > 20) {
-            showError('Модель не должна превышать 20 символов');
+            showToast('Модель не должна превышать 20 символов');
             return false;
         }
         if (!/[a-zA-Zа-яА-ЯёЁ]/.test(model)) {
-            showError('Модель не может состоять только из цифр');
+            showToast('Модель не может состоять только из цифр');
             return false;
         }
         if (/^\d/.test(model)) {
-            showError('Модель не может начинаться с цифры');
+            showToast('Модель не может начинаться с цифры');
             return false;
         }
         if (/\s{2,}/.test(model)) {
-            showError('Пробелы не могут идти подряд');
+            showToast('Пробелы не могут идти подряд');
             return false;
         }
     }
@@ -197,7 +190,7 @@ async function renderTable() {
         totalSpan.textContent = data.totalEquipment;
         modelSpan.textContent = data.withModel;
     } catch (err) {
-        showError(`Ошибка загрузки: ${err.message}`);
+        showToast(`Ошибка загрузки: ${err.message}`);
     }
 }
 
@@ -236,9 +229,10 @@ async function createEquipment() {
         clearAllFilters();
         await renderTable();
         await loadBrands();
+        showToast('Оборудование добавлено', 'success');
         return true;
     } catch (err) {
-        showError(`Не удалось добавить: ${err.message}`);
+        showToast(`Не удалось добавить: ${err.message}`);
         return false;
     }
 }
@@ -260,7 +254,7 @@ async function updateEquipment(id) {
             body: JSON.stringify(updated)
         });
         if (response.status === 400) {
-            showError('Неверный запрос (несоответствие ID)');
+            showToast('Неверный запрос (несоответствие ID)');
             return false;
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -268,9 +262,10 @@ async function updateEquipment(id) {
         restoreFiltersToDOM();
         await renderTable();
         await loadBrands();
+        showToast('Оборудование обновлено', 'success');
         return true;
     } catch (err) {
-        showError(`Ошибка обновления: ${err.message}`);
+        showToast(`Ошибка обновления: ${err.message}`);
         return false;
     }
 }
@@ -281,16 +276,27 @@ async function deleteEquipment(id) {
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (response.status === 404) {
-            showError('Оборудование не найдено (возможно, уже удалено)');
-        } else if (!response.ok) {
+            showToast('Оборудование не найдено (возможно, уже удалено)');
+            return;
+        }
+        if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
+        showToast('Оборудование удалено', 'success');
         if (id === currentEditId) clearForm();
         restoreFiltersToDOM();
         await renderTable();
         await loadBrands();
     } catch (err) {
-        showError(`Ошибка удаления: ${err.message}`);
+        showToast(`Ошибка удаления: ${err.message}`);
+    }
+}
+        if (id === currentEditId) clearForm();
+        restoreFiltersToDOM();
+        await renderTable();
+        await loadBrands();
+    } catch (err) {
+        showToast(`Ошибка удаления: ${err.message}`);
     }
 }
 

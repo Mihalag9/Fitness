@@ -3,7 +3,6 @@ const API_URL = 'https://localhost:7159/api/Abonnements';
 
 // DOM-элементы
 const tbody = document.getElementById('abonnements-body');
-const errorDiv = document.getElementById('error-message');
 const abonnementTypeInput = document.getElementById('abonnementType');
 const priceInput = document.getElementById('price');
 const durationMonthsInput = document.getElementById('durationMonths');
@@ -68,12 +67,6 @@ function clearAllFilters() {
 }
 
 // ---- Вспомогательные функции ----
-function showError(text) {
-    errorDiv.textContent = text;
-    errorDiv.classList.remove('hidden');
-    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
-}
-
 function clearForm() {
     abonnementTypeInput.value = '';
     priceInput.value = '';
@@ -151,7 +144,7 @@ async function renderTable() {
         maxPriceSpan.textContent = data.maxPrice.toLocaleString('ru-RU');
         unlimitedPercentageSpan.textContent = data.unlimitedPercentage;
     } catch (err) {
-        showError(`Ошибка загрузки: ${err.message}`);
+        showToast(`Ошибка загрузки: ${err.message}`);
     }
 }
 
@@ -195,9 +188,10 @@ async function createAbonnement() {
         await renderTable();
         return true;
     } catch (err) {
-        showError(`Не удалось добавить: ${err.message}`);
+        showToast(`Не удалось добавить: ${err.message}`);
         return false;
     }
+    showToast('Абонемент добавлен', 'success');
 }
 
 // ---- Обновление существующего ----
@@ -213,16 +207,17 @@ async function updateAbonnement(id) {
             body: JSON.stringify(updated)
         });
         if (response.status === 400) {
-            showError('Неверный запрос (несоответствие ID)');
+            showToast('Неверный запрос (несоответствие ID)');
             return false;
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
         restoreFiltersToDOM();
         await renderTable();
+        showToast('Абонемент обновлён', 'success');
         return true;
     } catch (err) {
-        showError(`Ошибка обновления: ${err.message}`);
+        showToast(`Ошибка обновления: ${err.message}`);
         return false;
     }
 }
@@ -234,7 +229,7 @@ function isValidTimeRange(value) {
 function collectFormData() {
     const rawValue = accessTimeRangeInput.value || '';
     if (!isValidTimeRange(rawValue)) {
-        showError('Формат времени: HH:MM - HH:MM (например 08:00 - 23:00)');
+        showToast('Формат времени: HH:MM - HH:MM (например 08:00 - 23:00)');
         return null;
     }
     const parts = rawValue.replace(/\s+/g, '').split('-');
@@ -260,8 +255,10 @@ async function deleteAbonnement(id) {
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (response.status === 404) {
-            showError('Абонемент не найден (возможно, уже удалён)');
-        } else if (!response.ok) {
+            showToast('Абонемент не найден (возможно, уже удалён)');
+            return;
+        }
+        if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
 
@@ -273,8 +270,10 @@ async function deleteAbonnement(id) {
         restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
-        showError(`Ошибка удаления: ${err.message}`);
+        showToast(`Ошибка удаления: ${err.message}`);
+        return;
     }
+    showToast('Абонемент удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----
