@@ -178,6 +178,7 @@ function fillFormForEdit(abonnement) {
 // ---- Добавление нового ----
 async function createAbonnement() {
     const newAbonnement = collectFormData();
+    if (!newAbonnement) return false;
     if (!validateForm(newAbonnement)) return false;
     try {
         const response = await fetch(API_URL, {
@@ -202,6 +203,7 @@ async function createAbonnement() {
 // ---- Обновление существующего ----
 async function updateAbonnement(id) {
     const updated = collectFormData();
+    if (!updated) return false;
     updated.abonnementId = id;
     if (!validateForm(updated)) return false;
     try {
@@ -225,9 +227,16 @@ async function updateAbonnement(id) {
     }
 }
 
+function isValidTimeRange(value) {
+    return /^([01]\d|2[0-3]):[0-5]\d\s*-\s*([01]\d|2[0-3]):[0-5]\d$/.test(value.replace(/\s+/g, ''));
+}
+
 function collectFormData() {
-    // Дробим строку вида "08:00 - 23:00" на две части, удаляя лишние пробелы
     const rawValue = accessTimeRangeInput.value || '';
+    if (!isValidTimeRange(rawValue)) {
+        showError('Формат времени: HH:MM - HH:MM (например 08:00 - 23:00)');
+        return null;
+    }
     const parts = rawValue.replace(/\s+/g, '').split('-');
 
     const start = parts[0] || '08:00';

@@ -4,19 +4,31 @@ CREATE OR REPLACE FUNCTION get_all_abonnements(
     p_weekday_access BOOLEAN DEFAULT NULL,
     p_weekend_access BOOLEAN DEFAULT NULL,
     p_price_min NUMERIC DEFAULT NULL,
-    p_price_max NUMERIC DEFAULT NULL
+    p_price_max NUMERIC DEFAULT NULL,
+    p_sort_field VARCHAR DEFAULT NULL,
+    p_sort_direction VARCHAR DEFAULT NULL
 )
 RETURNS TABLE("AbonnementId" INTEGER, "AbonnementType" VARCHAR, "Price" NUMERIC, "DurationMonths" INTEGER, "WeekdayAccess" BOOLEAN, "WeekendAccess" BOOLEAN, "AccessStartTime" TIME, "AccessEndTime" TIME) AS $$
 BEGIN
-    RETURN QUERY 
-    SELECT a."AbonnementId", a."AbonnementType", a."Price", a."DurationMonths", a."WeekdayAccess", a."WeekendAccess", a."AccessStartTime", a."AccessEndTime"
-    FROM "Abonnement" a
-    WHERE (p_abonnement_type IS NULL OR a."AbonnementType" ILIKE '%' || p_abonnement_type || '%')
-      AND (p_weekday_access IS NULL OR a."WeekdayAccess" = p_weekday_access)
-      AND (p_weekend_access IS NULL OR a."WeekendAccess" = p_weekend_access)
-      AND (p_price_min IS NULL OR a."Price" >= p_price_min)
-      AND (p_price_max IS NULL OR a."Price" <= p_price_max)
-    ORDER BY a."AbonnementId";
+    RETURN QUERY EXECUTE
+        'SELECT a."AbonnementId", a."AbonnementType", a."Price", a."DurationMonths", a."WeekdayAccess", a."WeekendAccess", a."AccessStartTime", a."AccessEndTime"
+         FROM "Abonnement" a
+         WHERE ($1 IS NULL OR a."AbonnementType" ILIKE ''%'' || $1 || ''%'')
+           AND ($2 IS NULL OR a."WeekdayAccess" = $2)
+           AND ($3 IS NULL OR a."WeekendAccess" = $3)
+           AND ($4 IS NULL OR a."Price" >= $4)
+           AND ($5 IS NULL OR a."Price" <= $5)
+         ORDER BY ' ||
+         CASE
+             WHEN p_sort_field IS NOT NULL AND p_sort_field IN ('price', 'duration') THEN
+                 CASE p_sort_field
+                     WHEN 'price' THEN 'a."Price"'
+                     WHEN 'duration' THEN 'a."DurationMonths"'
+                 END ||
+                 CASE WHEN p_sort_direction = 'desc' THEN ' DESC' ELSE ' ASC' END
+             ELSE 'a."AbonnementId"'
+         END
+        USING p_abonnement_type, p_weekday_access, p_weekend_access, p_price_min, p_price_max;
 END;
 $$ LANGUAGE plpgsql;
 

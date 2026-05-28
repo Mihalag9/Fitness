@@ -18,15 +18,19 @@ namespace Fitness.Services
             bool? weekdayAccess,
             bool? weekendAccess,
             decimal? priceMin,
-            decimal? priceMax)
+            decimal? priceMax,
+            string? sortField,
+            string? sortDirection)
         {
             return await _context.Abonnements
-                .FromSqlRaw("SELECT * FROM get_all_abonnements({0}, {1}, {2}, {3}, {4})",
+                .FromSqlRaw("SELECT * FROM get_all_abonnements({0}, {1}, {2}, {3}, {4}, {5}, {6})",
                     (object)abonnementType ?? DBNull.Value,
                     (object)weekdayAccess ?? DBNull.Value,
                     (object)weekendAccess ?? DBNull.Value,
                     (object)priceMin ?? DBNull.Value,
-                    (object)priceMax ?? DBNull.Value)
+                    (object)priceMax ?? DBNull.Value,
+                    (object)sortField ?? DBNull.Value,
+                    (object)sortDirection ?? DBNull.Value)
                 .ToListAsync();
         }
 

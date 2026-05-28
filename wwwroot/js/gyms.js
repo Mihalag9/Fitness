@@ -113,7 +113,17 @@ function validateGymForm() {
 }
 
 // ---- Statistics ----
-// (Функция updateStats была удалена)
+async function updateStats() {
+    try {
+        const response = await fetch(`${API_URL}/statistics`);
+        if (!response.ok) throw new Error('Ошибка загрузки статистики');
+        const data = await response.json();
+        totalSpan.textContent = data.totalGyms;
+        totalEquipmentSpan.textContent = data.totalEquipmentUnits;
+    } catch (err) {
+        console.error('Ошибка статистики:', err);
+    }
+}
 
 
 // ---- Equipment dictionary (filtered: only not in current gym) ----

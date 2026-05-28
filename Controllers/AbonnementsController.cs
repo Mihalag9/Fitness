@@ -20,9 +20,11 @@ public class AbonnementsController : ControllerBase
         [FromQuery] bool? weekdayAccess,
         [FromQuery] bool? weekendAccess,
         [FromQuery] decimal? priceMin,
-        [FromQuery] decimal? priceMax)
+        [FromQuery] decimal? priceMax,
+        [FromQuery] string? sortField,
+        [FromQuery] string? sortDirection)
     {
-        var abonnements = await _abonnementService.GetAllAsync(abonnementType, weekdayAccess, weekendAccess, priceMin, priceMax);
+        var abonnements = await _abonnementService.GetAllAsync(abonnementType, weekdayAccess, weekendAccess, priceMin, priceMax, sortField, sortDirection);
         var stats = await _abonnementService.GetStatisticsAsync();
         return Ok(new { Items = abonnements, Statistics = stats });
     }
