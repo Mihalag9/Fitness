@@ -13,6 +13,14 @@ public class WorkoutsController : ControllerBase
         _workoutService = workoutService;
     }
 
+    // GET: api/Workouts/gyms/dictionary
+    [HttpGet("gyms/dictionary")]
+    public async Task<ActionResult<IEnumerable<WorkoutService.GymLinkView>>> GetGymsDictionary()
+    {
+        var gyms = await _workoutService.GetAllGymsDictionaryAsync();
+        return Ok(gyms);
+    }
+
     // GET: api/Workouts?workoutName=...&durationFrom=...&durationTo=...&maxParticipantsMin=...&maxParticipantsMax=...&participantsSort=...
     [HttpGet]
     public async Task<ActionResult<object>> GetWorkouts(
@@ -85,4 +93,38 @@ public class WorkoutsController : ControllerBase
 
         return NoContent();
     }
+
+    // GET: api/Workouts/5/gyms
+    [HttpGet("{workoutid}/gyms")]
+    public async Task<ActionResult<IEnumerable<WorkoutService.GymLinkView>>> GetLinkedGyms(int workoutid)
+    {
+        var gyms = await _workoutService.GetGymsByWorkoutAsync(workoutid);
+        return Ok(gyms);
+    }
+
+    // PUT: api/Workouts/5/gyms
+    [HttpPut("{workoutid}/gyms")]
+    public async Task<IActionResult> PutGymLink(int workoutid, [FromBody] GymLinkDto dto)
+    {
+        if (dto == null || dto.GymId <= 0)
+            return BadRequest();
+
+        var success = await _workoutService.AddGymLinkAsync(dto.GymId, workoutid);
+        if (!success) return BadRequest();
+        return NoContent();
+    }
+
+    // DELETE: api/Workouts/5/gyms/3
+    [HttpDelete("{workoutid}/gyms/{gymid}")]
+    public async Task<IActionResult> DeleteGymLink(int workoutid, int gymid)
+    {
+        var success = await _workoutService.RemoveGymLinkAsync(gymid, workoutid);
+        if (!success) return NotFound();
+        return NoContent();
+    }
+}
+
+public class GymLinkDto
+{
+    public int GymId { get; set; }
 }

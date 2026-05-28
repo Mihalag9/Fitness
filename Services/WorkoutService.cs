@@ -13,17 +13,38 @@ namespace Fitness.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Workout>> GetAllAsync(string? workoutName, int? durationFrom, int? durationTo, int? maxParticipantsMin, int? maxParticipantsMax, string? participantsSort)
+        public async Task<IEnumerable<WorkoutView>> GetAllAsync(string? workoutName, int? durationFrom, int? durationTo, int? maxParticipantsMin, int? maxParticipantsMax, string? participantsSort)
         {
-            return await _context.Workouts
-                .FromSqlRaw("SELECT * FROM get_all_workouts({0}, {1}, {2}, {3}, {4}, {5})",
-                    (object)workoutName ?? DBNull.Value,
-                    (object)durationFrom ?? DBNull.Value,
-                    (object)durationTo ?? DBNull.Value,
-                    (object)maxParticipantsMin ?? DBNull.Value,
-                    (object)maxParticipantsMax ?? DBNull.Value,
-                    (object)participantsSort ?? DBNull.Value)
-                .ToListAsync();
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var workouts = new List<WorkoutView>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_all_workouts(@p0, @p1, @p2, @p3, @p4, @p5)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = (object)workoutName ?? DBNull.Value; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)durationFrom ?? DBNull.Value; command.Parameters.Add(p1);
+                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)durationTo ?? DBNull.Value; command.Parameters.Add(p2);
+                var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = (object)maxParticipantsMin ?? DBNull.Value; command.Parameters.Add(p3);
+                var p4 = command.CreateParameter(); p4.ParameterName = "@p4"; p4.Value = (object)maxParticipantsMax ?? DBNull.Value; command.Parameters.Add(p4);
+                var p5 = command.CreateParameter(); p5.ParameterName = "@p5"; p5.Value = (object)participantsSort ?? DBNull.Value; command.Parameters.Add(p5);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        workouts.Add(new WorkoutView
+                        {
+                            WorkoutId = reader.GetInt32(0),
+                            WorkoutName = reader.GetString(1),
+                            DurationMinutes = reader.GetInt32(2),
+                            MaxParticipants = reader.GetInt32(3),
+                            GymList = reader.IsDBNull(4) ? null : reader.GetString(4)
+                        });
+                    }
+                }
+            }
+            return workouts;
         }
 
         public async Task<Workout?> GetByIdAsync(int id)
@@ -89,6 +110,91 @@ namespace Fitness.Services
             }
         }
 
+        public async Task<IEnumerable<GymLinkView>> GetGymsByWorkoutAsync(int workoutId)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var gyms = new List<GymLinkView>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_gyms_by_workout(@p0)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = workoutId; command.Parameters.Add(p0);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        gyms.Add(new GymLinkView
+                        {
+                            GymId = reader.GetInt32(0),
+                            GymName = reader.GetString(1)
+                        });
+                    }
+                }
+            }
+            return gyms;
+        }
+
+        public async Task<bool> AddGymLinkAsync(int gymId, int workoutId)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT add_gym_allowed_workout(@p0, @p1)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = gymId; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return false;
+                return (bool)result;
+            }
+        }
+
+        public async Task<bool> RemoveGymLinkAsync(int gymId, int workoutId)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT remove_gym_allowed_workout(@p0, @p1)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = gymId; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return false;
+                return (bool)result;
+            }
+        }
+
+        public async Task<IEnumerable<GymLinkView>> GetAllGymsDictionaryAsync()
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var gyms = new List<GymLinkView>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_gyms_dictionary()";
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        gyms.Add(new GymLinkView
+                        {
+                            GymId = reader.GetInt32(0),
+                            GymName = reader.GetString(1)
+                        });
+                    }
+                }
+            }
+            return gyms;
+        }
+
         public async Task<WorkoutStatistics> GetStatisticsAsync()
         {
             var connection = _context.Database.GetDbConnection();
@@ -118,6 +224,21 @@ namespace Fitness.Services
             public int MaxDuration { get; set; }
             public int MinDuration { get; set; }
             public int TotalTrainersAssigned { get; set; }
+        }
+
+        public class WorkoutView
+        {
+            public int WorkoutId { get; set; }
+            public string WorkoutName { get; set; } = null!;
+            public int DurationMinutes { get; set; }
+            public int MaxParticipants { get; set; }
+            public string? GymList { get; set; }
+        }
+
+        public class GymLinkView
+        {
+            public int GymId { get; set; }
+            public string GymName { get; set; } = null!;
         }
     }
 }

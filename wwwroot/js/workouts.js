@@ -23,7 +23,15 @@ const filterParticipantsSort = document.getElementById('filter-participantsSort'
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
+// Gym links
+const gymLinksCard = document.getElementById('gym-links-card');
+const gymSelect = document.getElementById('gym-select');
+const addGymLinkBtn = document.getElementById('add-gym-link-btn');
+const gymLinksBody = document.getElementById('gym-links-body');
+
 let currentEditId = null;
+let allGyms = [];
+let currentLinkedGymIds = new Set();
 
 // ---- Вспомогательные функции ----
 function showError(text) {
@@ -41,6 +49,9 @@ function clearForm() {
     formTitle.textContent = 'Добавить тренировку';
     submitBtn.textContent = 'Добавить';
     cancelBtn.style.display = 'none';
+    gymLinksCard.classList.add('hidden');
+    gymLinksBody.innerHTML = '';
+    currentLinkedGymIds.clear();
 }
 
 // ---- Валидация формы перед отправкой ----
@@ -109,6 +120,93 @@ function validateWorkoutForm() {
     return true;
 }
 
+// ---- Gym links management ----
+function refreshGymSelect() {
+    gymSelect.innerHTML = '<option value="">— Выберите зал —</option>';
+    allGyms.forEach(gym => {
+        if (currentLinkedGymIds.has(gym.gymId)) return;
+        const opt = document.createElement('option');
+        opt.value = gym.gymId;
+        opt.textContent = gym.gymName;
+        gymSelect.appendChild(opt);
+    });
+}
+
+async function loadGymDictionary() {
+    try {
+        const response = await fetch(`${API_URL}/gyms/dictionary`);
+        if (!response.ok) throw new Error('Не удалось загрузить список залов');
+        allGyms = await response.json();
+        refreshGymSelect();
+    } catch (err) {
+        console.error('Ошибка загрузки залов:', err);
+    }
+}
+
+async function loadGymLinks(workoutId) {
+    try {
+        const response = await fetch(`${API_URL}/${workoutId}/gyms`);
+        if (!response.ok) throw new Error('Ошибка загрузки связей с залами');
+        const gyms = await response.json();
+
+        currentLinkedGymIds.clear();
+        gyms.forEach(gym => currentLinkedGymIds.add(gym.gymId));
+        refreshGymSelect();
+
+        gymLinksBody.innerHTML = '';
+        gyms.forEach(gym => {
+            const row = gymLinksBody.insertRow();
+            row.insertCell(0).textContent = gym.gymId;
+            row.insertCell(1).textContent = gym.gymName;
+            const actionsCell = row.insertCell(2);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Отвязать зал';
+            deleteBtn.onclick = () => removeGymLink(currentEditId, gym.gymId);
+            actionsCell.appendChild(deleteBtn);
+        });
+    } catch (err) {
+        showError(`Ошибка загрузки залов: ${err.message}`);
+    }
+}
+
+async function addGymLink() {
+    if (!currentEditId) return;
+    const gymId = parseInt(gymSelect.value, 10);
+    if (!gymId) {
+        showError('Выберите зал');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/${currentEditId}/gyms`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gymId })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        gymSelect.value = '';
+        await loadGymLinks(currentEditId);
+        await renderTable();
+    } catch (err) {
+        showError(`Ошибка добавления: ${err.message}`);
+    }
+}
+
+async function removeGymLink(workoutId, gymId) {
+    if (!confirm('Отвязать этот зал от тренировки?')) return;
+    try {
+        const response = await fetch(`${API_URL}/${workoutId}/gyms/${gymId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await loadGymLinks(workoutId);
+        await renderTable();
+    } catch (err) {
+        showError(`Ошибка удаления: ${err.message}`);
+    }
+}
+
 // ---- Отрисовка таблицы ----
 async function renderTable() {
     try {
@@ -139,7 +237,11 @@ async function renderTable() {
             row.insertCell(1).textContent = workout.workoutName;
             row.insertCell(2).textContent = workout.durationMinutes;
             row.insertCell(3).textContent = workout.maxParticipants;
-            const actionsCell = row.insertCell(4);
+            const gymCell = row.insertCell(4);
+            gymCell.textContent = workout.gymList || '—';
+            gymCell.style.whiteSpace = 'normal';
+            gymCell.style.maxWidth = '300px';
+            const actionsCell = row.insertCell(5);
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
@@ -171,6 +273,10 @@ function fillFormForEdit(workout) {
     formTitle.textContent = 'Редактировать тренировку';
     submitBtn.textContent = 'Сохранить';
     cancelBtn.style.display = 'inline-block';
+
+    gymLinksCard.classList.remove('hidden');
+    loadGymDictionary();
+    loadGymLinks(workout.workoutId);
 }
 
 // ---- Добавление новой ----
@@ -371,6 +477,7 @@ cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
 filterRangeToggle.addEventListener('change', onToggleRange);
+addGymLinkBtn.addEventListener('click', addGymLink);
 
 // Загружаем данные при старте
 renderTable();

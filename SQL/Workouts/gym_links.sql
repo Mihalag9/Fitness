@@ -22,6 +22,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Procedure: get_gyms_dictionary
+CREATE OR REPLACE FUNCTION get_gyms_dictionary()
+RETURNS TABLE("GymId" INTEGER, "GymName" VARCHAR) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT g."GymId", g."GymName"
+    FROM "Gym" g
+    ORDER BY g."GymName";
+END;
+$$ LANGUAGE plpgsql;
+
 -- Procedure: remove_gym_allowed_workout
 CREATE OR REPLACE FUNCTION remove_gym_allowed_workout(p_gymid INTEGER, p_workoutid INTEGER)
 RETURNS BOOLEAN AS $$
