@@ -74,7 +74,7 @@
 
     <!-- Модальное окно тренировки -->
     <div id="workout-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content modal-wide">
             <span class="modal-close" id="modal-close">&times;</span>
             <h2 id="modal-title">Добавить тренировку</h2>
             <input type="hidden" id="edit-id">
@@ -106,9 +106,8 @@
                     <div class="inventory-controls">
                         <div class="form-group">
                             <label>Зал</label>
-                            <select id="gym-select">
-                                <option value="">— Выберите зал —</option>
-                            </select>
+                            <input type="text" id="gym-input" list="gym-datalist" placeholder="Начните вводить название зала" autocomplete="off">
+                            <datalist id="gym-datalist"></datalist>
                         </div>
                         <div class="form-group">
                             <label>&nbsp;</label>

@@ -31,7 +31,8 @@ const cancelBtn = document.getElementById('cancel-btn');
 // Gym section
 const gymSectionHint = document.getElementById('gym-section-hint');
 const gymControls = document.getElementById('gym-controls');
-const gymSelect = document.getElementById('gym-select');
+const gymInput = document.getElementById('gym-input');
+const gymDatalist = document.getElementById('gym-datalist');
 const addGymLinkBtn = document.getElementById('add-gym-link-btn');
 const gymLinksBody = document.getElementById('gym-links-body');
 
@@ -109,15 +110,19 @@ function validateWorkoutForm() {
 }
 
 // ---- Gym links ----
-function refreshGymSelect() {
-    gymSelect.innerHTML = '<option value="">— Выберите зал —</option>';
+function refreshGymDatalist() {
+    gymDatalist.innerHTML = '';
     allGyms.forEach(gym => {
         if (currentLinkedGymIds.has(gym.gymId)) return;
         const opt = document.createElement('option');
-        opt.value = gym.gymId;
-        opt.textContent = gym.gymName;
-        gymSelect.appendChild(opt);
+        opt.value = gym.gymName;
+        gymDatalist.appendChild(opt);
     });
+}
+
+function findGymByName(name) {
+    const trimmed = name.trim();
+    return allGyms.find(g => g.gymName.toLowerCase() === trimmed.toLowerCase());
 }
 
 async function loadGymDictionary() {
@@ -125,7 +130,7 @@ async function loadGymDictionary() {
         const response = await fetch(`${API_URL}/gyms/dictionary`);
         if (!response.ok) throw new Error('Не удалось загрузить список залов');
         allGyms = await response.json();
-        refreshGymSelect();
+        refreshGymDatalist();
     } catch (err) {
         console.error('Ошибка загрузки залов:', err);
     }
@@ -139,7 +144,7 @@ async function loadGymLinks(workoutId) {
 
         currentLinkedGymIds.clear();
         gyms.forEach(gym => currentLinkedGymIds.add(gym.gymId));
-        refreshGymSelect();
+        refreshGymDatalist();
 
         gymLinksBody.innerHTML = '';
         gyms.forEach(gym => {
@@ -160,6 +165,7 @@ async function loadGymLinks(workoutId) {
 
 function enableGymSection(workoutId) {
     currentEditId = workoutId;
+    gymInput.value = '';
     gymSectionHint.classList.add('hidden');
     gymControls.classList.remove('hidden');
     loadGymDictionary();
@@ -168,17 +174,21 @@ function enableGymSection(workoutId) {
 
 async function addGymLink() {
     if (!currentEditId) return;
-    const gymId = parseInt(gymSelect.value, 10);
-    if (!gymId) { showError('Выберите зал'); return; }
+    const name = gymInput.value.trim();
+    if (!name) { showError('Введите название зала'); return; }
+
+    const gym = findGymByName(name);
+    if (!gym) { showError('Зал с таким названием не найден'); return; }
+    if (currentLinkedGymIds.has(gym.gymId)) { showError('Этот зал уже связан с тренировкой'); return; }
 
     try {
         const response = await fetch(`${API_URL}/${currentEditId}/gyms`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ gymId })
+            body: JSON.stringify({ gymId: gym.gymId })
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        gymSelect.value = '';
+        gymInput.value = '';
         await loadGymLinks(currentEditId);
         await renderTable();
     } catch (err) {

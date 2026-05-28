@@ -194,7 +194,7 @@ button {
 
         /* Ширины полей как в стандартных формах */
         .inventory-controls .form-group:nth-child(1) {
-            width: 260px; /* Select оборудования */
+            width: 320px; /* Поле ввода зала/оборудования */
         }
 
         .inventory-controls .form-group:nth-child(2) {
@@ -269,6 +269,10 @@ button {
     max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content.modal-wide {
+    width: 800px;
 }
 
 .modal-content h2 {
