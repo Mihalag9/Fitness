@@ -309,3 +309,53 @@ button {
 .gym-link-btn:hover {
     color: #0056b3;
 }
+
+/* ==========================================
+   АВТОДОПОЛНЕНИЕ (CUSTOM DROPDOWN)
+   ========================================== */
+.autocomplete-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-list {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1001;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.dropdown-list.show {
+    display: block;
+}
+
+.dropdown-list .dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.dropdown-list .dropdown-item:hover,
+.dropdown-list .dropdown-item.active {
+    background: #007bff;
+    color: white;
+}
+
+.dropdown-list .dropdown-item.no-results {
+    color: #999;
+    cursor: default;
+}
+
+.dropdown-list .dropdown-item.no-results:hover {
+    background: transparent;
+    color: #999;
+}

@@ -106,8 +106,10 @@
                     <div class="inventory-controls">
                         <div class="form-group">
                             <label>Зал</label>
-                            <input type="text" id="gym-input" list="gym-datalist" placeholder="Начните вводить название зала" autocomplete="off">
-                            <datalist id="gym-datalist"></datalist>
+                            <div class="autocomplete-wrap">
+                                <input type="text" id="gym-input" placeholder="Начните вводить название зала" autocomplete="off">
+                                <div id="gym-dropdown" class="dropdown-list hidden"></div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>&nbsp;</label>

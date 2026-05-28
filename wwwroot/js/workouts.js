@@ -32,7 +32,7 @@ const cancelBtn = document.getElementById('cancel-btn');
 const gymSectionHint = document.getElementById('gym-section-hint');
 const gymControls = document.getElementById('gym-controls');
 const gymInput = document.getElementById('gym-input');
-const gymDatalist = document.getElementById('gym-datalist');
+const gymDropdown = document.getElementById('gym-dropdown');
 const addGymLinkBtn = document.getElementById('add-gym-link-btn');
 const gymLinksBody = document.getElementById('gym-links-body');
 
@@ -40,6 +40,8 @@ let currentEditId = null;
 let allGyms = [];
 let currentLinkedGymIds = new Set();
 let justCreated = false;
+let selectedGymId = null;
+let dropdownIndex = -1;
 
 // ---- Helpers ----
 function showError(text) {
@@ -71,6 +73,7 @@ function resetModal(isEdit) {
     gymSectionHint.classList.remove('hidden');
     gymLinksBody.innerHTML = '';
     currentLinkedGymIds.clear();
+    hideDropdown();
 }
 
 function openModal() {
@@ -109,20 +112,98 @@ function validateWorkoutForm() {
     return true;
 }
 
-// ---- Gym links ----
-function refreshGymDatalist() {
-    gymDatalist.innerHTML = '';
-    allGyms.forEach(gym => {
-        if (currentLinkedGymIds.has(gym.gymId)) return;
-        const opt = document.createElement('option');
-        opt.value = gym.gymName;
-        gymDatalist.appendChild(opt);
-    });
-}
-
+// ---- Gym links & autocomplete ----
 function findGymByName(name) {
     const trimmed = name.trim();
     return allGyms.find(g => g.gymName.toLowerCase() === trimmed.toLowerCase());
+}
+
+function getFilteredGyms(query) {
+    if (!query) return [];
+    const q = query.toLowerCase().trim();
+    return allGyms.filter(g =>
+        g.gymName.toLowerCase().includes(q) &&
+        !currentLinkedGymIds.has(g.gymId)
+    );
+}
+
+function showDropdown() {
+    gymDropdown.classList.add('show');
+}
+
+function hideDropdown() {
+    gymDropdown.classList.remove('show');
+    dropdownIndex = -1;
+}
+
+function renderDropdown(filtered) {
+    gymDropdown.innerHTML = '';
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item no-results';
+        div.textContent = 'Ничего не найдено';
+        gymDropdown.appendChild(div);
+        return;
+    }
+    filtered.forEach((gym, i) => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        if (i === dropdownIndex) div.classList.add('active');
+        div.textContent = gym.gymName;
+        div.dataset.gymId = gym.gymId;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectGymFromDropdown(gym.gymId, gym.gymName);
+        });
+        gymDropdown.appendChild(div);
+    });
+}
+
+function selectGymFromDropdown(gymId, gymName) {
+    gymInput.value = gymName;
+    selectedGymId = gymId;
+    hideDropdown();
+}
+
+function onGymInput() {
+    const query = gymInput.value.trim();
+    if (!query) {
+        hideDropdown();
+        selectedGymId = null;
+        return;
+    }
+    selectedGymId = null;
+    dropdownIndex = -1;
+    const filtered = getFilteredGyms(query);
+    renderDropdown(filtered);
+    if (filtered.length > 0) showDropdown();
+    else hideDropdown();
+}
+
+function onGymKeydown(e) {
+    const items = gymDropdown.querySelectorAll('.dropdown-item:not(.no-results)');
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (items.length === 0) return;
+        dropdownIndex = Math.min(dropdownIndex + 1, items.length - 1);
+        renderDropdown(getFilteredGyms(gymInput.value.trim()));
+        items[dropdownIndex]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (items.length === 0) return;
+        dropdownIndex = Math.max(dropdownIndex - 1, 0);
+        renderDropdown(getFilteredGyms(gymInput.value.trim()));
+        items[dropdownIndex]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+        if (dropdownIndex >= 0 && dropdownIndex < items.length) {
+            e.preventDefault();
+            const gymId = parseInt(items[dropdownIndex].dataset.gymId, 10);
+            const gymName = items[dropdownIndex].textContent;
+            selectGymFromDropdown(gymId, gymName);
+        }
+    } else if (e.key === 'Escape') {
+        hideDropdown();
+    }
 }
 
 async function loadGymDictionary() {
@@ -130,7 +211,6 @@ async function loadGymDictionary() {
         const response = await fetch(`${API_URL}/gyms/dictionary`);
         if (!response.ok) throw new Error('Не удалось загрузить список залов');
         allGyms = await response.json();
-        refreshGymDatalist();
     } catch (err) {
         console.error('Ошибка загрузки залов:', err);
     }
@@ -144,7 +224,7 @@ async function loadGymLinks(workoutId) {
 
         currentLinkedGymIds.clear();
         gyms.forEach(gym => currentLinkedGymIds.add(gym.gymId));
-        refreshGymDatalist();
+        hideDropdown();
 
         gymLinksBody.innerHTML = '';
         gyms.forEach(gym => {
@@ -166,6 +246,7 @@ async function loadGymLinks(workoutId) {
 function enableGymSection(workoutId) {
     currentEditId = workoutId;
     gymInput.value = '';
+    selectedGymId = null;
     gymSectionHint.classList.add('hidden');
     gymControls.classList.remove('hidden');
     loadGymDictionary();
@@ -177,7 +258,12 @@ async function addGymLink() {
     const name = gymInput.value.trim();
     if (!name) { showError('Введите название зала'); return; }
 
-    const gym = findGymByName(name);
+    let gym = null;
+    if (selectedGymId) {
+        gym = allGyms.find(g => g.gymId === selectedGymId);
+    } else {
+        gym = findGymByName(name);
+    }
     if (!gym) { showError('Зал с таким названием не найден'); return; }
     if (currentLinkedGymIds.has(gym.gymId)) { showError('Этот зал уже связан с тренировкой'); return; }
 
@@ -189,6 +275,7 @@ async function addGymLink() {
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         gymInput.value = '';
+        selectedGymId = null;
         await loadGymLinks(currentEditId);
         await renderTable();
     } catch (err) {
@@ -465,6 +552,10 @@ clearFiltersBtn.addEventListener('click', onClearFilters);
 filterRangeToggle.addEventListener('change', onToggleRange);
 addWorkoutBtn.addEventListener('click', openCreateModal);
 addGymLinkBtn.addEventListener('click', addGymLink);
+
+gymInput.addEventListener('input', onGymInput);
+gymInput.addEventListener('keydown', onGymKeydown);
+gymInput.addEventListener('blur', () => setTimeout(hideDropdown, 200));
 
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
