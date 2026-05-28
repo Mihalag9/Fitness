@@ -7,16 +7,20 @@ CREATE OR REPLACE FUNCTION get_all_workouts(
     p_max_participants_max INTEGER DEFAULT NULL,
     p_participants_sort VARCHAR DEFAULT NULL
 )
-RETURNS TABLE("WorkoutId" INTEGER, "WorkoutName" VARCHAR, "DurationMinutes" INTEGER, "MaxParticipants" INTEGER) AS $$
+RETURNS TABLE("WorkoutId" INTEGER, "WorkoutName" VARCHAR, "DurationMinutes" INTEGER, "MaxParticipants" INTEGER, "GymList" TEXT) AS $$
 BEGIN
     RETURN QUERY 
-    SELECT w."WorkoutId", w."WorkoutName", w."DurationMinutes", w."MaxParticipants"
+    SELECT w."WorkoutId", w."WorkoutName", w."DurationMinutes", w."MaxParticipants",
+           COALESCE(string_agg(DISTINCT g."GymName", ', ' ORDER BY g."GymName"), '') AS "GymList"
     FROM "Workout" w
+    LEFT JOIN "GymAllowedWorkout" gw ON w."WorkoutId" = gw."WorkoutId"
+    LEFT JOIN "Gym" g ON gw."GymId" = g."GymId"
     WHERE (p_workoutname IS NULL OR w."WorkoutName" ILIKE '%' || p_workoutname || '%')
       AND (p_duration_from IS NULL OR w."DurationMinutes" >= p_duration_from)
       AND (p_duration_to IS NULL OR w."DurationMinutes" <= p_duration_to)
       AND (p_max_participants_min IS NULL OR w."MaxParticipants" >= p_max_participants_min)
       AND (p_max_participants_max IS NULL OR w."MaxParticipants" <= p_max_participants_max)
+    GROUP BY w."WorkoutId", w."WorkoutName", w."DurationMinutes", w."MaxParticipants"
     ORDER BY
         CASE WHEN p_participants_sort = 'asc' THEN w."MaxParticipants" END ASC NULLS LAST,
         CASE WHEN p_participants_sort = 'desc' THEN w."MaxParticipants" END DESC NULLS LAST,
