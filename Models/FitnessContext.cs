@@ -41,6 +41,8 @@ public partial class FitnessContext : DbContext
 
     public virtual DbSet<WorkoutType> WorkoutTypes { get; set; }
 
+    public virtual DbSet<GymAllowedWorkout> GymAllowedWorkouts { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=Fitness;Username=postgres;Password=123");
@@ -235,6 +237,21 @@ public partial class FitnessContext : DbContext
             entity.HasIndex(e => e.TypeName, "WorkoutType_TypeName_key").IsUnique();
 
             entity.Property(e => e.TypeName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<GymAllowedWorkout>(entity =>
+        {
+            entity.HasKey(e => new { e.GymId, e.WorkoutId }).HasName("GymAllowedWorkout_pkey");
+
+            entity.ToTable("GymAllowedWorkout");
+
+            entity.HasOne(d => d.Gym).WithMany(p => p.GymAllowedWorkouts)
+                .HasForeignKey(d => d.GymId)
+                .HasConstraintName("GymAllowedWorkout_GymId_fkey");
+
+            entity.HasOne(d => d.Workout).WithMany(p => p.GymAllowedWorkouts)
+                .HasForeignKey(d => d.WorkoutId)
+                .HasConstraintName("GymAllowedWorkout_WorkoutId_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
