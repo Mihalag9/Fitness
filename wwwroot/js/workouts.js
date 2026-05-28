@@ -35,6 +35,8 @@ const gymInput = document.getElementById('gym-input');
 const gymDropdown = document.getElementById('gym-dropdown');
 const addGymLinkBtn = document.getElementById('add-gym-link-btn');
 const gymLinksBody = document.getElementById('gym-links-body');
+const gymLimitHint = document.getElementById('gym-limit-hint');
+const MAX_GYMS = 5;
 
 let currentEditId = null;
 let allGyms = [];
@@ -216,6 +218,14 @@ async function loadGymDictionary() {
     }
 }
 
+function updateGymLimitState() {
+    const count = currentLinkedGymIds.size;
+    const limitReached = count >= MAX_GYMS;
+    gymInput.disabled = limitReached;
+    addGymLinkBtn.disabled = limitReached;
+    gymLimitHint.classList.toggle('hidden', !limitReached);
+}
+
 async function loadGymLinks(workoutId) {
     try {
         const response = await fetch(`${API_URL}/${workoutId}/gyms`);
@@ -238,6 +248,8 @@ async function loadGymLinks(workoutId) {
             deleteBtn.onclick = () => removeGymLink(workoutId, gym.gymId);
             actionsCell.appendChild(deleteBtn);
         });
+
+        updateGymLimitState();
     } catch (err) {
         showError(`Ошибка загрузки залов: ${err.message}`);
     }
@@ -273,7 +285,10 @@ async function addGymLink() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ gymId: gym.gymId })
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || `HTTP ${response.status}`);
+        }
         gymInput.value = '';
         selectedGymId = null;
         await loadGymLinks(currentEditId);

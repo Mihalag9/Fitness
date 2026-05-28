@@ -11,6 +11,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Trigger function: запрещает более 5 залов на тренировку
+CREATE OR REPLACE FUNCTION trg_check_gym_limit() RETURNS TRIGGER AS $$
+DECLARE v_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM "GymAllowedWorkout" WHERE "WorkoutId" = NEW."WorkoutId";
+    IF v_count >= 5 THEN
+        RAISE EXCEPTION 'Не более 5 залов на одну тренировку';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_gym_limit ON "GymAllowedWorkout";
+CREATE TRIGGER trg_gym_limit
+    BEFORE INSERT ON "GymAllowedWorkout"
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_check_gym_limit();
+
 -- Procedure: add_gym_allowed_workout
 CREATE OR REPLACE FUNCTION add_gym_allowed_workout(p_gymid INTEGER, p_workoutid INTEGER)
 RETURNS BOOLEAN AS $$

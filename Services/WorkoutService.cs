@@ -1,5 +1,6 @@
 using Fitness.Models;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Text.Json;
 
 namespace Fitness.Services
@@ -136,7 +137,7 @@ namespace Fitness.Services
             return gyms;
         }
 
-        public async Task<bool> AddGymLinkAsync(int gymId, int workoutId)
+        public async Task<(bool Success, string? Error)> AddGymLinkAsync(int gymId, int workoutId)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -147,9 +148,15 @@ namespace Fitness.Services
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = gymId; command.Parameters.Add(p0);
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
 
-                var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                try
+                {
+                    await command.ExecuteScalarAsync();
+                    return (true, null);
+                }
+                catch (PostgresException ex) when (ex.MessageText.Contains("более 5 залов"))
+                {
+                    return (false, ex.MessageText);
+                }
             }
         }
 

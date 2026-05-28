@@ -109,8 +109,8 @@ public class WorkoutsController : ControllerBase
         if (dto == null || dto.GymId <= 0)
             return BadRequest();
 
-        var success = await _workoutService.AddGymLinkAsync(dto.GymId, workoutid);
-        if (!success) return BadRequest();
+        var (success, error) = await _workoutService.AddGymLinkAsync(dto.GymId, workoutid);
+        if (!success) return BadRequest(error ?? "Ошибка");
         return NoContent();
     }
 
