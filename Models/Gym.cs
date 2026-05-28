@@ -12,4 +12,6 @@ public partial class Gym
     public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
 
     public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
+
+    public virtual ICollection<GymAllowedWorkout> GymAllowedWorkouts { get; set; } = new List<GymAllowedWorkout>();
 }

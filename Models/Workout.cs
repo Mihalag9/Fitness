@@ -16,4 +16,6 @@ public partial class Workout
     public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 
     public virtual ICollection<TrainerRole> TrainerRoles { get; set; } = new List<TrainerRole>();
+
+    public virtual ICollection<GymAllowedWorkout> GymAllowedWorkouts { get; set; } = new List<GymAllowedWorkout>();
 }
