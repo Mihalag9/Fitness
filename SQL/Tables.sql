@@ -1,6 +1,6 @@
 CREATE TABLE "Abonnement" (
     "AbonnementId"       SERIAL PRIMARY KEY,
-    "AbonnementType"     VARCHAR(100) NOT NULL,
+    "AbonnementType"     VARCHAR(100) NOT NULL UNIQUE,
     "Price"              NUMERIC(10, 2) NOT NULL CHECK ("Price" >= 0),
     "DurationMonths"     INTEGER NOT NULL CHECK ("DurationMonths" > 0),
     "AccessStartTime"    TIME NOT NULL DEFAULT '08:00:00',
@@ -16,7 +16,7 @@ CREATE TABLE "WorkoutType" (
 
 CREATE TABLE "Gym" (
     "GymId"          SERIAL PRIMARY KEY,
-    "GymName"        VARCHAR(100) NOT NULL
+    "GymName"        VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE "Equipment" (
@@ -34,7 +34,7 @@ CREATE TABLE "Trainer" (
 
 CREATE TABLE "Workout" (
     "WorkoutId"       SERIAL PRIMARY KEY,
-    "WorkoutName"     VARCHAR(200) NOT NULL,
+    "WorkoutName"     VARCHAR(200) NOT NULL UNIQUE,
     "DurationMinutes" INTEGER NOT NULL CHECK ("DurationMinutes" > 0),
     "MaxParticipants" INTEGER NOT NULL CHECK ("MaxParticipants" > 0)
 );
@@ -43,7 +43,9 @@ CREATE TABLE "Client" (
     "ClientId"       SERIAL PRIMARY KEY,
     "FullName"       VARCHAR(200) NOT NULL,
     "BirthDate"      DATE,
-    "Phone"          VARCHAR(20)
+    "Phone"          VARCHAR(20) NOT NULL UNIQUE
+	
+	CONSTRAINT chk_phone_format CHECK ("Phone" ~ '^\+7[0-9]{10}$')
 );
 
 CREATE TABLE "Purchase" (
@@ -104,4 +106,11 @@ CREATE TABLE "Review" (
 
     PRIMARY KEY ("ClientId", "TrainerId"),
     CHECK ("ReviewText" IS NOT NULL OR "Rating" IS NOT NULL)
+);
+
+CREATE TABLE "GymAllowedWorkout" (
+    "GymId"          INTEGER NOT NULL REFERENCES "Gym"("GymId") ON DELETE CASCADE,
+    "WorkoutId"      INTEGER NOT NULL REFERENCES "Workout"("WorkoutId") ON DELETE CASCADE,
+    
+    PRIMARY KEY ("GymId", "WorkoutId")
 );
