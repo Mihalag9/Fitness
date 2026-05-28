@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Fitness.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -41,8 +42,11 @@ namespace Fitness.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Abonnement> CreateAsync(Abonnement abonnement)
+        public async Task<(Abonnement? Entity, string? Error)> CreateAsync(Abonnement abonnement)
         {
+            var error = Validate(abonnement);
+            if (error != null) return (null, error);
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
@@ -62,12 +66,15 @@ namespace Fitness.Services
                 {
                     abonnement.AbonnementId = Convert.ToInt32(result);
                 }
-                return abonnement;
+                return (abonnement, null);
             }
         }
 
-        public async Task<bool> UpdateAsync(int id, Abonnement abonnement)
+        public async Task<(bool Success, string? Error)> UpdateAsync(int id, Abonnement abonnement)
         {
+            var error = Validate(abonnement);
+            if (error != null) return (false, error);
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
@@ -84,8 +91,8 @@ namespace Fitness.Services
                 var p7 = command.CreateParameter(); p7.ParameterName = "@p7"; p7.Value = abonnement.AccessEndTime; command.Parameters.Add(p7);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                if (result == null || result == DBNull.Value) return (false, null);
+                return ((bool)result, null);
             }
         }
 
@@ -122,9 +129,36 @@ namespace Fitness.Services
             }
         }
 
-        private bool AbonnementExists(int id)
+        private static string? Validate(Abonnement abonnement)
         {
-            return _context.Abonnements.Any(e => e.AbonnementId == id);
+            var type = abonnement.AbonnementType?.Trim();
+
+            if (string.IsNullOrEmpty(type))
+                return "Название абонемента обязательно";
+
+            if (type.Length < 5)
+                return "Название должно содержать не менее 5 символов";
+
+            if (type.Length > 30)
+                return "Название не должно превышать 30 символов";
+
+            if (char.IsDigit(type[0]))
+                return "Название не может начинаться с цифры";
+
+            if (type.All(char.IsDigit))
+                return "Название не может состоять только из цифр";
+
+            if (!Regex.IsMatch(type, @"^[a-zA-Zа-яА-ЯёЁ\s-]+$"))
+                return "Название содержит недопустимые символы";
+
+            if (abonnement.Price <= 1000)
+                return "Цена должна быть больше 1000 рублей";
+
+            if (abonnement.DurationMonths < 1 || abonnement.DurationMonths > 18)
+                return "Срок действия должен быть от 1 до 18 месяцев";
+
+            abonnement.AbonnementType = char.ToUpper(type[0]) + type[1..];
+            return null;
         }
 
         public class AbonnementStatistics

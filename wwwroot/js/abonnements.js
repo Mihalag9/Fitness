@@ -95,20 +95,32 @@ function validateForm(data) {
         showToast('Название абонемента обязательно');
         return false;
     }
-    if (data.abonnementType.length < 3) {
-        showToast('Название должно содержать не менее 3 символов');
+    if (data.abonnementType.length < 5) {
+        showToast('Название должно содержать не менее 5 символов');
         return false;
     }
-    if (data.abonnementType.length > 100) {
-        showToast('Название не должно превышать 100 символов');
+    if (data.abonnementType.length > 30) {
+        showToast('Название не должно превышать 30 символов');
         return false;
     }
-    if (isNaN(data.price) || data.price <= 0) {
-        showToast('Цена должна быть положительным числом');
+    if (/^\d/.test(data.abonnementType)) {
+        showToast('Название не может начинаться с цифры');
         return false;
     }
-    if (isNaN(data.durationMonths) || data.durationMonths <= 0) {
-        showToast('Срок действия должен быть положительным числом');
+    if (/^\d+$/.test(data.abonnementType)) {
+        showToast('Название не может состоять только из цифр');
+        return false;
+    }
+    if (/[^a-zA-Zа-яА-ЯёЁ\s-]/.test(data.abonnementType)) {
+        showToast('Название содержит недопустимые символы');
+        return false;
+    }
+    if (isNaN(data.price) || data.price <= 1000) {
+        showToast('Цена должна быть больше 1000 рублей');
+        return false;
+    }
+    if (isNaN(data.durationMonths) || data.durationMonths < 1 || data.durationMonths > 18) {
+        showToast('Срок действия должен быть от 1 до 18 месяцев');
         return false;
     }
     return true;
@@ -252,7 +264,11 @@ function isValidTimeRange(value) {
 }
 
 function collectFormData() {
-    const rawValue = accessTimeRangeInput.value || '';
+    let rawValue = accessTimeRangeInput.value || '';
+    rawValue = rawValue.trim();
+    if (!rawValue) {
+        rawValue = '08:00 - 23:00';
+    }
     if (!isValidTimeRange(rawValue)) {
         showToast('Формат времени: HH:MM - HH:MM (например 08:00 - 23:00)');
         return null;
@@ -262,9 +278,19 @@ function collectFormData() {
     const start = parts[0] || '08:00';
     const end = parts[1] || '23:00';
 
+    let name = abonnementTypeInput.value.trim();
+    if (name.length > 0) {
+        name = name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    let price = parseFloat(priceInput.value);
+    if (!isNaN(price)) {
+        price = Math.round(price * 100) / 100;
+    }
+
     return {
-        abonnementType: abonnementTypeInput.value.trim(),
-        price: parseFloat(priceInput.value),
+        abonnementType: name,
+        price: price,
         durationMonths: parseInt(durationMonthsInput.value),
         weekdayAccess: weekdayAccessSelect.value === 'true',
         weekendAccess: weekendAccessSelect.value === 'true',

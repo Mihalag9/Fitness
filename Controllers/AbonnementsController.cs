@@ -55,21 +55,18 @@ public class AbonnementsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Abonnement>> PostAbonnement(Abonnement abonnement)
     {
-        var createdAbonnement = await _abonnementService.CreateAsync(abonnement);
-        return CreatedAtAction(nameof(GetAbonnement), new { abonnementid = createdAbonnement.AbonnementId }, createdAbonnement);
+        var (entity, error) = await _abonnementService.CreateAsync(abonnement);
+        if (error != null) return BadRequest(error);
+        return CreatedAtAction(nameof(GetAbonnement), new { abonnementid = entity!.AbonnementId }, entity);
     }
 
     // PUT: api/Abonnements/5
     [HttpPut("{abonnementid}")]
     public async Task<IActionResult> PutAbonnement(int abonnementid, Abonnement abonnement)
     {
-        var success = await _abonnementService.UpdateAsync(abonnementid, abonnement);
-
-        if (!success)
-        {
-            return NotFound();
-        }
-
+        var (success, error) = await _abonnementService.UpdateAsync(abonnementid, abonnement);
+        if (error != null) return BadRequest(error);
+        if (!success) return NotFound();
         return NoContent();
     }
 
