@@ -97,26 +97,26 @@
             </div>
 
             <!-- Секция залов -->
-            <div id="gym-section" style="margin-top:20px; border-top:1px solid #ddd; padding-top:15px;">
+            <div id="gym-section" class="gym-section">
                 <h3>Связанные залы</h3>
-                <p id="gym-section-hint" style="font-size:13px; color:#666;">
+                <p id="gym-section-hint" class="gym-section-hint">
                     Сохраните тренировку, чтобы выбрать залы
                 </p>
                 <div id="gym-controls" class="hidden">
-                    <div class="inventory-controls">
-                        <div class="form-group">
+                    <div class="gym-controls-row">
+                        <div class="gym-controls-field">
                             <label>Зал</label>
                             <div class="autocomplete-wrap">
                                 <input type="text" id="gym-input" placeholder="Начните вводить название зала" autocomplete="off">
                                 <div id="gym-dropdown" class="dropdown-list hidden"></div>
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="gym-controls-btn">
                             <label>&nbsp;</label>
                             <button id="add-gym-link-btn">Добавить</button>
                         </div>
                     </div>
-                    <div class="inventory-table-wrap">
+                    <div class="gym-table-wrap">
                         <table id="gym-links-table">
                             <thead>
                                 <tr><th>ID</th><th>Название зала</th><th>Действия</th></tr>
