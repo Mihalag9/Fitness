@@ -71,14 +71,7 @@ namespace Fitness.Controllers
         public async Task<ActionResult<Review>> PostReview(Review review)
         {
             _context.Reviews.Add(review);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                return BadRequest(new { message = "Отзыв от этого клиента этому тренеру уже существует" });
-            }
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetReview), new { clientid = review.ClientId, trainerid = review.TrainerId }, review);
         }

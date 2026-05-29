@@ -71,14 +71,7 @@ namespace Fitness.Controllers
         public async Task<ActionResult<Booking>> PostBooking(Booking booking)
         {
             _context.Bookings.Add(booking);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                return BadRequest(new { message = "Такое бронирование уже существует" });
-            }
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetBooking),new { clientid = booking.ClientId, scheduleid = booking.ScheduleId }, booking);
         }
