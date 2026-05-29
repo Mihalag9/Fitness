@@ -44,6 +44,11 @@ const invPrevBtn = document.getElementById('inv-prev-btn');
 const invNextBtn = document.getElementById('inv-next-btn');
 const invPageInfo = document.getElementById('inv-page-info');
 
+// Inventory filters
+const invFilterName = document.getElementById('inv-filter-name');
+const invFilterBrand = document.getElementById('inv-filter-brand');
+const invFilterSort = document.getElementById('inv-filter-sort');
+
 let currentEditId = null;
 
 let appliedFilters = {};
@@ -290,13 +295,40 @@ async function loadBrands() {
 }
 
 // ---- Inventory management ----
+function getFilteredInventory() {
+    let items = [...allInventoryItems];
+
+    const nameQuery = invFilterName.value.trim().toLowerCase();
+    if (nameQuery) {
+        items = items.filter(eq =>
+            eq.equipmentName.toLowerCase().includes(nameQuery) ||
+            (eq.brand && eq.brand.toLowerCase().includes(nameQuery)) ||
+            (eq.model && eq.model.toLowerCase().includes(nameQuery))
+        );
+    }
+
+    const brand = invFilterBrand.value;
+    if (brand) {
+        items = items.filter(eq => eq.brand === brand);
+    }
+
+    const sort = invFilterSort.value;
+    if (sort === 'name-asc') items.sort((a, b) => a.equipmentName.localeCompare(b.equipmentName));
+    else if (sort === 'name-desc') items.sort((a, b) => b.equipmentName.localeCompare(a.equipmentName));
+    else if (sort === 'qty-asc') items.sort((a, b) => a.quantity - b.quantity);
+    else if (sort === 'qty-desc') items.sort((a, b) => b.quantity - a.quantity);
+
+    return items;
+}
+
 function renderInventoryPage() {
     inventoryBody.innerHTML = '';
-    const totalPages = Math.max(1, Math.ceil(allInventoryItems.length / INVENTORY_PAGE_SIZE));
+    const filtered = getFilteredInventory();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / INVENTORY_PAGE_SIZE));
     if (inventoryPage > totalPages) inventoryPage = totalPages;
 
     const start = (inventoryPage - 1) * INVENTORY_PAGE_SIZE;
-    const pageItems = allInventoryItems.slice(start, start + INVENTORY_PAGE_SIZE);
+    const pageItems = filtered.slice(start, start + INVENTORY_PAGE_SIZE);
 
     pageItems.forEach(item => {
         const row = inventoryBody.insertRow();
@@ -323,7 +355,7 @@ function renderInventoryPage() {
 
     invPrevBtn.disabled = inventoryPage <= 1;
     invNextBtn.disabled = inventoryPage >= totalPages;
-    invPageInfo.textContent = `${inventoryPage} / ${totalPages}`;
+    invPageInfo.textContent = `${inventoryPage} / ${totalPages} (${filtered.length})`;
 
     if (allInventoryItems.length > 0) {
         inventoryPagination.classList.remove('hidden');
@@ -343,6 +375,18 @@ async function loadInventory(gymId) {
 
         allInventoryItems = items;
         inventoryPage = 1;
+
+        const brands = [...new Set(items.map(i => i.brand).filter(Boolean))].sort();
+        invFilterBrand.innerHTML = '<option value="">Все бренды</option>';
+        brands.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b;
+            opt.textContent = b;
+            invFilterBrand.appendChild(opt);
+        });
+        invFilterName.value = '';
+        invFilterSort.value = '';
+
         renderInventoryPage();
     } catch (err) {
         showToast(`Ошибка инвентаря: ${err.message}`);
@@ -684,9 +728,14 @@ invPrevBtn.addEventListener('click', () => {
     if (inventoryPage > 1) { inventoryPage--; renderInventoryPage(); }
 });
 invNextBtn.addEventListener('click', () => {
-    const totalPages = Math.ceil(allInventoryItems.length / INVENTORY_PAGE_SIZE);
+    const filtered = getFilteredInventory();
+    const totalPages = Math.ceil(filtered.length / INVENTORY_PAGE_SIZE);
     if (inventoryPage < totalPages) { inventoryPage++; renderInventoryPage(); }
 });
+
+invFilterName.addEventListener('input', () => { inventoryPage = 1; renderInventoryPage(); });
+invFilterBrand.addEventListener('change', () => { inventoryPage = 1; renderInventoryPage(); });
+invFilterSort.addEventListener('change', () => { inventoryPage = 1; renderInventoryPage(); });
 
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });

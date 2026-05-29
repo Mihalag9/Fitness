@@ -214,6 +214,33 @@ button {
         height: 38px;
     }
 
+/* Фильтры инвентаря внутри модалки */
+.inventory-filters {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+    .inventory-filters input,
+    .inventory-filters select {
+        height: 34px;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        box-sizing: border-box;
+    }
+
+    .inventory-filters input {
+        width: 220px;
+    }
+
+    .inventory-filters select {
+        width: 160px;
+    }
+
 /* Таблица инвентаря внутри карточки — на всю ширину без двойных отступов */
 .inventory-table-wrap {
     width: 100%;

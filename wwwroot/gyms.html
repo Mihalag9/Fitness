@@ -90,6 +90,20 @@
                         </div>
                     </div>
 
+                    <div class="inventory-filters" id="inventory-filters">
+                        <input type="text" id="inv-filter-name" placeholder="Поиск по названию">
+                        <select id="inv-filter-brand">
+                            <option value="">Все бренды</option>
+                        </select>
+                        <select id="inv-filter-sort">
+                            <option value="">Без сортировки</option>
+                            <option value="name-asc">Название ↑</option>
+                            <option value="name-desc">Название ↓</option>
+                            <option value="qty-asc">Кол-во ↑</option>
+                            <option value="qty-desc">Кол-во ↓</option>
+                        </select>
+                    </div>
+
                     <div class="inventory-table-wrap">
                         <table id="inventory-table">
                             <thead>
