@@ -382,9 +382,15 @@ function startEditInventory(item) {
     cancelBtn.onclick = () => loadInventory(currentEditId);
 
     quantityCell.innerHTML = '';
-    quantityCell.appendChild(input);
-    quantityCell.appendChild(saveBtn);
-    quantityCell.appendChild(cancelBtn);
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.alignItems = 'center';
+    wrap.style.gap = '4px';
+    wrap.style.whiteSpace = 'nowrap';
+    wrap.appendChild(input);
+    wrap.appendChild(saveBtn);
+    wrap.appendChild(cancelBtn);
+    quantityCell.appendChild(wrap);
 }
 
 async function saveInventoryQuantity(equipmentId, newQuantity) {
