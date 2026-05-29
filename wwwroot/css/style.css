@@ -37,8 +37,49 @@ body {
 h1 {
     text-align: center;
     color: #2c3e50;
-    margin: 20px 0;
+    margin: 20px 0 0 0;
 }
+
+/* Вкладки */
+.page-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    width: 95%;
+    margin: 0 auto;
+    border-bottom: 2px solid #ddd;
+}
+
+.page-tab {
+    padding: 10px 28px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #555;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -2px;
+}
+
+    .page-tab:hover {
+        color: #007bff;
+    }
+
+    .page-tab.active {
+        color: #007bff;
+        border-bottom-color: #007bff;
+        font-weight: 600;
+    }
+
+.tab-content {
+    display: none;
+}
+
+    .tab-content.active {
+        display: block;
+    }
 
 /* Таблица */
 table {
@@ -174,35 +215,35 @@ button {
 
 /* Панель управления оборудованием */
 .inventory-controls {
-    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    margin-bottom: 10px;
 }
 
     .inventory-controls .form-group {
-        display: inline-block;
-        vertical-align: bottom;
-        margin-right: 10px;
-        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
     }
 
         .inventory-controls .form-group label {
-            display: block;
             font-size: 12px;
             font-weight: 600;
             color: #555;
             margin-bottom: 4px;
         }
 
-        /* Ширины полей как в стандартных формах */
         .inventory-controls .form-group:nth-child(1) {
-            width: 320px; /* Поле ввода зала/оборудования */
+            width: 250px;
         }
 
         .inventory-controls .form-group:nth-child(2) {
-            width: 100px; /* Количество */
+            width: 100px;
         }
 
         .inventory-controls .form-group:nth-child(3) {
-            width: auto; /* Кнопка по содержимому */
+            width: auto;
         }
 
     .inventory-controls input,
@@ -211,10 +252,57 @@ button {
         margin: 0;
         width: 100%;
         box-sizing: border-box;
-        height: 38px;
+        height: 36px;
+    }
+
+/* Фильтры инвентаря внутри модалки */
+.inventory-filters {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+    .inventory-filters input,
+    .inventory-filters select {
+        height: 36px;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        box-sizing: border-box;
+    }
+
+    .inventory-filters input {
+        width: 200px;
+    }
+
+    .inventory-filters select {
+        width: 150px;
+    }
+
+    .inventory-filters .autocomplete-wrap {
+        width: 200px;
+    }
+
+    .inventory-filters .autocomplete-wrap input {
+        width: 100%;
+        box-sizing: border-box;
     }
 
 /* Таблица инвентаря внутри карточки — на всю ширину без двойных отступов */
+/* Подсказка о лимите оборудования */
+.inventory-limit-hint {
+    font-size: 13px;
+    color: #856404;
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+
 .inventory-table-wrap {
     width: 100%;
     overflow-x: auto;
@@ -233,12 +321,60 @@ button {
     }
 
         /* Компактные кнопки в колонке Действия */
+        #inventory-table td:last-child {
+            white-space: nowrap;
+        }
+
         #inventory-table td button {
             padding: 6px 10px;
             font-size: 14px;
             margin: 0 2px;
             min-width: 36px;
         }
+
+/* Пагинация инвентаря */
+.inventory-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.inv-page-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+}
+
+    .inv-page-btn:hover:not(:disabled) {
+        background: #0056b3;
+    }
+
+    .inv-page-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+.inv-page-info {
+    font-size: 13px;
+    color: #666;
+    min-width: 40px;
+    text-align: center;
+}
 
 /* ==========================================
    МОДАЛЬНОЕ ОКНО
@@ -433,6 +569,15 @@ button {
 .autocomplete-wrap {
     position: relative;
     width: 100%;
+}
+
+.filter-grid .autocomplete-wrap {
+    width: 250px;
+}
+
+.filter-grid .autocomplete-wrap input {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .dropdown-list {

@@ -13,62 +13,38 @@
         <a href="workouts.html">Тренировки</a>
         <a href="abonnements.html">Абонементы</a>
         <a href="gyms.html" class="active">Залы</a>
-        <a href="equipment.html">Оборудование</a>
     </nav>
 
     <h1>Управление залами фитнес-клуба</h1>
 
-    <div class="form-card">
-        <h2 id="form-title">Добавить зал</h2>
-        <input type="hidden" id="edit-id">
-        <input type="text" id="gymName" placeholder="Название зала" required maxlength="30">
-        <button id="submit-btn">Добавить</button>
-        <button id="cancel-btn" style="display:none;">Отмена</button>
+    <div class="page-tabs">
+        <button class="page-tab active" data-tab="gyms">Залы</button>
+        <button class="page-tab" data-tab="equipment">Оборудование</button>
     </div>
-    <div id="inventory-card" class="form-card hidden">
-        <h2>Оборудование в зале: <span id="inventory-gym-name"></span></h2>
 
-        <div class="inventory-controls">
-            <div class="form-group">
-                <label for="equipment-select">Оборудование</label>
-                <select id="equipment-select">
-                    <option value="">— Выберите оборудование —</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="equipment-quantity">Количество</label>
-                <input type="number" id="equipment-quantity" placeholder="Количество" min="1" value="1">
-            </div>
-            <div class="form-group">
-                <label>&nbsp;</label>
-                <button id="add-equipment-btn">Добавить / Изменить</button>
-            </div>
-        </div>
-
-        <div class="inventory-table-wrap">
-            <table id="inventory-table">
-                <thead>
-                    <tr><th>ID</th><th>Название</th><th>Бренд</th><th>Модель</th><th>Кол-во</th><th>Действия</th></tr>
-                </thead>
-                <tbody id="inventory-body"></tbody>
-            </table>
-        </div>
-    </div>
+    <div id="tab-gyms" class="tab-content active">
 
     <div class="filter-card">
         <h2>Фильтры</h2>
-        <input type="text" id="filter-gymName" placeholder="Название зала">
-        <select id="filter-hasEquipment">
-            <option value="">Все залы</option>
-            <option value="true">С оборудованием</option>
-            <option value="false">Без оборудования</option>
-        </select>
-        <input type="text" id="filter-equipmentName" placeholder="Название оборудования">
-        <select id="filter-brand">
-            <option value="">Все бренды</option>
-        </select>
-        <button id="apply-filters">Применить</button>
-        <button id="clear-filters">Очистить</button>
+        <div class="filter-grid">
+            <input type="text" id="filter-gymName" placeholder="Название зала">
+            <select id="filter-hasEquipment">
+                <option value="">Все залы</option>
+                <option value="true">С оборудованием</option>
+                <option value="false">Без оборудования</option>
+            </select>
+            <input type="text" id="filter-equipmentName" placeholder="Название оборудования">
+            <div class="autocomplete-wrap">
+                <input type="text" id="filter-brand" placeholder="Бренд" autocomplete="off">
+                <div id="filter-brand-dropdown" class="dropdown-list hidden"></div>
+            </div>
+        </div>
+
+        <div class="filter-actions" style="margin-top: 10px;">
+            <button id="apply-filters">Применить</button>
+            <button id="clear-filters">Очистить</button>
+            <button id="add-gym-btn" style="margin-left:auto;">+ Добавить зал</button>
+        </div>
     </div>
 
     <div class="stats-card">
@@ -83,6 +59,132 @@
         </thead>
         <tbody id="gyms-body"></tbody>
     </table>
+
+    <div id="gym-modal" class="modal">
+        <div class="modal-content modal-wide">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <h2 id="modal-title">Добавить зал</h2>
+            <input type="hidden" id="edit-id">
+
+            <div class="form-grid">
+                <input type="text" id="gymName" placeholder="Название зала" required maxlength="30">
+            </div>
+
+            <div class="form-actions" style="margin-top: 10px;">
+                <button id="submit-btn">Добавить</button>
+                <button id="cancel-btn">Отмена</button>
+            </div>
+
+            <div id="inventory-card" class="hidden">
+                <div class="gym-section">
+                    <h3>Оборудование в зале: <span id="inventory-gym-name"></span></h3>
+
+                    <div class="inventory-controls">
+                        <div class="form-group">
+                            <label for="equipment-input">Оборудование</label>
+                            <div class="autocomplete-wrap">
+                                <input type="text" id="equipment-input" placeholder="Начните вводить название" autocomplete="off">
+                                <div id="equipment-dropdown" class="dropdown-list hidden"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="equipment-quantity">Количество</label>
+                            <input type="number" id="equipment-quantity" placeholder="Количество" min="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button id="add-equipment-btn">Добавить</button>
+                        </div>
+                    </div>
+
+                    <div id="inventory-limit-hint" class="inventory-limit-hint hidden">
+                        Достигнут лимит: в зале уже 30 видов оборудования
+                    </div>
+
+                    <div class="inventory-filters" id="inventory-filters">
+                        <input type="text" id="inv-filter-name" placeholder="Поиск по названию">
+                        <div class="autocomplete-wrap">
+                            <input type="text" id="inv-filter-brand" placeholder="Бренд" autocomplete="off">
+                            <div id="inv-filter-brand-dropdown" class="dropdown-list hidden"></div>
+                        </div>
+                        <select id="inv-filter-sort">
+                            <option value="">Без сортировки</option>
+                            <option value="name-asc">Название ↑</option>
+                            <option value="name-desc">Название ↓</option>
+                            <option value="qty-asc">Кол-во ↑</option>
+                            <option value="qty-desc">Кол-во ↓</option>
+                        </select>
+                    </div>
+
+                    <div class="inventory-table-wrap">
+                        <table id="inventory-table">
+                            <thead>
+                                <tr><th>ID</th><th>Название</th><th>Бренд</th><th>Модель</th><th>Кол-во</th><th>Действия</th></tr>
+                            </thead>
+                            <tbody id="inventory-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="inventory-pagination" class="inventory-pagination hidden">
+                        <button id="inv-prev-btn" class="inv-page-btn" disabled>&lsaquo;</button>
+                        <span id="inv-page-info" class="inv-page-info">1 / 1</span>
+                        <button id="inv-next-btn" class="inv-page-btn" disabled>&rsaquo;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="tab-equipment" class="tab-content">
+        <div class="filter-card">
+            <h2>Фильтры</h2>
+            <div class="filter-grid">
+                <input type="text" id="eq-filter-name" placeholder="Название оборудования">
+                <div class="autocomplete-wrap">
+                    <input type="text" id="eq-filter-brand" placeholder="Бренд" autocomplete="off">
+                    <div id="eq-filter-brand-dropdown" class="dropdown-list hidden"></div>
+                </div>
+            </div>
+            <div class="filter-actions" style="margin-top: 10px;">
+                <button id="eq-apply-filters">Применить</button>
+                <button id="eq-clear-filters">Очистить</button>
+                <button id="eq-add-btn" style="margin-left:auto;">+ Добавить оборудование</button>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h2>Статистика</h2>
+            <p>Всего видов оборудования: <span id="eq-total-count">0</span></p>
+            <p>С указанной моделью: <span id="eq-model-count">0</span></p>
+        </div>
+
+        <table id="equipment-table">
+            <thead>
+                <tr><th>ID</th><th>Название</th><th>Бренд</th><th>Модель</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="eq-tbody"></tbody>
+        </table>
+
+        <div id="equipment-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close" id="eq-modal-close">&times;</span>
+                <h2 id="eq-modal-title">Добавить оборудование</h2>
+                <input type="hidden" id="eq-edit-id">
+
+                <div class="form-grid">
+                    <input type="text" id="eq-name" placeholder="Название оборудования" required maxlength="40">
+                    <input type="text" id="eq-brand" placeholder="Бренд" required maxlength="20">
+                    <input type="text" id="eq-model" placeholder="Модель (необязательно)" maxlength="20">
+                </div>
+
+                <div class="form-actions" style="margin-top: 10px;">
+                    <button id="eq-submit-btn">Добавить</button>
+                    <button id="eq-cancel-btn">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="js/toast.js"></script>
     <script src="js/gyms.js"></script>
