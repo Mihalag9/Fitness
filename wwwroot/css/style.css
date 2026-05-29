@@ -233,6 +233,10 @@ button {
     }
 
         /* Компактные кнопки в колонке Действия */
+        #inventory-table td:last-child {
+            white-space: nowrap;
+        }
+
         #inventory-table td button {
             padding: 6px 10px;
             font-size: 14px;
