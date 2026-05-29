@@ -6,7 +6,12 @@ const gymNameInput = document.getElementById('gymName');
 const submitBtn = document.getElementById('submit-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const editIdField = document.getElementById('edit-id');
-const formTitle = document.getElementById('form-title');
+
+// Модальное окно
+const modal = document.getElementById('gym-modal');
+const modalClose = document.getElementById('modal-close');
+const modalTitle = document.getElementById('modal-title');
+const addGymBtn = document.getElementById('add-gym-btn');
 
 const filterGymName = document.getElementById('filter-gymName');
 const filterHasEquipment = document.getElementById('filter-hasEquipment');
@@ -62,11 +67,28 @@ function clearForm() {
     gymNameInput.value = '';
     editIdField.value = '';
     currentEditId = null;
-    formTitle.textContent = 'Добавить зал';
-    submitBtn.textContent = 'Добавить';
-    cancelBtn.style.display = 'none';
     inventoryCard.classList.add('hidden');
     inventoryBody.innerHTML = '';
+}
+
+function resetModal(isEdit) {
+    clearForm();
+    if (isEdit) {
+        modalTitle.textContent = 'Редактировать зал';
+        submitBtn.textContent = 'Сохранить';
+    } else {
+        modalTitle.textContent = 'Добавить зал';
+        submitBtn.textContent = 'Добавить';
+    }
+}
+
+function openModal() {
+    modal.classList.add('show');
+}
+
+function closeModal() {
+    modal.classList.remove('show');
+    resetModal(false);
 }
 
 // ---- Валидация формы ----
@@ -349,7 +371,7 @@ async function renderTable() {
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
-            editBtn.onclick = () => fillFormForEdit(gym);
+            editBtn.onclick = () => openEditModal(gym);
 
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '🗑️';
@@ -369,17 +391,23 @@ async function renderTable() {
     }
 }
 
-function fillFormForEdit(gym) {
+// ---- Открыть модалку для создания ----
+function openCreateModal() {
+    resetModal(false);
+    openModal();
+}
+
+// ---- Открыть модалку для редактирования ----
+function openEditModal(gym) {
+    resetModal(true);
     gymNameInput.value = gym.gymName;
     editIdField.value = gym.gymId;
     currentEditId = gym.gymId;
-    formTitle.textContent = 'Редактировать зал';
-    submitBtn.textContent = 'Сохранить';
-    cancelBtn.style.display = 'inline-block';
 
     inventoryCard.classList.remove('hidden');
     inventoryGymName.textContent = gym.gymName;
     addEquipmentBtn.textContent = 'Добавить';
+    openModal();
     loadInventory(gym.gymId);
 }
 
@@ -398,10 +426,18 @@ async function createGym() {
             const errText = await response.text();
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
-        clearForm();
+        const created = await response.json();
+        editIdField.value = created.gymId;
+        currentEditId = created.gymId;
+        modalTitle.textContent = 'Редактировать зал';
+        submitBtn.textContent = 'Сохранить';
+        inventoryCard.classList.remove('hidden');
+        inventoryGymName.textContent = gymNameInput.value.trim();
+        addEquipmentBtn.textContent = 'Добавить';
+        loadInventory(created.gymId);
         clearAllFilters();
         await renderTable();
-        showToast('Зал добавлен', 'success');
+        showToast('Зал добавлен. Теперь можно добавить оборудование.', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -424,7 +460,7 @@ async function updateGym(id) {
             return false;
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        clearForm();
+        closeModal();
         restoreFiltersToDOM();
         await renderTable();
         showToast('Зал обновлён', 'success');
@@ -447,7 +483,7 @@ async function deleteGym(id) {
             throw new Error(`HTTP ${response.status}`);
         }
         showToast('Зал удалён', 'success');
-        if (id === currentEditId) clearForm();
+        if (id === currentEditId) closeModal();
         restoreFiltersToDOM();
         await renderTable();
     } catch (err) {
@@ -465,7 +501,7 @@ async function onSubmit() {
 }
 
 function onCancel() {
-    clearForm();
+    closeModal();
 }
 
 function onApplyFilters() {
@@ -508,6 +544,10 @@ cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
 addEquipmentBtn.addEventListener('click', addInventoryItem);
+addGymBtn.addEventListener('click', openCreateModal);
+
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
 loadEquipmentDictionary();
 loadBrands();
