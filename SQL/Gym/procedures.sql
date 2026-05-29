@@ -92,11 +92,11 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: upsert_inventory
 CREATE OR REPLACE FUNCTION upsert_inventory(p_gymid INTEGER, p_equipmentid INTEGER, p_quantity INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
     IF p_quantity <= 0 THEN
         DELETE FROM "Inventory" WHERE "GymId" = p_gymid AND "EquipmentId" = p_equipmentid;
-        RETURN TRUE;
+        RETURN NULL;
     END IF;
     
     BEGIN
@@ -105,10 +105,10 @@ BEGIN
         ON CONFLICT ("GymId", "EquipmentId") 
         DO UPDATE SET "Quantity" = p_quantity;
     EXCEPTION WHEN OTHERS THEN
-        RETURN FALSE;
+        RETURN SQLERRM;
     END;
     
-    RETURN TRUE;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 

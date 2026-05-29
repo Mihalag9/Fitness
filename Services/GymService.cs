@@ -131,7 +131,7 @@ namespace Fitness.Services
             return items;
         }
 
-        public async Task<bool> UpsertInventoryAsync(int gymId, int equipmentId, int quantity)
+        public async Task<(bool Success, string? Error)> UpsertInventoryAsync(int gymId, int equipmentId, int quantity)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -144,8 +144,8 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = quantity; command.Parameters.Add(p2);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                if (result == null || result == DBNull.Value) return (true, null);
+                return (false, result.ToString());
             }
         }
 

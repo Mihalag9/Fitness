@@ -292,6 +292,17 @@ button {
     }
 
 /* Таблица инвентаря внутри карточки — на всю ширину без двойных отступов */
+/* Подсказка о лимите оборудования */
+.inventory-limit-hint {
+    font-size: 13px;
+    color: #856404;
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+
 .inventory-table-wrap {
     width: 100%;
     overflow-x: auto;

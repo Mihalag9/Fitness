@@ -32,6 +32,7 @@ const equipmentDropdown = document.getElementById('equipment-dropdown');
 const equipmentQuantity = document.getElementById('equipment-quantity');
 const addEquipmentBtn = document.getElementById('add-equipment-btn');
 const inventoryBody = document.getElementById('inventory-body');
+const inventoryLimitHint = document.getElementById('inventory-limit-hint');
 
 let selectedEquipmentId = null;
 let equipmentDropdownIndex = -1;
@@ -345,6 +346,16 @@ function onGymBrandKeydown(e) {
 }
 
 // ---- Inventory management ----
+const INVENTORY_LIMIT = 30;
+
+function updateInventoryLimitState() {
+    const limitReached = allInventoryItems.length >= INVENTORY_LIMIT;
+    equipmentInput.disabled = limitReached;
+    equipmentQuantity.disabled = limitReached;
+    addEquipmentBtn.disabled = limitReached;
+    inventoryLimitHint.classList.toggle('hidden', !limitReached);
+}
+
 function getFilteredInventory() {
     let items = [...allInventoryItems];
 
@@ -483,6 +494,8 @@ function renderInventoryPage() {
     } else {
         inventoryPagination.classList.add('hidden');
     }
+
+    updateInventoryLimitState();
 }
 
 async function loadInventory(gymId) {
@@ -589,7 +602,6 @@ async function addInventoryItem() {
         showToast('Количество должно быть не менее 1');
         return;
     }
-    // Дополнительная проверка: оборудование уже есть в зале
     if (currentInventoryIds.has(equipmentId)) {
         showToast('Это оборудование уже есть в зале. Используйте редактирование для изменения количества.');
         return;
@@ -601,7 +613,10 @@ async function addInventoryItem() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ equipmentId, quantity })
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
+        }
         equipmentInput.value = '';
         selectedEquipmentId = null;
         equipmentQuantity.value = '1';

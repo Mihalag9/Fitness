@@ -76,8 +76,8 @@ namespace Fitness.Controllers
         [HttpPut("{gymid}/inventory")]
         public async Task<IActionResult> PutInventory(int gymid, [FromBody] InventoryUpdateDto dto)
         {
-            var success = await _gymService.UpsertInventoryAsync(gymid, dto.EquipmentId, dto.Quantity);
-            if (!success) return BadRequest();
+            var (success, error) = await _gymService.UpsertInventoryAsync(gymid, dto.EquipmentId, dto.Quantity);
+            if (!success) return BadRequest(new { message = error });
             return NoContent();
         }
 
