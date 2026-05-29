@@ -712,7 +712,7 @@ gymNameInput.addEventListener('input', function () {
     this.value = val;
 });
 
-// ---- Инициализация ----
+// ---- Инициализация: Залы ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', onCancel);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
@@ -740,6 +740,283 @@ invFilterSort.addEventListener('change', () => { inventoryPage = 1; renderInvent
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
+// ==========================================
+// ВКЛАДКА «ОБОРУДОВАНИЕ»
+// ==========================================
+
+// Переключение вкладок
+document.querySelectorAll('.page-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+});
+
+const EQ_API_URL = 'https://localhost:7159/api/Equipment';
+
+const eqTbody = document.getElementById('eq-tbody');
+const eqNameInput = document.getElementById('eq-name');
+const eqBrandInput = document.getElementById('eq-brand');
+const eqModelInput = document.getElementById('eq-model');
+const eqSubmitBtn = document.getElementById('eq-submit-btn');
+const eqCancelBtn = document.getElementById('eq-cancel-btn');
+const eqEditIdField = document.getElementById('eq-edit-id');
+const eqModalTitle = document.getElementById('eq-modal-title');
+const eqAddBtn = document.getElementById('eq-add-btn');
+const eqFilterName = document.getElementById('eq-filter-name');
+const eqFilterBrand = document.getElementById('eq-filter-brand');
+const eqApplyFiltersBtn = document.getElementById('eq-apply-filters');
+const eqClearFiltersBtn = document.getElementById('eq-clear-filters');
+const eqTotalSpan = document.getElementById('eq-total-count');
+const eqModelSpan = document.getElementById('eq-model-count');
+const eqModal = document.getElementById('equipment-modal');
+const eqModalClose = document.getElementById('eq-modal-close');
+
+let eqCurrentEditId = null;
+let eqAppliedFilters = {};
+
+function eqSnapshotFilters() {
+    eqAppliedFilters = {
+        equipmentName: eqFilterName.value,
+        brand: eqFilterBrand.value
+    };
+}
+
+function eqRestoreFiltersToDOM() {
+    eqFilterName.value = eqAppliedFilters.equipmentName || '';
+    eqFilterBrand.value = eqAppliedFilters.brand || '';
+}
+
+function eqClearAllFilters() {
+    eqAppliedFilters = {};
+    eqFilterName.value = '';
+    eqFilterBrand.value = '';
+}
+
+function eqResetModal(isEdit) {
+    eqNameInput.value = '';
+    eqBrandInput.value = '';
+    eqModelInput.value = '';
+    eqEditIdField.value = '';
+    eqCurrentEditId = null;
+    if (isEdit) {
+        eqModalTitle.textContent = 'Редактировать оборудование';
+        eqSubmitBtn.textContent = 'Сохранить';
+    } else {
+        eqModalTitle.textContent = 'Добавить оборудование';
+        eqSubmitBtn.textContent = 'Добавить';
+    }
+}
+
+function eqOpenModal() { eqModal.classList.add('show'); }
+
+function eqCloseModal() {
+    eqModal.classList.remove('show');
+    eqResetModal(false);
+}
+
+function eqOpenCreateModal() { eqResetModal(false); eqOpenModal(); }
+
+function eqOpenEditModal(item) {
+    eqResetModal(true);
+    eqNameInput.value = item.equipmentName;
+    eqBrandInput.value = item.brand;
+    eqModelInput.value = item.model || '';
+    eqEditIdField.value = item.equipmentId;
+    eqCurrentEditId = item.equipmentId;
+    eqOpenModal();
+}
+
+function eqValidateForm() {
+    const name = eqNameInput.value.trim();
+    const brand = eqBrandInput.value.trim();
+    const model = eqModelInput.value.trim();
+
+    if (!name) { showToast('Название оборудования обязательно'); return false; }
+    if (name.length < 3) { showToast('Название должно содержать не менее 3 символов'); return false; }
+    if (name.length > 40) { showToast('Название не должно превышать 40 символов'); return false; }
+    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(name)) { showToast('Название не может состоять только из цифр'); return false; }
+    if (/^\d/.test(name)) { showToast('Название не может начинаться с цифры'); return false; }
+    if (/\s{2,}/.test(name)) { showToast('Пробелы не могут идти подряд'); return false; }
+
+    if (!brand) { showToast('Бренд обязателен'); return false; }
+    if (brand.length < 3) { showToast('Бренд должен содержать не менее 3 символов'); return false; }
+    if (brand.length > 20) { showToast('Бренд не должен превышать 20 символов'); return false; }
+    if (!/[a-zA-Zа-яА-ЯёЁ]/.test(brand)) { showToast('Бренд не может состоять только из цифр'); return false; }
+    if (/^\d/.test(brand)) { showToast('Бренд не может начинаться с цифры'); return false; }
+    if (/\s{2,}/.test(brand)) { showToast('Пробелы не могут идти подряд'); return false; }
+
+    if (model) {
+        if (model.length < 3) { showToast('Модель должна содержать не менее 3 символов'); return false; }
+        if (model.length > 20) { showToast('Модель не должна превышать 20 символов'); return false; }
+        if (!/[a-zA-Zа-яА-ЯёЁ]/.test(model)) { showToast('Модель не может состоять только из цифр'); return false; }
+        if (/^\d/.test(model)) { showToast('Модель не может начинаться с цифры'); return false; }
+        if (/\s{2,}/.test(model)) { showToast('Пробелы не могут идти подряд'); return false; }
+    }
+    return true;
+}
+
+async function eqLoadBrands() {
+    try {
+        const response = await fetch(`${EQ_API_URL}/brands`);
+        if (!response.ok) throw new Error('Не удалось загрузить бренды');
+        const brands = await response.json();
+        eqFilterBrand.innerHTML = '<option value="">Все бренды</option>';
+        brands.forEach(brand => {
+            const opt = document.createElement('option');
+            opt.value = brand;
+            opt.textContent = brand;
+            eqFilterBrand.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Ошибка загрузки брендов:', err);
+    }
+}
+
+async function eqRenderTable() {
+    try {
+        const params = new URLSearchParams();
+        if (eqAppliedFilters.equipmentName) params.append('equipmentName', eqAppliedFilters.equipmentName.trim());
+        if (eqAppliedFilters.brand) params.append('brand', eqAppliedFilters.brand);
+
+        const url = params.toString() ? `${EQ_API_URL}?${params.toString()}` : EQ_API_URL;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+
+        eqTbody.innerHTML = '';
+        result.items.forEach(item => {
+            const row = eqTbody.insertRow();
+            row.insertCell(0).textContent = item.equipmentId;
+            row.insertCell(1).textContent = item.equipmentName;
+            row.insertCell(2).textContent = item.brand;
+            row.insertCell(3).textContent = item.model || '—';
+            const actionsCell = row.insertCell(4);
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️';
+            editBtn.title = 'Редактировать';
+            editBtn.onclick = () => eqOpenEditModal(item);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Удалить';
+            deleteBtn.onclick = () => eqDeleteEquipment(item.equipmentId);
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(deleteBtn);
+        });
+
+        const data = result.statistics;
+        eqTotalSpan.textContent = data.totalEquipment;
+        eqModelSpan.textContent = data.withModel;
+    } catch (err) {
+        showToast(`Ошибка загрузки: ${err.message}`);
+    }
+}
+
+async function eqCreateEquipment() {
+    if (!eqValidateForm()) return false;
+    const newItem = {
+        equipmentName: eqNameInput.value.trim(),
+        brand: eqBrandInput.value.trim(),
+        model: eqModelInput.value.trim() || null
+    };
+    try {
+        const response = await fetch(EQ_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newItem)
+        });
+        if (!response.ok) { const errText = await response.text(); throw new Error(`Ошибка ${response.status}: ${errText}`); }
+        eqCloseModal();
+        eqClearAllFilters();
+        await eqRenderTable();
+        await eqLoadBrands();
+        showToast('Оборудование добавлено', 'success');
+        return true;
+    } catch (err) { showToast(`Не удалось добавить: ${err.message}`); return false; }
+}
+
+async function eqUpdateEquipment(id) {
+    if (!eqValidateForm()) return false;
+    const updated = {
+        equipmentId: id,
+        equipmentName: eqNameInput.value.trim(),
+        brand: eqBrandInput.value.trim(),
+        model: eqModelInput.value.trim() || null
+    };
+    try {
+        const response = await fetch(`${EQ_API_URL}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updated)
+        });
+        if (response.status === 400) { showToast('Неверный запрос (несоответствие ID)'); return false; }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        eqCloseModal();
+        eqRestoreFiltersToDOM();
+        await eqRenderTable();
+        await eqLoadBrands();
+        showToast('Оборудование обновлено', 'success');
+        return true;
+    } catch (err) { showToast(`Ошибка обновления: ${err.message}`); return false; }
+}
+
+async function eqDeleteEquipment(id) {
+    if (!confirm('Удалить это оборудование? Оно будет удалено из всех залов.')) return;
+    try {
+        const response = await fetch(`${EQ_API_URL}/${id}`, { method: 'DELETE' });
+        if (response.status === 404) { showToast('Оборудование не найдено (возможно, уже удалено)'); return; }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        showToast('Оборудование удалено', 'success');
+        eqRestoreFiltersToDOM();
+        await eqRenderTable();
+        await eqLoadBrands();
+    } catch (err) { showToast(`Ошибка удаления: ${err.message}`); }
+}
+
+async function eqOnSubmit() {
+    if (eqCurrentEditId !== null) { await eqUpdateEquipment(eqCurrentEditId); }
+    else { await eqCreateEquipment(); }
+}
+
+function eqOnApplyFilters() { eqSnapshotFilters(); eqRenderTable(); }
+function eqOnClearFilters() { eqClearAllFilters(); eqRenderTable(); }
+
+function eqPreventLeadingDigit(e, input) {
+    const isDigit = /^\d$/.test(e.key);
+    const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'].includes(e.key);
+    const isCtrlCmd = e.ctrlKey || e.metaKey;
+    if (isCtrlCmd || isNav) return;
+    if (input.value.length === 0 && isDigit) e.preventDefault();
+}
+
+function eqAutoFormat(input) {
+    let val = input.value;
+    val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
+    val = val.replace(/\s{2,}/g, ' ');
+    val = val.replace(/([a-zA-Zа-яА-ЯёЁ]+)/g, m => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase());
+    input.value = val;
+}
+
+// ---- Инициализация: Оборудование ----
+eqSubmitBtn.addEventListener('click', eqOnSubmit);
+eqCancelBtn.addEventListener('click', eqCloseModal);
+eqApplyFiltersBtn.addEventListener('click', eqOnApplyFilters);
+eqClearFiltersBtn.addEventListener('click', eqOnClearFilters);
+eqAddBtn.addEventListener('click', eqOpenCreateModal);
+eqModalClose.addEventListener('click', eqCloseModal);
+eqModal.addEventListener('click', (e) => { if (e.target === eqModal) eqCloseModal(); });
+
+eqNameInput.addEventListener('keydown', function (e) { eqPreventLeadingDigit(e, this); });
+eqBrandInput.addEventListener('keydown', function (e) { eqPreventLeadingDigit(e, this); });
+eqModelInput.addEventListener('keydown', function (e) { eqPreventLeadingDigit(e, this); });
+eqNameInput.addEventListener('input', function () { eqAutoFormat(this); });
+eqBrandInput.addEventListener('input', function () { eqAutoFormat(this); });
+eqModelInput.addEventListener('input', function () { eqAutoFormat(this); });
+
 loadEquipmentDictionary();
 loadBrands();
 renderTable();
+eqLoadBrands();
+eqRenderTable();

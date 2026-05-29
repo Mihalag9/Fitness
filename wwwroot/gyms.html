@@ -13,10 +13,16 @@
         <a href="workouts.html">Тренировки</a>
         <a href="abonnements.html">Абонементы</a>
         <a href="gyms.html" class="active">Залы</a>
-        <a href="equipment.html">Оборудование</a>
     </nav>
 
     <h1>Управление залами фитнес-клуба</h1>
+
+    <div class="page-tabs">
+        <button class="page-tab active" data-tab="gyms">Залы</button>
+        <button class="page-tab" data-tab="equipment">Оборудование</button>
+    </div>
+
+    <div id="tab-gyms" class="tab-content active">
 
     <div class="filter-card">
         <h2>Фильтры</h2>
@@ -118,6 +124,56 @@
                         <span id="inv-page-info" class="inv-page-info">1 / 1</span>
                         <button id="inv-next-btn" class="inv-page-btn" disabled>&rsaquo;</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="tab-equipment" class="tab-content">
+        <div class="filter-card">
+            <h2>Фильтры</h2>
+            <div class="filter-grid">
+                <input type="text" id="eq-filter-name" placeholder="Название оборудования">
+                <select id="eq-filter-brand">
+                    <option value="">Все бренды</option>
+                </select>
+            </div>
+            <div class="filter-actions" style="margin-top: 10px;">
+                <button id="eq-apply-filters">Применить</button>
+                <button id="eq-clear-filters">Очистить</button>
+                <button id="eq-add-btn" style="margin-left:auto;">+ Добавить оборудование</button>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h2>Статистика</h2>
+            <p>Всего видов оборудования: <span id="eq-total-count">0</span></p>
+            <p>С указанной моделью: <span id="eq-model-count">0</span></p>
+        </div>
+
+        <table id="equipment-table">
+            <thead>
+                <tr><th>ID</th><th>Название</th><th>Бренд</th><th>Модель</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="eq-tbody"></tbody>
+        </table>
+
+        <div id="equipment-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close" id="eq-modal-close">&times;</span>
+                <h2 id="eq-modal-title">Добавить оборудование</h2>
+                <input type="hidden" id="eq-edit-id">
+
+                <div class="form-grid">
+                    <input type="text" id="eq-name" placeholder="Название оборудования" required maxlength="40">
+                    <input type="text" id="eq-brand" placeholder="Бренд" required maxlength="20">
+                    <input type="text" id="eq-model" placeholder="Модель (необязательно)" maxlength="20">
+                </div>
+
+                <div class="form-actions" style="margin-top: 10px;">
+                    <button id="eq-submit-btn">Добавить</button>
+                    <button id="eq-cancel-btn">Отмена</button>
                 </div>
             </div>
         </div>
