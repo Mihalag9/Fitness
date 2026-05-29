@@ -276,22 +276,14 @@ async function loadEquipmentDictionary() {
     }
 }
 
-// ---- Brands for filter ----
-async function loadBrands() {
-    try {
-        const response = await fetch(`${EQUIPMENT_API_URL}/brands`);
-        if (!response.ok) throw new Error('Не удалось загрузить бренды');
-        const brands = await response.json();
-        filterBrand.innerHTML = '<option value="">Все бренды</option>';
-        brands.forEach(brand => {
-            const opt = document.createElement('option');
-            opt.value = brand;
-            opt.textContent = brand;
-            filterBrand.appendChild(opt);
-        });
-    } catch (err) {
-        console.error('Ошибка загрузки брендов:', err);
-    }
+function populateGymBrandFilter(brands) {
+    filterBrand.innerHTML = '<option value="">Все бренды</option>';
+    brands.forEach(brand => {
+        const opt = document.createElement('option');
+        opt.value = brand;
+        opt.textContent = brand;
+        filterBrand.appendChild(opt);
+    });
 }
 
 // ---- Inventory management ----
@@ -560,6 +552,11 @@ async function renderTable() {
         const data = result.statistics;
         totalSpan.textContent = data.totalGyms;
         totalEquipmentSpan.textContent = data.totalEquipmentUnits;
+
+        // Бренды из ответа
+        if (result.brands) {
+            populateGymBrandFilter(result.brands);
+        }
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }
@@ -582,6 +579,7 @@ function openEditModal(gym) {
     inventoryGymName.textContent = gym.gymName;
     addEquipmentBtn.textContent = 'Добавить';
     openModal();
+    loadEquipmentDictionary();
     loadInventory(gym.gymId);
 }
 
@@ -608,6 +606,7 @@ async function createGym() {
         inventoryCard.classList.remove('hidden');
         inventoryGymName.textContent = gymNameInput.value.trim();
         addEquipmentBtn.textContent = 'Добавить';
+        loadEquipmentDictionary();
         loadInventory(created.gymId);
         clearAllFilters();
         await renderTable();
@@ -745,12 +744,19 @@ modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }
 // ==========================================
 
 // Переключение вкладок
+let eqTabLoaded = false;
+
 document.querySelectorAll('.page-tab').forEach(tab => {
     tab.addEventListener('click', () => {
         document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         tab.classList.add('active');
         document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+
+        if (tab.dataset.tab === 'equipment' && !eqTabLoaded) {
+            eqTabLoaded = true;
+            eqRenderTable();
+        }
     });
 });
 
@@ -858,21 +864,14 @@ function eqValidateForm() {
     return true;
 }
 
-async function eqLoadBrands() {
-    try {
-        const response = await fetch(`${EQ_API_URL}/brands`);
-        if (!response.ok) throw new Error('Не удалось загрузить бренды');
-        const brands = await response.json();
-        eqFilterBrand.innerHTML = '<option value="">Все бренды</option>';
-        brands.forEach(brand => {
-            const opt = document.createElement('option');
-            opt.value = brand;
-            opt.textContent = brand;
-            eqFilterBrand.appendChild(opt);
-        });
-    } catch (err) {
-        console.error('Ошибка загрузки брендов:', err);
-    }
+function populateEquipmentBrandFilter(brands) {
+    eqFilterBrand.innerHTML = '<option value="">Все бренды</option>';
+    brands.forEach(brand => {
+        const opt = document.createElement('option');
+        opt.value = brand;
+        opt.textContent = brand;
+        eqFilterBrand.appendChild(opt);
+    });
 }
 
 async function eqRenderTable() {
@@ -909,6 +908,11 @@ async function eqRenderTable() {
         const data = result.statistics;
         eqTotalSpan.textContent = data.totalEquipment;
         eqModelSpan.textContent = data.withModel;
+
+        // Бренды из ответа
+        if (result.brands) {
+            populateEquipmentBrandFilter(result.brands);
+        }
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }
@@ -931,7 +935,6 @@ async function eqCreateEquipment() {
         eqCloseModal();
         eqClearAllFilters();
         await eqRenderTable();
-        await eqLoadBrands();
         showToast('Оборудование добавлено', 'success');
         return true;
     } catch (err) { showToast(`Не удалось добавить: ${err.message}`); return false; }
@@ -956,7 +959,6 @@ async function eqUpdateEquipment(id) {
         eqCloseModal();
         eqRestoreFiltersToDOM();
         await eqRenderTable();
-        await eqLoadBrands();
         showToast('Оборудование обновлено', 'success');
         return true;
     } catch (err) { showToast(`Ошибка обновления: ${err.message}`); return false; }
@@ -971,7 +973,6 @@ async function eqDeleteEquipment(id) {
         showToast('Оборудование удалено', 'success');
         eqRestoreFiltersToDOM();
         await eqRenderTable();
-        await eqLoadBrands();
     } catch (err) { showToast(`Ошибка удаления: ${err.message}`); }
 }
 
@@ -1015,8 +1016,4 @@ eqNameInput.addEventListener('input', function () { eqAutoFormat(this); });
 eqBrandInput.addEventListener('input', function () { eqAutoFormat(this); });
 eqModelInput.addEventListener('input', function () { eqAutoFormat(this); });
 
-loadEquipmentDictionary();
-loadBrands();
 renderTable();
-eqLoadBrands();
-eqRenderTable();

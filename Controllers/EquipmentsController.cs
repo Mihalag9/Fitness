@@ -22,7 +22,8 @@ namespace Fitness.Controllers
         {
             var items = await _equipmentService.GetAllAsync(equipmentName, brand);
             var stats = await _equipmentService.GetStatisticsAsync();
-            return Ok(new { Items = items, Statistics = stats });
+            var brands = await _equipmentService.GetBrandsAsync();
+            return Ok(new { Items = items, Statistics = stats, Brands = brands });
         }
 
         [HttpGet("brands")]

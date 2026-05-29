@@ -192,6 +192,26 @@ namespace Fitness.Services
             return items;
         }
 
+        public async Task<IEnumerable<string>> GetBrandsAsync()
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var brands = new List<string>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_equipment_brands()";
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        brands.Add(reader.GetString(0));
+                    }
+                }
+            }
+            return brands;
+        }
+
         public async Task<GymStatistics> GetStatisticsAsync()
         {
             var connection = _context.Database.GetDbConnection();

@@ -24,7 +24,8 @@ namespace Fitness.Controllers
         {
             var gyms = await _gymService.GetAllAsync(gymName, hasEquipment, equipmentName, brand);
             var stats = await _gymService.GetStatisticsAsync();
-            return Ok(new { Items = gyms, Statistics = stats });
+            var brands = await _gymService.GetBrandsAsync();
+            return Ok(new { Items = gyms, Statistics = stats, Brands = brands });
         }
 
         [HttpGet("{gymid}")]
