@@ -66,7 +66,7 @@ INSERT INTO "Gym" ("GymName") VALUES
 ('Сайкл-студия 2'),
 ('Кроссфит-зона');
 
--- 6. Оборудование (22 вида)
+-- 6. Оборудование (32 вида)
 INSERT INTO "Equipment" ("EquipmentName", "Brand", "Model") VALUES
 ('Беговая дорожка', 'Technogym', 'Run Excite 700'),
 ('Эллиптический тренажер', 'Precor', 'EFX 835'),
@@ -89,7 +89,22 @@ INSERT INTO "Equipment" ("EquipmentName", "Brand", "Model") VALUES
 ('Набор фитнес-резинок', 'TRX', 'Bandit Set'),
 ('Ролик для пресса', 'Torneo', 'A-936 Core Wheel'),
 ('Кроссовер кабельный', 'Matrix', 'Aura Series'),
-('Медбол 5 кг', 'Reebok', 'Studio Medball');
+('Медбол 5 кг', 'Reebok', 'Studio Medball'),
+('Гакк-машина', 'Technogym', 'Pure Strength Hack Press'),
+('Скамья для жима лежа', 'Precor', 'Discovery Series Olympic Bench'),
+('Тренажер для сгибания ног сидя', 'Life Fitness', 'Optima Series Leg Curl'),
+('Набор бамперных дисков (150 кг)', 'Eleiko', 'IWF Training Plates'),
+('Гантельный ряд (12-30 кг)', 'Ziva', 'Pro EX'),
+('Тренажер для разгибания ног', 'Matrix', 'Versa Leg Extension'),
+('Силовая рама (Power Rack)', 'Rogue Fitness', 'Monster Lite R-3'),
+('Лыжный тренажер', 'Concept2', 'SkiErg'),
+('Утяжелители (2х2 кг)', 'Torneo', 'A-930'),
+('Гиря чугунная 24 кг', 'Уральская гиря', 'Чемпионская'),
+('Тренажер для гиперэкстензии', 'Body-Solid', 'GRCH322'),
+('Функциональные петли', 'TRX', 'PRO4'),
+('Степ-дека многофункциональная', 'Reebok', 'Deck Studio'),
+('Тренировочные лапы', 'Everlast', 'Mantis Punch Mitts'),
+('Блок для йоги пробковый', 'Manduka', 'Cork Yoga Block');
 
 -- 7. Виды тренировок (С учетом добавленной "Силовой" под ID 2)
 INSERT INTO "Workout" ("WorkoutName", "DurationMinutes", "MaxParticipants") VALUES
