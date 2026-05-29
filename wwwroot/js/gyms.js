@@ -35,6 +35,15 @@ const inventoryBody = document.getElementById('inventory-body');
 let selectedEquipmentId = null;
 let equipmentDropdownIndex = -1;
 
+// Inventory pagination
+const INVENTORY_PAGE_SIZE = 5;
+let allInventoryItems = [];
+let inventoryPage = 1;
+const inventoryPagination = document.getElementById('inventory-pagination');
+const invPrevBtn = document.getElementById('inv-prev-btn');
+const invNextBtn = document.getElementById('inv-next-btn');
+const invPageInfo = document.getElementById('inv-page-info');
+
 let currentEditId = null;
 
 let appliedFilters = {};
@@ -281,39 +290,60 @@ async function loadBrands() {
 }
 
 // ---- Inventory management ----
+function renderInventoryPage() {
+    inventoryBody.innerHTML = '';
+    const totalPages = Math.max(1, Math.ceil(allInventoryItems.length / INVENTORY_PAGE_SIZE));
+    if (inventoryPage > totalPages) inventoryPage = totalPages;
+
+    const start = (inventoryPage - 1) * INVENTORY_PAGE_SIZE;
+    const pageItems = allInventoryItems.slice(start, start + INVENTORY_PAGE_SIZE);
+
+    pageItems.forEach(item => {
+        const row = inventoryBody.insertRow();
+        row.insertCell(0).textContent = item.equipmentId;
+        row.insertCell(1).textContent = item.equipmentName;
+        row.insertCell(2).textContent = item.brand || '—';
+        row.insertCell(3).textContent = item.model || '—';
+        row.insertCell(4).textContent = item.quantity;
+        const actionsCell = row.insertCell(5);
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать количество';
+        editBtn.onclick = () => startEditInventory(item);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить из зала';
+        deleteBtn.onclick = () => deleteInventoryItem(currentEditId, item.equipmentId);
+
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+
+    invPrevBtn.disabled = inventoryPage <= 1;
+    invNextBtn.disabled = inventoryPage >= totalPages;
+    invPageInfo.textContent = `${inventoryPage} / ${totalPages}`;
+
+    if (allInventoryItems.length > 0) {
+        inventoryPagination.classList.remove('hidden');
+    } else {
+        inventoryPagination.classList.add('hidden');
+    }
+}
+
 async function loadInventory(gymId) {
     try {
         const response = await fetch(`${API_URL}/${gymId}/inventory`);
         if (!response.ok) throw new Error('Ошибка загрузки инвентаря');
         const items = await response.json();
 
-        // Обновляем Set ID оборудования в зале
         currentInventoryIds.clear();
         items.forEach(item => currentInventoryIds.add(item.equipmentId));
 
-        inventoryBody.innerHTML = '';
-        items.forEach(item => {
-            const row = inventoryBody.insertRow();
-            row.insertCell(0).textContent = item.equipmentId;
-            row.insertCell(1).textContent = item.equipmentName;
-            row.insertCell(2).textContent = item.brand || '—';
-            row.insertCell(3).textContent = item.model || '—';
-            row.insertCell(4).textContent = item.quantity;
-            const actionsCell = row.insertCell(5);
-
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать количество';
-            editBtn.onclick = () => startEditInventory(item);
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить из зала';
-            deleteBtn.onclick = () => deleteInventoryItem(gymId, item.equipmentId);
-
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
+        allInventoryItems = items;
+        inventoryPage = 1;
+        renderInventoryPage();
     } catch (err) {
         showToast(`Ошибка инвентаря: ${err.message}`);
     }
@@ -643,6 +673,14 @@ addGymBtn.addEventListener('click', openCreateModal);
 equipmentInput.addEventListener('input', onEquipmentInput);
 equipmentInput.addEventListener('keydown', onEquipmentKeydown);
 equipmentInput.addEventListener('blur', () => setTimeout(hideEquipmentDropdown, 200));
+
+invPrevBtn.addEventListener('click', () => {
+    if (inventoryPage > 1) { inventoryPage--; renderInventoryPage(); }
+});
+invNextBtn.addEventListener('click', () => {
+    const totalPages = Math.ceil(allInventoryItems.length / INVENTORY_PAGE_SIZE);
+    if (inventoryPage < totalPages) { inventoryPage++; renderInventoryPage(); }
+});
 
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
