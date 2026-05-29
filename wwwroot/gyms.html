@@ -20,19 +20,24 @@
 
     <div class="filter-card">
         <h2>Фильтры</h2>
-        <input type="text" id="filter-gymName" placeholder="Название зала">
-        <select id="filter-hasEquipment">
-            <option value="">Все залы</option>
-            <option value="true">С оборудованием</option>
-            <option value="false">Без оборудования</option>
-        </select>
-        <input type="text" id="filter-equipmentName" placeholder="Название оборудования">
-        <select id="filter-brand">
-            <option value="">Все бренды</option>
-        </select>
-        <button id="apply-filters">Применить</button>
-        <button id="clear-filters">Очистить</button>
-        <button id="add-gym-btn" style="margin-left:auto;">+ Добавить зал</button>
+        <div class="filter-grid">
+            <input type="text" id="filter-gymName" placeholder="Название зала">
+            <select id="filter-hasEquipment">
+                <option value="">Все залы</option>
+                <option value="true">С оборудованием</option>
+                <option value="false">Без оборудования</option>
+            </select>
+            <input type="text" id="filter-equipmentName" placeholder="Название оборудования">
+            <select id="filter-brand">
+                <option value="">Все бренды</option>
+            </select>
+        </div>
+
+        <div class="filter-actions" style="margin-top: 10px;">
+            <button id="apply-filters">Применить</button>
+            <button id="clear-filters">Очистить</button>
+            <button id="add-gym-btn" style="margin-left:auto;">+ Добавить зал</button>
+        </div>
     </div>
 
     <div class="stats-card">
