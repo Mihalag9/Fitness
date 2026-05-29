@@ -26,10 +26,14 @@ const totalEquipmentSpan = document.getElementById('total-equipment');
 // Inventory elements
 const inventoryCard = document.getElementById('inventory-card');
 const inventoryGymName = document.getElementById('inventory-gym-name');
-const equipmentSelect = document.getElementById('equipment-select');
+const equipmentInput = document.getElementById('equipment-input');
+const equipmentDropdown = document.getElementById('equipment-dropdown');
 const equipmentQuantity = document.getElementById('equipment-quantity');
 const addEquipmentBtn = document.getElementById('add-equipment-btn');
 const inventoryBody = document.getElementById('inventory-body');
+
+let selectedEquipmentId = null;
+let equipmentDropdownIndex = -1;
 
 let currentEditId = null;
 
@@ -69,6 +73,10 @@ function clearForm() {
     currentEditId = null;
     inventoryCard.classList.add('hidden');
     inventoryBody.innerHTML = '';
+    equipmentInput.value = '';
+    selectedEquipmentId = null;
+    equipmentQuantity.value = '1';
+    hideEquipmentDropdown();
 }
 
 function resetModal(isEdit) {
@@ -141,18 +149,107 @@ async function updateStats() {
 }
 
 
-// ---- Equipment dictionary (filtered: only not in current gym) ----
-function refreshEquipmentSelect() {
-    equipmentSelect.innerHTML = '<option value="">— Выберите оборудование —</option>';
-    allEquipment.forEach(eq => {
-        // Пропускаем оборудование, которое уже есть в зале
-        if (currentInventoryIds.has(eq.equipmentId)) return;
+// ---- Equipment dictionary ----
+function getFilteredEquipment(query) {
+    if (!query) return [];
+    const q = query.toLowerCase().trim();
+    return allEquipment.filter(eq =>
+        !currentInventoryIds.has(eq.equipmentId) &&
+        (eq.equipmentName.toLowerCase().includes(q) ||
+         (eq.brand && eq.brand.toLowerCase().includes(q)) ||
+         (eq.model && eq.model.toLowerCase().includes(q)))
+    );
+}
 
-        const opt = document.createElement('option');
-        opt.value = eq.equipmentId;
-        opt.textContent = `${eq.equipmentName}${eq.brand ? ' (' + eq.brand + ')' : ''}`;
-        equipmentSelect.appendChild(opt);
+function formatEquipmentItem(eq) {
+    const parts = [eq.equipmentName];
+    if (eq.brand) parts.push(eq.brand);
+    if (eq.model) parts.push(eq.model);
+    return parts.join(' — ');
+}
+
+function showEquipmentDropdown() {
+    equipmentDropdown.classList.add('show');
+}
+
+function hideEquipmentDropdown() {
+    equipmentDropdown.classList.remove('show');
+    equipmentDropdownIndex = -1;
+}
+
+function renderEquipmentDropdown(filtered) {
+    equipmentDropdown.innerHTML = '';
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item no-results';
+        div.textContent = 'Ничего не найдено';
+        equipmentDropdown.appendChild(div);
+        return;
+    }
+    filtered.forEach((eq, i) => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        if (i === equipmentDropdownIndex) div.classList.add('active');
+        div.textContent = formatEquipmentItem(eq);
+        div.dataset.equipmentId = eq.equipmentId;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectEquipmentFromDropdown(eq);
+        });
+        equipmentDropdown.appendChild(div);
     });
+}
+
+function selectEquipmentFromDropdown(eq) {
+    equipmentInput.value = formatEquipmentItem(eq);
+    selectedEquipmentId = eq.equipmentId;
+    hideEquipmentDropdown();
+}
+
+function onEquipmentInput() {
+    const query = equipmentInput.value.trim();
+    if (!query) {
+        hideEquipmentDropdown();
+        selectedEquipmentId = null;
+        return;
+    }
+    selectedEquipmentId = null;
+    equipmentDropdownIndex = -1;
+    const filtered = getFilteredEquipment(query);
+    renderEquipmentDropdown(filtered);
+    if (filtered.length > 0) showEquipmentDropdown();
+    else hideEquipmentDropdown();
+}
+
+function onEquipmentKeydown(e) {
+    const items = equipmentDropdown.querySelectorAll('.dropdown-item:not(.no-results)');
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (items.length === 0) return;
+        equipmentDropdownIndex = Math.min(equipmentDropdownIndex + 1, items.length - 1);
+        renderEquipmentDropdown(getFilteredEquipment(equipmentInput.value.trim()));
+        items[equipmentDropdownIndex]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (items.length === 0) return;
+        equipmentDropdownIndex = Math.max(equipmentDropdownIndex - 1, 0);
+        renderEquipmentDropdown(getFilteredEquipment(equipmentInput.value.trim()));
+        items[equipmentDropdownIndex]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+        if (equipmentDropdownIndex >= 0 && equipmentDropdownIndex < items.length) {
+            e.preventDefault();
+            const eqId = parseInt(items[equipmentDropdownIndex].dataset.equipmentId, 10);
+            const eq = allEquipment.find(e => e.equipmentId === eqId);
+            if (eq) selectEquipmentFromDropdown(eq);
+        }
+    } else if (e.key === 'Escape') {
+        hideEquipmentDropdown();
+    }
+}
+
+function findEquipmentByName(name) {
+    const trimmed = name.trim().toLowerCase();
+    return allEquipment.find(eq => formatEquipmentItem(eq).toLowerCase() === trimmed);
 }
 
 async function loadEquipmentDictionary() {
@@ -160,7 +257,6 @@ async function loadEquipmentDictionary() {
         const response = await fetch(`${API_URL}/equipment`);
         if (!response.ok) throw new Error('Не удалось загрузить справочник оборудования');
         allEquipment = await response.json();
-        refreshEquipmentSelect();
     } catch (err) {
         console.error('Ошибка загрузки оборудования:', err);
     }
@@ -194,9 +290,6 @@ async function loadInventory(gymId) {
         // Обновляем Set ID оборудования в зале
         currentInventoryIds.clear();
         items.forEach(item => currentInventoryIds.add(item.equipmentId));
-
-        // Перестраиваем выпадающий список без уже имеющегося оборудования
-        refreshEquipmentSelect();
 
         inventoryBody.innerHTML = '';
         items.forEach(item => {
@@ -290,7 +383,7 @@ async function saveInventoryQuantity(equipmentId, newQuantity) {
 // ---- Добавление нового оборудования в зал ----
 async function addInventoryItem() {
     if (!currentEditId) return;
-    const equipmentId = parseInt(equipmentSelect.value, 10);
+    const equipmentId = selectedEquipmentId;
     const quantity = parseInt(equipmentQuantity.value, 10);
 
     if (!equipmentId) {
@@ -314,7 +407,8 @@ async function addInventoryItem() {
             body: JSON.stringify({ equipmentId, quantity })
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        equipmentSelect.value = '';
+        equipmentInput.value = '';
+        selectedEquipmentId = null;
         equipmentQuantity.value = '1';
         await loadInventory(currentEditId);
         restoreFiltersToDOM();
@@ -545,6 +639,10 @@ applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
 addEquipmentBtn.addEventListener('click', addInventoryItem);
 addGymBtn.addEventListener('click', openCreateModal);
+
+equipmentInput.addEventListener('input', onEquipmentInput);
+equipmentInput.addEventListener('keydown', onEquipmentKeydown);
+equipmentInput.addEventListener('blur', () => setTimeout(hideEquipmentDropdown, 200));
 
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });

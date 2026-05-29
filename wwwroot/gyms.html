@@ -74,10 +74,11 @@
 
                     <div class="inventory-controls">
                         <div class="form-group">
-                            <label for="equipment-select">Оборудование</label>
-                            <select id="equipment-select">
-                                <option value="">— Выберите оборудование —</option>
-                            </select>
+                            <label for="equipment-input">Оборудование</label>
+                            <div class="autocomplete-wrap">
+                                <input type="text" id="equipment-input" placeholder="Начните вводить название" autocomplete="off">
+                                <div id="equipment-dropdown" class="dropdown-list hidden"></div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="equipment-quantity">Количество</label>
@@ -85,7 +86,7 @@
                         </div>
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button id="add-equipment-btn">Добавить / Изменить</button>
+                            <button id="add-equipment-btn">Добавить</button>
                         </div>
                     </div>
 
