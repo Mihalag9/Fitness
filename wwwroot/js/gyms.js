@@ -48,6 +48,7 @@ const invPageInfo = document.getElementById('inv-page-info');
 // Inventory filters
 const invFilterName = document.getElementById('inv-filter-name');
 const invFilterBrand = document.getElementById('inv-filter-brand');
+const invFilterBrandDropdown = document.getElementById('inv-filter-brand-dropdown');
 const invFilterSort = document.getElementById('inv-filter-sort');
 
 let currentEditId = null;
@@ -370,6 +371,72 @@ function getFilteredInventory() {
     return items;
 }
 
+// ---- Inventory brand autocomplete ----
+let invBrands = [];
+
+function refreshInvBrands() {
+    invBrands = [...new Set(allInventoryItems.map(i => i.brand).filter(Boolean))].sort();
+}
+
+function getFilteredInvBrands(query) {
+    if (!query) return invBrands;
+    const q = query.toLowerCase().trim();
+    return invBrands.filter(b => b.toLowerCase().includes(q));
+}
+
+function renderInvBrandDropdown(filtered) {
+    invFilterBrandDropdown.innerHTML = '';
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item no-results';
+        div.textContent = 'Ничего не найдено';
+        invFilterBrandDropdown.appendChild(div);
+        return;
+    }
+    const allItem = document.createElement('div');
+    allItem.className = 'dropdown-item';
+    allItem.textContent = 'Все бренды';
+    allItem.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        invFilterBrand.value = '';
+        invFilterBrandDropdown.classList.remove('show');
+        inventoryPage = 1;
+        renderInventoryPage();
+    });
+    invFilterBrandDropdown.appendChild(allItem);
+
+    filtered.forEach(brand => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        div.textContent = brand;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            invFilterBrand.value = brand;
+            invFilterBrandDropdown.classList.remove('show');
+            inventoryPage = 1;
+            renderInventoryPage();
+        });
+        invFilterBrandDropdown.appendChild(div);
+    });
+}
+
+function onInvBrandInput() {
+    const query = invFilterBrand.value.trim();
+    const filtered = getFilteredInvBrands(query);
+    renderInvBrandDropdown(filtered);
+    if (filtered.length > 0 || query) invFilterBrandDropdown.classList.add('show');
+    else invFilterBrandDropdown.classList.remove('show');
+}
+
+function onInvBrandKeydown(e) {
+    const items = invFilterBrandDropdown.querySelectorAll('.dropdown-item');
+    if (e.key === 'Escape') invFilterBrandDropdown.classList.remove('show');
+    if (e.key === 'Enter' && items.length > 0) {
+        e.preventDefault();
+        items[0].dispatchEvent(new Event('mousedown'));
+    }
+}
+
 function renderInventoryPage() {
     inventoryBody.innerHTML = '';
     const filtered = getFilteredInventory();
@@ -425,14 +492,8 @@ async function loadInventory(gymId) {
         allInventoryItems = items;
         inventoryPage = 1;
 
-        const brands = [...new Set(items.map(i => i.brand).filter(Boolean))].sort();
-        invFilterBrand.innerHTML = '<option value="">Все бренды</option>';
-        brands.forEach(b => {
-            const opt = document.createElement('option');
-            opt.value = b;
-            opt.textContent = b;
-            invFilterBrand.appendChild(opt);
-        });
+        refreshInvBrands();
+        invFilterBrand.value = '';
         invFilterName.value = '';
         invFilterSort.value = '';
 
@@ -794,7 +855,9 @@ invNextBtn.addEventListener('click', () => {
 });
 
 invFilterName.addEventListener('input', () => { inventoryPage = 1; renderInventoryPage(); });
-invFilterBrand.addEventListener('change', () => { inventoryPage = 1; renderInventoryPage(); });
+invFilterBrand.addEventListener('input', onInvBrandInput);
+invFilterBrand.addEventListener('keydown', onInvBrandKeydown);
+invFilterBrand.addEventListener('blur', () => setTimeout(() => invFilterBrandDropdown.classList.remove('show'), 200));
 invFilterSort.addEventListener('change', () => { inventoryPage = 1; renderInventoryPage(); });
 
 modalClose.addEventListener('click', closeModal);

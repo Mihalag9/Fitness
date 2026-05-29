@@ -99,9 +99,10 @@
 
                     <div class="inventory-filters" id="inventory-filters">
                         <input type="text" id="inv-filter-name" placeholder="Поиск по названию">
-                        <select id="inv-filter-brand">
-                            <option value="">Все бренды</option>
-                        </select>
+                        <div class="autocomplete-wrap">
+                            <input type="text" id="inv-filter-brand" placeholder="Бренд" autocomplete="off">
+                            <div id="inv-filter-brand-dropdown" class="dropdown-list hidden"></div>
+                        </div>
                         <select id="inv-filter-sort">
                             <option value="">Без сортировки</option>
                             <option value="name-asc">Название ↑</option>
