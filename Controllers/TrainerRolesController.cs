@@ -71,7 +71,14 @@ namespace Fitness.Controllers
         public async Task<ActionResult<TrainerRole>> PostTrainerRole(TrainerRole trainerRole)
         {
             _context.TrainerRoles.Add(trainerRole);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest(new { message = "Роль тренера для этой тренировки уже назначена" });
+            }
 
             return CreatedAtAction(nameof(GetTrainerRole), new { trainerid = trainerRole.TrainerId, workoutid = trainerRole.WorkoutId }, trainerRole);
         }

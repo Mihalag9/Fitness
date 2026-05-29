@@ -47,6 +47,9 @@ namespace Fitness.Services
             var error = Validate(abonnement);
             if (error != null) return (null, error);
 
+            if (await _context.Abonnements.AnyAsync(a => a.AbonnementType == abonnement.AbonnementType))
+                return (null, "Абонемент с таким типом уже существует");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
@@ -74,6 +77,9 @@ namespace Fitness.Services
         {
             var error = Validate(abonnement);
             if (error != null) return (false, error);
+
+            if (await _context.Abonnements.AnyAsync(a => a.AbonnementType == abonnement.AbonnementType && a.AbonnementId != id))
+                return (false, "Абонемент с таким типом уже существует");
 
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();

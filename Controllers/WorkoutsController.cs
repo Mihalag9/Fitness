@@ -62,15 +62,17 @@ public class WorkoutsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Workout>> PostWorkout(Workout workout)
     {
-        var createdWorkout = await _workoutService.CreateAsync(workout);
-        return CreatedAtAction(nameof(GetWorkout), new { workoutid = createdWorkout.WorkoutId }, createdWorkout);
+        var (createdWorkout, error) = await _workoutService.CreateAsync(workout);
+        if (error != null) return BadRequest(new { message = error });
+        return CreatedAtAction(nameof(GetWorkout), new { workoutid = createdWorkout!.WorkoutId }, createdWorkout);
     }
 
     // PUT: api/Workouts/5
     [HttpPut("{workoutid}")]
     public async Task<IActionResult> PutWorkout(int workoutid, Workout workout)
     {
-        var success = await _workoutService.UpdateAsync(workoutid, workout);
+        var (success, error) = await _workoutService.UpdateAsync(workoutid, workout);
+        if (error != null) return BadRequest(new { message = error });
 
         if (!success)
         {

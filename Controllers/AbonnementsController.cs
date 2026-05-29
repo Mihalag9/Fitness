@@ -56,7 +56,7 @@ public class AbonnementsController : ControllerBase
     public async Task<ActionResult<Abonnement>> PostAbonnement(Abonnement abonnement)
     {
         var (entity, error) = await _abonnementService.CreateAsync(abonnement);
-        if (error != null) return BadRequest(error);
+        if (error != null) return BadRequest(new { message = error });
         return CreatedAtAction(nameof(GetAbonnement), new { abonnementid = entity!.AbonnementId }, entity);
     }
 
@@ -65,7 +65,7 @@ public class AbonnementsController : ControllerBase
     public async Task<IActionResult> PutAbonnement(int abonnementid, Abonnement abonnement)
     {
         var (success, error) = await _abonnementService.UpdateAsync(abonnementid, abonnement);
-        if (error != null) return BadRequest(error);
+        if (error != null) return BadRequest(new { message = error });
         if (!success) return NotFound();
         return NoContent();
     }

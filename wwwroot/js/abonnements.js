@@ -30,6 +30,7 @@ const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
 let currentEditId = null;
+let allItems = [];
 
 let appliedFilters = {};
 
@@ -115,6 +116,14 @@ function validateForm(data) {
         showToast('Название содержит недопустимые символы');
         return false;
     }
+    const duplicate = allItems.some(i =>
+        i.abonnementType.toLowerCase() === data.abonnementType.toLowerCase() &&
+        i.abonnementId !== currentEditId
+    );
+    if (duplicate) {
+        showToast('Абонемент с таким типом уже существует');
+        return false;
+    }
     if (isNaN(data.price) || data.price <= 1000) {
         showToast('Цена должна быть больше 1000 рублей');
         return false;
@@ -148,6 +157,7 @@ async function renderTable() {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
+        allItems = result.items;
         
         // Обновляем таблицу
         tbody.innerHTML = '';
@@ -217,8 +227,8 @@ async function createAbonnement() {
             body: JSON.stringify(newAbonnement)
         });
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Ошибка ${response.status}: ${errText}`);
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
         }
         clearForm();
         clearAllFilters();
@@ -243,11 +253,10 @@ async function updateAbonnement(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
-        if (response.status === 400) {
-            showToast('Неверный запрос (несоответствие ID)');
-            return false;
+        if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
         }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
         restoreFiltersToDOM();
         await renderTable();

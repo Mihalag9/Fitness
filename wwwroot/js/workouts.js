@@ -38,6 +38,7 @@ const gymLimitHint = document.getElementById('gym-limit-hint');
 const MAX_GYMS = 5;
 
 let currentEditId = null;
+let allWorkouts = [];
 
 let appliedFilters = {};
 
@@ -146,6 +147,12 @@ function validateWorkoutForm() {
     const maxNum = parseInt(maxP, 10);
     if (isNaN(maxNum) || maxNum < 1) { showToast('Максимум участников должен быть не менее 1'); return false; }
     if (maxNum > 50) { showToast('Максимум участников не должен превышать 50'); return false; }
+
+    const duplicate = allWorkouts.some(w =>
+        w.workoutName.toLowerCase() === name.toLowerCase() &&
+        w.workoutId !== currentEditId
+    );
+    if (duplicate) { showToast('Тренировка с таким названием уже существует'); return false; }
 
     return true;
 }
@@ -371,6 +378,7 @@ async function renderTable() {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
+        allWorkouts = result.items;
 
         tbody.innerHTML = '';
         result.items.forEach(workout => {
@@ -450,8 +458,8 @@ async function createWorkout() {
             body: JSON.stringify(newWorkout)
         });
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Ошибка ${response.status}: ${errText}`);
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
         }
         const created = await response.json();
         editIdField.value = created.workoutId;
@@ -485,8 +493,10 @@ async function updateWorkout(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
-        if (response.status === 400) { showToast('Неверный запрос (несоответствие ID)'); return false; }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
+        }
         closeModal();
         restoreFiltersToDOM();
         await renderTable();

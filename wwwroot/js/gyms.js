@@ -53,6 +53,7 @@ const invFilterBrandDropdown = document.getElementById('inv-filter-brand-dropdow
 const invFilterSort = document.getElementById('inv-filter-sort');
 
 let currentEditId = null;
+let allGyms = [];
 
 let appliedFilters = {};
 
@@ -146,6 +147,14 @@ function validateGymForm() {
     }
     if (/\s{2,}/.test(name)) {
         showToast('Пробелы не могут идти подряд');
+        return false;
+    }
+    const duplicate = allGyms.some(g =>
+        g.gymName.toLowerCase() === name.toLowerCase() &&
+        g.gymId !== currentEditId
+    );
+    if (duplicate) {
+        showToast('Зал с таким названием уже существует');
         return false;
     }
 
@@ -660,6 +669,7 @@ async function renderTable() {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
+        allGyms = result.items;
 
         tbody.innerHTML = '';
         result.items.forEach(gym => {
@@ -733,8 +743,8 @@ async function createGym() {
             body: JSON.stringify(newGym)
         });
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Ошибка ${response.status}: ${errText}`);
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
         }
         const created = await response.json();
         editIdField.value = created.gymId;
@@ -766,11 +776,10 @@ async function updateGym(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
-        if (response.status === 400) {
-            showToast('Неверный запрос (несоответствие ID)');
-            return false;
+        if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
         }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         closeModal();
         restoreFiltersToDOM();
         await renderTable();

@@ -23,6 +23,7 @@ const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
 let currentEditId = null;
+let allClients = [];
 
 let appliedFilters = {};
 
@@ -128,6 +129,15 @@ function validateClientForm() {
         showToast('Телефон должен быть в формате +79001234501');
         return false;
     }
+    if (phone) {
+        const duplicate = allClients.some(c =>
+            c.phone === phone && c.clientId !== currentEditId
+        );
+        if (duplicate) {
+            showToast('Клиент с таким номером телефона уже существует');
+            return false;
+        }
+    }
 
     // Дата рождения
     if (!isValidBirthDate(birthDate)) {
@@ -161,6 +171,7 @@ async function renderTable() {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
+        allClients = result.items;
         
         // Обновляем таблицу
         tbody.innerHTML = '';
@@ -221,8 +232,8 @@ async function createClient() {
             body: JSON.stringify(newClient)
         });
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Ошибка ${response.status}: ${errText}`);
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
         }
         clearForm();
         clearAllFilters();
@@ -252,11 +263,10 @@ async function updateClient(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
-        if (response.status === 400) {
-            showToast('Неверный запрос (несоответствие ID)');
-            return false;
+        if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
         }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         clearForm();
         restoreFiltersToDOM();
         await renderTable();

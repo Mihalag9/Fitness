@@ -52,15 +52,17 @@ public class ClientsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Client>> PostClient(Client client)
     {
-        var createdClient = await _clientService.CreateAsync(client);
-        return CreatedAtAction(nameof(GetClient), new { clientid = createdClient.ClientId }, createdClient);
+        var (createdClient, error) = await _clientService.CreateAsync(client);
+        if (error != null) return BadRequest(new { message = error });
+        return CreatedAtAction(nameof(GetClient), new { clientid = createdClient!.ClientId }, createdClient);
     }
 
     // PUT: api/Clients/5
     [HttpPut("{clientid}")]
     public async Task<IActionResult> PutClient(int clientid, Client client)
     {
-        var success = await _clientService.UpdateAsync(clientid, client);
+        var (success, error) = await _clientService.UpdateAsync(clientid, client);
+        if (error != null) return BadRequest(new { message = error });
 
         if (!success)
         {

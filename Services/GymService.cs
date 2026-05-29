@@ -50,8 +50,11 @@ namespace Fitness.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Gym> CreateAsync(Gym gym)
+        public async Task<(Gym? Entity, string? Error)> CreateAsync(Gym gym)
         {
+            if (await _context.Gyms.AnyAsync(g => g.GymName == gym.GymName))
+                return (null, "Зал с таким названием уже существует");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
@@ -65,12 +68,15 @@ namespace Fitness.Services
                 {
                     gym.GymId = Convert.ToInt32(result);
                 }
-                return gym;
+                return (gym, null);
             }
         }
 
-        public async Task<bool> UpdateAsync(int id, Gym gym)
+        public async Task<(bool Success, string? Error)> UpdateAsync(int id, Gym gym)
         {
+            if (await _context.Gyms.AnyAsync(g => g.GymName == gym.GymName && g.GymId != id))
+                return (false, "Зал с таким названием уже существует");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
@@ -81,8 +87,8 @@ namespace Fitness.Services
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)gym.GymName ?? DBNull.Value; command.Parameters.Add(p1);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                if (result == null || result == DBNull.Value) return (false, null);
+                return ((bool)result, null);
             }
         }
 

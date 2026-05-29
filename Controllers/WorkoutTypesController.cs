@@ -70,7 +70,14 @@ public class WorkoutTypesController : ControllerBase
     public async Task<ActionResult<WorkoutType>> PostWorkoutType(WorkoutType workouttype)
     {
         _context.WorkoutTypes.Add(workouttype);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { message = "Тип тренировки с таким названием уже существует" });
+        }
 
         return CreatedAtAction("GetWorkoutType", new { workouttypeid = workouttype.WorkoutTypeId }, workouttype);
     }

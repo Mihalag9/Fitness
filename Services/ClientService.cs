@@ -31,8 +31,11 @@ namespace Fitness.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Client> CreateAsync(Client client)
+        public async Task<(Client? Entity, string? Error)> CreateAsync(Client client)
         {
+            if (!string.IsNullOrEmpty(client.Phone) && await _context.Clients.AnyAsync(c => c.Phone == client.Phone))
+                return (null, "Клиент с таким номером телефона уже существует");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
@@ -48,12 +51,15 @@ namespace Fitness.Services
                 {
                     client.ClientId = Convert.ToInt32(result);
                 }
-                return client;
+                return (client, null);
             }
         }
 
-        public async Task<bool> UpdateAsync(int id, Client client)
+        public async Task<(bool Success, string? Error)> UpdateAsync(int id, Client client)
         {
+            if (!string.IsNullOrEmpty(client.Phone) && await _context.Clients.AnyAsync(c => c.Phone == client.Phone && c.ClientId != id))
+                return (false, "Клиент с таким номером телефона уже существует");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
@@ -66,8 +72,8 @@ namespace Fitness.Services
                 var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = (object)client.Phone ?? DBNull.Value; command.Parameters.Add(p3);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                if (result == null || result == DBNull.Value) return (false, null);
+                return ((bool)result, null);
             }
         }
 
