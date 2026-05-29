@@ -17,6 +17,7 @@ const filterGymName = document.getElementById('filter-gymName');
 const filterHasEquipment = document.getElementById('filter-hasEquipment');
 const filterEquipmentName = document.getElementById('filter-equipmentName');
 const filterBrand = document.getElementById('filter-brand');
+const filterBrandDropdown = document.getElementById('filter-brand-dropdown');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
@@ -276,14 +277,70 @@ async function loadEquipmentDictionary() {
     }
 }
 
+// ---- Brand autocomplete for gym filter ----
+let allGymBrands = [];
+let gymBrandSelected = false;
+
 function populateGymBrandFilter(brands) {
-    filterBrand.innerHTML = '<option value="">Все бренды</option>';
-    brands.forEach(brand => {
-        const opt = document.createElement('option');
-        opt.value = brand;
-        opt.textContent = brand;
-        filterBrand.appendChild(opt);
+    allGymBrands = brands;
+}
+
+function getFilteredGymBrands(query) {
+    if (!query) return allGymBrands;
+    const q = query.toLowerCase().trim();
+    return allGymBrands.filter(b => b.toLowerCase().includes(q));
+}
+
+function renderGymBrandDropdown(filtered) {
+    filterBrandDropdown.innerHTML = '';
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item no-results';
+        div.textContent = 'Ничего не найдено';
+        filterBrandDropdown.appendChild(div);
+        return;
+    }
+    const allItem = document.createElement('div');
+    allItem.className = 'dropdown-item';
+    allItem.textContent = 'Все бренды';
+    allItem.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        filterBrand.value = '';
+        gymBrandSelected = true;
+        filterBrandDropdown.classList.remove('show');
     });
+    filterBrandDropdown.appendChild(allItem);
+
+    filtered.forEach(brand => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        div.textContent = brand;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            filterBrand.value = brand;
+            gymBrandSelected = true;
+            filterBrandDropdown.classList.remove('show');
+        });
+        filterBrandDropdown.appendChild(div);
+    });
+}
+
+function onGymBrandInput() {
+    gymBrandSelected = false;
+    const query = filterBrand.value.trim();
+    const filtered = getFilteredGymBrands(query);
+    renderGymBrandDropdown(filtered);
+    if (filtered.length > 0 || query) filterBrandDropdown.classList.add('show');
+    else filterBrandDropdown.classList.remove('show');
+}
+
+function onGymBrandKeydown(e) {
+    const items = filterBrandDropdown.querySelectorAll('.dropdown-item');
+    if (e.key === 'Escape') filterBrandDropdown.classList.remove('show');
+    if (e.key === 'Enter' && items.length > 0) {
+        e.preventDefault();
+        items[0].dispatchEvent(new Event('mousedown'));
+    }
 }
 
 // ---- Inventory management ----
@@ -723,6 +780,10 @@ equipmentInput.addEventListener('input', onEquipmentInput);
 equipmentInput.addEventListener('keydown', onEquipmentKeydown);
 equipmentInput.addEventListener('blur', () => setTimeout(hideEquipmentDropdown, 200));
 
+filterBrand.addEventListener('input', onGymBrandInput);
+filterBrand.addEventListener('keydown', onGymBrandKeydown);
+filterBrand.addEventListener('blur', () => setTimeout(() => filterBrandDropdown.classList.remove('show'), 200));
+
 invPrevBtn.addEventListener('click', () => {
     if (inventoryPage > 1) { inventoryPage--; renderInventoryPage(); }
 });
@@ -773,6 +834,7 @@ const eqModalTitle = document.getElementById('eq-modal-title');
 const eqAddBtn = document.getElementById('eq-add-btn');
 const eqFilterName = document.getElementById('eq-filter-name');
 const eqFilterBrand = document.getElementById('eq-filter-brand');
+const eqFilterBrandDropdown = document.getElementById('eq-filter-brand-dropdown');
 const eqApplyFiltersBtn = document.getElementById('eq-apply-filters');
 const eqClearFiltersBtn = document.getElementById('eq-clear-filters');
 const eqTotalSpan = document.getElementById('eq-total-count');
@@ -864,14 +926,70 @@ function eqValidateForm() {
     return true;
 }
 
+// ---- Brand autocomplete for equipment filter ----
+let allEqBrands = [];
+let eqBrandSelected = false;
+
 function populateEquipmentBrandFilter(brands) {
-    eqFilterBrand.innerHTML = '<option value="">Все бренды</option>';
-    brands.forEach(brand => {
-        const opt = document.createElement('option');
-        opt.value = brand;
-        opt.textContent = brand;
-        eqFilterBrand.appendChild(opt);
+    allEqBrands = brands;
+}
+
+function getFilteredEqBrands(query) {
+    if (!query) return allEqBrands;
+    const q = query.toLowerCase().trim();
+    return allEqBrands.filter(b => b.toLowerCase().includes(q));
+}
+
+function renderEqBrandDropdown(filtered) {
+    eqFilterBrandDropdown.innerHTML = '';
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item no-results';
+        div.textContent = 'Ничего не найдено';
+        eqFilterBrandDropdown.appendChild(div);
+        return;
+    }
+    const allItem = document.createElement('div');
+    allItem.className = 'dropdown-item';
+    allItem.textContent = 'Все бренды';
+    allItem.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        eqFilterBrand.value = '';
+        eqBrandSelected = true;
+        eqFilterBrandDropdown.classList.remove('show');
     });
+    eqFilterBrandDropdown.appendChild(allItem);
+
+    filtered.forEach(brand => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        div.textContent = brand;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            eqFilterBrand.value = brand;
+            eqBrandSelected = true;
+            eqFilterBrandDropdown.classList.remove('show');
+        });
+        eqFilterBrandDropdown.appendChild(div);
+    });
+}
+
+function onEqBrandInput() {
+    eqBrandSelected = false;
+    const query = eqFilterBrand.value.trim();
+    const filtered = getFilteredEqBrands(query);
+    renderEqBrandDropdown(filtered);
+    if (filtered.length > 0 || query) eqFilterBrandDropdown.classList.add('show');
+    else eqFilterBrandDropdown.classList.remove('show');
+}
+
+function onEqBrandKeydown(e) {
+    const items = eqFilterBrandDropdown.querySelectorAll('.dropdown-item');
+    if (e.key === 'Escape') eqFilterBrandDropdown.classList.remove('show');
+    if (e.key === 'Enter' && items.length > 0) {
+        e.preventDefault();
+        items[0].dispatchEvent(new Event('mousedown'));
+    }
 }
 
 async function eqRenderTable() {
@@ -1015,5 +1133,9 @@ eqModelInput.addEventListener('keydown', function (e) { eqPreventLeadingDigit(e,
 eqNameInput.addEventListener('input', function () { eqAutoFormat(this); });
 eqBrandInput.addEventListener('input', function () { eqAutoFormat(this); });
 eqModelInput.addEventListener('input', function () { eqAutoFormat(this); });
+
+eqFilterBrand.addEventListener('input', onEqBrandInput);
+eqFilterBrand.addEventListener('keydown', onEqBrandKeydown);
+eqFilterBrand.addEventListener('blur', () => setTimeout(() => eqFilterBrandDropdown.classList.remove('show'), 200));
 
 renderTable();

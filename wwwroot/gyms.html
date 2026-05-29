@@ -34,9 +34,10 @@
                 <option value="false">Без оборудования</option>
             </select>
             <input type="text" id="filter-equipmentName" placeholder="Название оборудования">
-            <select id="filter-brand">
-                <option value="">Все бренды</option>
-            </select>
+            <div class="autocomplete-wrap">
+                <input type="text" id="filter-brand" placeholder="Бренд" autocomplete="off">
+                <div id="filter-brand-dropdown" class="dropdown-list hidden"></div>
+            </div>
         </div>
 
         <div class="filter-actions" style="margin-top: 10px;">
@@ -135,9 +136,10 @@
             <h2>Фильтры</h2>
             <div class="filter-grid">
                 <input type="text" id="eq-filter-name" placeholder="Название оборудования">
-                <select id="eq-filter-brand">
-                    <option value="">Все бренды</option>
-                </select>
+                <div class="autocomplete-wrap">
+                    <input type="text" id="eq-filter-brand" placeholder="Бренд" autocomplete="off">
+                    <div id="eq-filter-brand-dropdown" class="dropdown-list hidden"></div>
+                </div>
             </div>
             <div class="filter-actions" style="margin-top: 10px;">
                 <button id="eq-apply-filters">Применить</button>

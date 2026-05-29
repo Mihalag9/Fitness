@@ -551,6 +551,15 @@ button {
     width: 100%;
 }
 
+.filter-grid .autocomplete-wrap {
+    width: 250px;
+}
+
+.filter-grid .autocomplete-wrap input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .dropdown-list {
     display: none;
     position: absolute;
