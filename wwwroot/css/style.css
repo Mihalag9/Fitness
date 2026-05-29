@@ -174,35 +174,35 @@ button {
 
 /* Панель управления оборудованием */
 .inventory-controls {
-    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    margin-bottom: 10px;
 }
 
     .inventory-controls .form-group {
-        display: inline-block;
-        vertical-align: bottom;
-        margin-right: 10px;
-        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
     }
 
         .inventory-controls .form-group label {
-            display: block;
             font-size: 12px;
             font-weight: 600;
             color: #555;
             margin-bottom: 4px;
         }
 
-        /* Ширины полей как в стандартных формах */
         .inventory-controls .form-group:nth-child(1) {
-            width: 320px; /* Поле ввода зала/оборудования */
+            width: 250px;
         }
 
         .inventory-controls .form-group:nth-child(2) {
-            width: 100px; /* Количество */
+            width: 100px;
         }
 
         .inventory-controls .form-group:nth-child(3) {
-            width: auto; /* Кнопка по содержимому */
+            width: auto;
         }
 
     .inventory-controls input,
@@ -211,7 +211,7 @@ button {
         margin: 0;
         width: 100%;
         box-sizing: border-box;
-        height: 38px;
+        height: 36px;
     }
 
 /* Фильтры инвентаря внутри модалки */
@@ -225,7 +225,7 @@ button {
 
     .inventory-filters input,
     .inventory-filters select {
-        height: 34px;
+        height: 36px;
         padding: 6px 10px;
         border: 1px solid #ccc;
         border-radius: 4px;
@@ -234,11 +234,11 @@ button {
     }
 
     .inventory-filters input {
-        width: 220px;
+        width: 200px;
     }
 
     .inventory-filters select {
-        width: 160px;
+        width: 150px;
     }
 
 /* Таблица инвентаря внутри карточки — на всю ширину без двойных отступов */
