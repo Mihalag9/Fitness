@@ -426,6 +426,11 @@ function onInvBrandInput() {
     renderInvBrandDropdown(filtered);
     if (filtered.length > 0 || query) invFilterBrandDropdown.classList.add('show');
     else invFilterBrandDropdown.classList.remove('show');
+
+    if (!query) {
+        inventoryPage = 1;
+        renderInventoryPage();
+    }
 }
 
 function onInvBrandKeydown(e) {

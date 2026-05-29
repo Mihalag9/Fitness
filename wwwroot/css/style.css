@@ -282,6 +282,15 @@ button {
         width: 150px;
     }
 
+    .inventory-filters .autocomplete-wrap {
+        width: 200px;
+    }
+
+    .inventory-filters .autocomplete-wrap input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
 /* Таблица инвентаря внутри карточки — на всю ширину без двойных отступов */
 .inventory-table-wrap {
     width: 100%;
