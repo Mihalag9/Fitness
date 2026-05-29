@@ -99,10 +99,14 @@ BEGIN
         RETURN TRUE;
     END IF;
     
-    INSERT INTO "Inventory" ("GymId", "EquipmentId", "Quantity")
-    VALUES (p_gymid, p_equipmentid, p_quantity)
-    ON CONFLICT ("GymId", "EquipmentId") 
-    DO UPDATE SET "Quantity" = p_quantity;
+    BEGIN
+        INSERT INTO "Inventory" ("GymId", "EquipmentId", "Quantity")
+        VALUES (p_gymid, p_equipmentid, p_quantity)
+        ON CONFLICT ("GymId", "EquipmentId") 
+        DO UPDATE SET "Quantity" = p_quantity;
+    EXCEPTION WHEN OTHERS THEN
+        RETURN FALSE;
+    END;
     
     RETURN TRUE;
 END;
