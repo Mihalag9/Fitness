@@ -12,43 +12,25 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
-        g."GymId",
-        g."GymName",
-        COALESCE(
-            string_agg(
-                e."EquipmentName" || ' ×' || i."Quantity", 
-                ', ' ORDER BY e."EquipmentName"
-            ),
-            ''
-        ) AS "EquipmentList"
-    FROM "Gym" g
-    LEFT JOIN "Inventory" i ON g."GymId" = i."GymId"
-    LEFT JOIN "Equipment" e ON i."EquipmentId" = e."EquipmentId"
-    WHERE (p_gymname IS NULL OR g."GymName" ILIKE '%' || p_gymname || '%')
+    SELECT v."GymId", v."GymName", v."EquipmentList"
+    FROM vw_gym_display v
+    WHERE (p_gymname IS NULL OR v."GymName" ILIKE '%' || p_gymname || '%')
       AND (
           CASE 
               WHEN p_has_equipment IS NULL THEN TRUE
-              WHEN p_has_equipment = TRUE THEN EXISTS (
-                  SELECT 1 FROM "Inventory" ii WHERE ii."GymId" = g."GymId"
-              )
-              ELSE NOT EXISTS (
-                  SELECT 1 FROM "Inventory" ii WHERE ii."GymId" = g."GymId"
-              )
+              WHEN p_has_equipment = TRUE THEN v."EquipmentList" != ''
+              ELSE v."EquipmentList" = ''
           END
       )
       AND (p_equipmentname IS NULL OR EXISTS (
-          SELECT 1 FROM "Inventory" ii2
-          JOIN "Equipment" ee2 ON ii2."EquipmentId" = ee2."EquipmentId"
-          WHERE ii2."GymId" = g."GymId" AND ee2."EquipmentName" ILIKE '%' || p_equipmentname || '%'
+          SELECT 1 FROM vw_inventory_display vi
+          WHERE vi."GymId" = v."GymId" AND vi."EquipmentName" ILIKE '%' || p_equipmentname || '%'
       ))
       AND (p_brand IS NULL OR EXISTS (
-          SELECT 1 FROM "Inventory" ii3
-          JOIN "Equipment" ee3 ON ii3."EquipmentId" = ee3."EquipmentId"
-          WHERE ii3."GymId" = g."GymId" AND ee3."Brand" = p_brand
+          SELECT 1 FROM vw_inventory_display vi2
+          WHERE vi2."GymId" = v."GymId" AND vi2."Brand" = p_brand
       ))
-    GROUP BY g."GymId", g."GymName"
-    ORDER BY g."GymName" ASC;
+    ORDER BY v."GymName" ASC;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -101,16 +83,10 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
-        e."EquipmentId",
-        e."EquipmentName",
-        e."Brand",
-        e."Model",
-        i."Quantity"
-    FROM "Inventory" i
-    JOIN "Equipment" e ON i."EquipmentId" = e."EquipmentId"
-    WHERE i."GymId" = p_gymid
-    ORDER BY e."EquipmentName" ASC;
+    SELECT vi."EquipmentId", vi."EquipmentName", vi."Brand", vi."Model", vi."Quantity"
+    FROM vw_inventory_display vi
+    WHERE vi."GymId" = p_gymid
+    ORDER BY vi."EquipmentName" ASC;
 END;
 $$ LANGUAGE plpgsql;
 
