@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фитнес-клуб — Управление расписанием</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="clients.html">Клиенты</a>
+        <a href="trainers.html">Тренеры</a>
+        <a href="workouts.html">Тренировки</a>
+        <a href="abonnements.html">Абонементы</a>
+        <a href="gyms.html">Залы</a>
+        <a href="schedules.html" class="active">Расписание</a>
+    </nav>
+
+    <h1>Управление расписанием</h1>
+
+    <div class="filter-card">
+        <h2>Фильтры</h2>
+        <div class="filter-grid filter-grid-compact">
+            <div class="form-group">
+                <label>Тренер</label>
+                <div class="autocomplete-wrap">
+                    <input type="text" id="filter-trainer" placeholder="ФИО тренера" autocomplete="off" maxlength="50">
+                    <div id="filter-trainer-dropdown" class="dropdown-list hidden"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Зал</label>
+                <div class="autocomplete-wrap">
+                    <input type="text" id="filter-gym" placeholder="Название зала" autocomplete="off" maxlength="50">
+                    <div id="filter-gym-dropdown" class="dropdown-list hidden"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Тренировка</label>
+                <div class="autocomplete-wrap">
+                    <input type="text" id="filter-workout" placeholder="Название тренировки" autocomplete="off" maxlength="50">
+                    <div id="filter-workout-dropdown" class="dropdown-list hidden"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Тип тренировки</label>
+                <select id="filter-type">
+                    <option value="">Все типы</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Дата от</label>
+                <input type="date" id="filter-dateFrom">
+            </div>
+            <div class="form-group">
+                <label>Дата до</label>
+                <input type="date" id="filter-dateTo">
+            </div>
+        </div>
+        <div class="filter-actions" style="margin-top: 10px;">
+            <button id="apply-filters">Применить</button>
+            <button id="clear-filters">Очистить</button>
+            <button id="add-schedule-btn" style="margin-left:auto;">+ Добавить запись</button>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <h2>Статистика</h2>
+        <p>Всего записей: <span id="total-count">0</span></p>
+        <p>Групповых: <span id="group-count">0</span></p>
+        <p>Индивидуальных: <span id="individual-count">0</span></p>
+        <p>Тренеров задействовано: <span id="trainers-count">0</span></p>
+    </div>
+
+    <table id="schedules-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Тренер</th>
+                <th>Тренировка</th>
+                <th>Зал</th>
+                <th>Тип</th>
+                <th>Дата</th>
+                <th>Начало</th>
+                <th>Конец</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody id="schedules-body"></tbody>
+    </table>
+
+    <!-- ==================== МОДАЛКА РАСПИСАНИЯ ==================== -->
+    <div id="schedule-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <h2 id="modal-title">Добавить запись</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Тренер</label>
+                    <div class="autocomplete-wrap">
+                        <input type="text" id="modal-trainer-input" placeholder="Начните вводить ФИО" autocomplete="off" maxlength="50">
+                        <div id="modal-trainer-dropdown" class="dropdown-list hidden"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Тренировка</label>
+                    <div class="autocomplete-wrap">
+                        <input type="text" id="modal-workout-input" placeholder="Начните вводить название" autocomplete="off" maxlength="50">
+                        <div id="modal-workout-dropdown" class="dropdown-list hidden"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Зал</label>
+                    <div class="autocomplete-wrap">
+                        <input type="text" id="modal-gym-input" placeholder="Начните вводить название" autocomplete="off" maxlength="50">
+                        <div id="modal-gym-dropdown" class="dropdown-list hidden"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Тип тренировки</label>
+                    <select id="modal-type-select">
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Дата</label>
+                    <input type="date" id="modal-date">
+                </div>
+                <div class="form-group">
+                    <label>Время начала</label>
+                    <input type="time" id="modal-startTime" min="08:00" max="23:00">
+                </div>
+                <div class="form-group">
+                    <label>Время окончания</label>
+                    <input type="time" id="modal-endTime" readonly style="background:#f0f0f0;cursor:not-allowed;">
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top: 10px;">
+                <button id="submit-btn">Добавить</button>
+                <button id="cancel-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== МОДАЛКА ЗАПИСЕЙ НА ЗАНЯТИЕ ==================== -->
+    <div id="bookings-modal" class="modal">
+        <div class="modal-content modal-wide">
+            <span class="modal-close" id="bookings-modal-close">&times;</span>
+            <h2>Записи на: <span id="bookings-schedule-info" style="color:#007bff;"></span></h2>
+
+            <div class="filter-grid filter-grid-compact" style="margin-bottom:10px;">
+                <div class="form-group">
+                    <label>Клиент</label>
+                    <div class="autocomplete-wrap">
+                        <input type="text" id="booking-filter-client" placeholder="ФИО клиента" autocomplete="off" maxlength="50">
+                        <div id="booking-filter-client-dropdown" class="dropdown-list hidden"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Посещение</label>
+                    <select id="booking-filter-attended">
+                        <option value="">Все</option>
+                        <option value="true">Посетил</option>
+                        <option value="false">Не посетил</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span id="booking-slots-info" style="font-weight:500;"></span>
+                <button id="add-booking-btn" style="margin-left:auto;">+ Добавить клиента</button>
+            </div>
+
+            <table id="bookings-table" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Клиент</th>
+                        <th>Дата записи</th>
+                        <th>Посещено</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="bookings-body"></tbody>
+            </table>
+
+            <div id="bookings-pagination" style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <!-- ==================== МОДАЛКА ДОБАВЛЕНИЯ КЛИЕНТА ==================== -->
+    <div id="booking-modal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <span class="modal-close" id="booking-modal-close">&times;</span>
+            <h2>Добавить клиента</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Клиент</label>
+                    <div class="autocomplete-wrap">
+                        <input type="text" id="booking-client-input" placeholder="Начните вводить ФИО" autocomplete="off" maxlength="50">
+                        <div id="booking-client-dropdown" class="dropdown-list hidden"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top: 10px;">
+                <button id="booking-submit-btn">Добавить</button>
+                <button id="booking-cancel-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/toast.js"></script>
+    <script src="js/schedules.js"></script>
+</body>
+</html>
