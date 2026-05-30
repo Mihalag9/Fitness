@@ -7,7 +7,6 @@ BEGIN
         SELECT 1 FROM "Purchase"
         WHERE "ClientId" = NEW."ClientId"
           AND "Status" = 'активен'
-          AND "ExpiryDate" >= CURRENT_DATE
     ) THEN
         RAISE EXCEPTION 'У клиента уже есть активный абонемент';
     END IF;
