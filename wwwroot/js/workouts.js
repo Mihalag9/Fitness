@@ -304,8 +304,7 @@ function enableGymSection(workoutId) {
     selectedGymId = null;
     gymSectionHint.classList.add('hidden');
     gymControls.classList.remove('hidden');
-    loadGymDictionary();
-    loadGymLinks(workoutId);
+    loadEditData(workoutId);
 }
 
 async function addGymLink() {
@@ -329,14 +328,13 @@ async function addGymLink() {
             body: JSON.stringify({ gymId: gym.gymId })
         });
         if (!response.ok) {
-            const text = await response.text();
-            throw new Error(text || `HTTP ${response.status}`);
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || `HTTP ${response.status}`);
         }
+        const result = await response.json();
         gymInput.value = '';
         selectedGymId = null;
-        await loadGymLinks(currentEditId);
-        restoreFiltersToDOM();
-        await renderTable();
+        applyGymLinkResult(result);
         showToast('Зал связан с тренировкой', 'success');
     } catch (err) {
         showToast(`Ошибка добавления: ${err.message}`);
@@ -350,12 +348,107 @@ async function removeGymLink(workoutId, gymId) {
             method: 'DELETE'
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        await loadGymLinks(workoutId);
-        restoreFiltersToDOM();
-        await renderTable();
+        const result = await response.json();
+        applyGymLinkResult(result);
         showToast('Зал отвязан от тренировки', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
+    }
+}
+
+// ---- Отрисовка таблицы тренировок (общая) ----
+function renderWorkoutTable(items, statistics) {
+    tbody.innerHTML = '';
+    items.forEach(workout => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = workout.workoutId;
+        row.insertCell(1).textContent = workout.workoutName;
+        row.insertCell(2).textContent = workout.durationMinutes;
+        row.insertCell(3).textContent = workout.maxParticipants;
+        const gymCell = row.insertCell(4);
+        gymCell.style.whiteSpace = 'normal';
+        gymCell.style.maxWidth = '300px';
+        if (workout.gymList) {
+            const link = document.createElement('a');
+            link.href = '#';
+            link.className = 'gym-link-btn';
+            link.title = 'Управлять залами';
+            link.textContent = workout.gymList;
+            link.onclick = (e) => {
+                e.preventDefault();
+                openEditModal(workout);
+            };
+            gymCell.appendChild(link);
+        } else {
+            gymCell.textContent = '—';
+            gymCell.style.color = '#999';
+        }
+        const actionsCell = row.insertCell(5);
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать';
+        editBtn.onclick = () => openEditModal(workout);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => deleteWorkout(workout.workoutId);
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+    allWorkouts = items;
+    totalSpan.textContent = statistics.totalWorkouts;
+    avgDurationSpan.textContent = statistics.avgDuration;
+    trainersCountSpan.textContent = statistics.totalTrainersAssigned;
+}
+
+// ---- Применение результата CRUD привязок залов ----
+function applyGymLinkResult(result) {
+    currentLinkedGymIds.clear();
+    result.gyms.forEach(gym => currentLinkedGymIds.add(gym.gymId));
+    gymLinksBody.innerHTML = '';
+    result.gyms.forEach(gym => {
+        const row = gymLinksBody.insertRow();
+        row.insertCell(0).textContent = gym.gymId;
+        row.insertCell(1).textContent = gym.gymName;
+        const actionsCell = row.insertCell(2);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Отвязать зал';
+        deleteBtn.onclick = () => removeGymLink(currentEditId, gym.gymId);
+        actionsCell.appendChild(deleteBtn);
+    });
+    updateGymLimitState();
+    renderWorkoutTable(result.items, result.statistics);
+}
+
+// ---- Загрузка данных модала редактирования (1 запрос) ----
+async function loadEditData(workoutId) {
+    try {
+        const response = await fetch(`${API_URL}/${workoutId}/edit-data`);
+        if (!response.ok) throw new Error('Ошибка загрузки данных тренировки');
+        const data = await response.json();
+
+        allGyms = data.allGyms;
+        currentLinkedGymIds.clear();
+        data.gyms.forEach(gym => currentLinkedGymIds.add(gym.gymId));
+        hideDropdown();
+
+        gymLinksBody.innerHTML = '';
+        data.gyms.forEach(gym => {
+            const row = gymLinksBody.insertRow();
+            row.insertCell(0).textContent = gym.gymId;
+            row.insertCell(1).textContent = gym.gymName;
+            const actionsCell = row.insertCell(2);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Отвязать зал';
+            deleteBtn.onclick = () => removeGymLink(workoutId, gym.gymId);
+            actionsCell.appendChild(deleteBtn);
+        });
+
+        updateGymLimitState();
+    } catch (err) {
+        showToast(`Ошибка: ${err.message}`);
     }
 }
 
@@ -378,50 +471,8 @@ async function renderTable() {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
-        allWorkouts = result.items;
 
-        tbody.innerHTML = '';
-        result.items.forEach(workout => {
-            const row = tbody.insertRow();
-            row.insertCell(0).textContent = workout.workoutId;
-            row.insertCell(1).textContent = workout.workoutName;
-            row.insertCell(2).textContent = workout.durationMinutes;
-            row.insertCell(3).textContent = workout.maxParticipants;
-            const gymCell = row.insertCell(4);
-            gymCell.style.whiteSpace = 'normal';
-            gymCell.style.maxWidth = '300px';
-            if (workout.gymList) {
-                const link = document.createElement('a');
-                link.href = '#';
-                link.className = 'gym-link-btn';
-                link.title = 'Управлять залами';
-                link.textContent = workout.gymList;
-                link.onclick = (e) => {
-                    e.preventDefault();
-                    openEditModal(workout);
-                };
-                gymCell.appendChild(link);
-            } else {
-                gymCell.textContent = '—';
-                gymCell.style.color = '#999';
-            }
-            const actionsCell = row.insertCell(5);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => openEditModal(workout);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => deleteWorkout(workout.workoutId);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
-
-        const data = result.statistics;
-        totalSpan.textContent = data.totalWorkouts;
-        avgDurationSpan.textContent = data.avgDuration;
-        trainersCountSpan.textContent = data.totalTrainersAssigned;
+        renderWorkoutTable(result.items, result.statistics);
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }

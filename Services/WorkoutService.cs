@@ -143,7 +143,7 @@ namespace Fitness.Services
             return gyms;
         }
 
-        public async Task<(bool Success, string? Error)> AddGymLinkAsync(int gymId, int workoutId)
+        public async Task<WorkoutGymResult> AddGymLinkAsync(int gymId, int workoutId)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -157,16 +157,20 @@ namespace Fitness.Services
                 try
                 {
                     await command.ExecuteScalarAsync();
-                    return (true, null);
                 }
                 catch (PostgresException ex) when (ex.MessageText.Contains("более 5 залов"))
                 {
-                    return (false, ex.MessageText);
+                    return new WorkoutGymResult { Success = false, Error = ex.MessageText };
                 }
             }
+
+            var gyms = await GetGymsByWorkoutAsync(workoutId);
+            var items = await GetAllAsync(null, null, null, null, null, null);
+            var stats = await GetStatisticsAsync();
+            return new WorkoutGymResult { Success = true, Gyms = gyms, Items = items, Statistics = stats };
         }
 
-        public async Task<bool> RemoveGymLinkAsync(int gymId, int workoutId)
+        public async Task<WorkoutGymResult> RemoveGymLinkAsync(int gymId, int workoutId)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -178,9 +182,16 @@ namespace Fitness.Services
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                if (result == null || result == DBNull.Value || !(bool)result)
+                {
+                    return new WorkoutGymResult { Success = false, Error = "Связь не найдена" };
+                }
             }
+
+            var gymsList = await GetGymsByWorkoutAsync(workoutId);
+            var itemsList = await GetAllAsync(null, null, null, null, null, null);
+            var statsResult = await GetStatisticsAsync();
+            return new WorkoutGymResult { Success = true, Gyms = gymsList, Items = itemsList, Statistics = statsResult };
         }
 
         public async Task<IEnumerable<GymLinkView>> GetAllGymsDictionaryAsync()
@@ -206,6 +217,22 @@ namespace Fitness.Services
                 }
             }
             return gyms;
+        }
+
+        public async Task<WorkoutEditData?> GetEditDataAsync(int id)
+        {
+            var workout = await GetByIdAsync(id);
+            if (workout == null) return null;
+
+            var gyms = await GetGymsByWorkoutAsync(id);
+            var allGyms = await GetAllGymsDictionaryAsync();
+
+            return new WorkoutEditData
+            {
+                Workout = workout,
+                Gyms = gyms,
+                AllGyms = allGyms
+            };
         }
 
         public async Task<WorkoutStatistics> GetStatisticsAsync()
@@ -252,6 +279,22 @@ namespace Fitness.Services
         {
             public int GymId { get; set; }
             public string GymName { get; set; } = null!;
+        }
+
+        public class WorkoutEditData
+        {
+            public Workout Workout { get; set; } = null!;
+            public IEnumerable<GymLinkView> Gyms { get; set; } = Enumerable.Empty<GymLinkView>();
+            public IEnumerable<GymLinkView> AllGyms { get; set; } = Enumerable.Empty<GymLinkView>();
+        }
+
+        public class WorkoutGymResult
+        {
+            public bool Success { get; set; }
+            public string? Error { get; set; }
+            public IEnumerable<GymLinkView> Gyms { get; set; } = Enumerable.Empty<GymLinkView>();
+            public IEnumerable<WorkoutView> Items { get; set; } = Enumerable.Empty<WorkoutView>();
+            public WorkoutStatistics Statistics { get; set; } = new();
         }
     }
 }
