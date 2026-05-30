@@ -98,18 +98,18 @@ public class TrainersController : ControllerBase
         if (dto == null || dto.WorkoutId <= 0)
             return BadRequest();
 
-        var (success, error, roles) = await _trainerService.AddTrainerRoleAsync(trainerid, dto.WorkoutId, dto.Role);
-        if (!success) return BadRequest(new { message = error ?? "Ошибка" });
-        return Ok(roles);
+        var result = await _trainerService.AddTrainerRoleAsync(trainerid, dto.WorkoutId, dto.Role);
+        if (!result.Success) return BadRequest(new { message = result.Error ?? "Ошибка" });
+        return Ok(result);
     }
 
     // DELETE: api/Trainers/5/roles/3
     [HttpDelete("{trainerid}/roles/{workoutid}")]
     public async Task<IActionResult> DeleteTrainerRole(int trainerid, int workoutid)
     {
-        var (success, error, roles) = await _trainerService.DeleteTrainerRoleAsync(trainerid, workoutid);
-        if (!success) return NotFound(new { message = error });
-        return Ok(roles);
+        var result = await _trainerService.DeleteTrainerRoleAsync(trainerid, workoutid);
+        if (!result.Success) return NotFound(new { message = result.Error });
+        return Ok(result);
     }
 
     // GET: api/Trainers/workouts/dictionary

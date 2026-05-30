@@ -312,6 +312,35 @@ addTrainerBtn.addEventListener('click', openCreateModal);
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
+// ---- Отрисовка таблицы тренеров (общая) ----
+function renderTrainerTable(items, statistics) {
+    tbody.innerHTML = '';
+    items.forEach(trainer => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = trainer.trainerId;
+        row.insertCell(1).textContent = trainer.fullName;
+        row.insertCell(2).textContent = (trainer.experience != null && trainer.experience > 0) ? trainer.experience : '—';
+        const specCell = row.insertCell(3);
+        specCell.textContent = trainer.specializations || '—';
+        specCell.style.whiteSpace = 'pre-line';
+        specCell.title = trainer.specializations || '';
+        const actionsCell = row.insertCell(4);
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать';
+        editBtn.onclick = () => openEditModal(trainer);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => deleteTrainer(trainer.trainerId);
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+    totalSpan.textContent = statistics.totalTrainers;
+    expSpan.textContent = statistics.trainersWithExperience;
+    noExpSpan.textContent = statistics.trainersWithoutExperience;
+}
+
 // ---- Загрузка всех данных тренеров (1 запрос) ----
 async function loadPageData() {
     try {
@@ -330,7 +359,7 @@ async function loadPageData() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
 
-        // Заполняем_roles для фильтра
+        // Заполняем roles для фильтра
         filterRole.innerHTML = '<option value="">Все роли</option>';
         result.roles.forEach(role => {
             const option = document.createElement('option');
@@ -340,35 +369,7 @@ async function loadPageData() {
         });
         restoreFiltersToDOM();
 
-        // Отрисовка таблицы
-        tbody.innerHTML = '';
-        result.items.forEach(trainer => {
-            const row = tbody.insertRow();
-            row.insertCell(0).textContent = trainer.trainerId;
-            row.insertCell(1).textContent = trainer.fullName;
-            row.insertCell(2).textContent = (trainer.experience != null && trainer.experience > 0) ? trainer.experience : '—';
-            const specCell = row.insertCell(3);
-            specCell.textContent = trainer.specializations || '—';
-            specCell.style.whiteSpace = 'pre-line';
-            specCell.title = trainer.specializations || '';
-            const actionsCell = row.insertCell(4);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => openEditModal(trainer);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => deleteTrainer(trainer.trainerId);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
-
-        // Статистика
-        const data = result.statistics;
-        totalSpan.textContent = data.totalTrainers;
-        expSpan.textContent = data.trainersWithExperience;
-        noExpSpan.textContent = data.trainersWithoutExperience;
+        renderTrainerTable(result.items, result.statistics);
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }
@@ -514,11 +515,11 @@ async function addSpec() {
         showToast(err?.message || 'Ошибка добавления');
         return;
     }
-    const roles = await response.json();
+    const result = await response.json();
     specWorkoutInput.value = '';
     selectedSpecWorkoutId = null;
-    renderSpecLinks(roles);
-    await loadPageData();
+    renderSpecLinks(result.roles);
+    renderTrainerTable(result.items, result.statistics);
 }
 
 // ---- Удаление специализации ----
@@ -530,9 +531,9 @@ async function removeSpec(trainerId, workoutId) {
         showToast(err?.message || 'Ошибка удаления');
         return;
     }
-    const roles = await response.json();
-    renderSpecLinks(roles);
-    await loadPageData();
+    const result = await response.json();
+    renderSpecLinks(result.roles);
+    renderTrainerTable(result.items, result.statistics);
 }
 
 // ---- Обработчики специализаций ----
