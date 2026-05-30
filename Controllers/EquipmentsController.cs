@@ -54,14 +54,16 @@ namespace Fitness.Controllers
         [HttpPost]
         public async Task<ActionResult<Equipment>> PostEquipment(Equipment equipment)
         {
-            var created = await _equipmentService.CreateAsync(equipment);
-            return CreatedAtAction(nameof(GetEquipment), new { equipmentid = created.EquipmentId }, created);
+            var (created, error) = await _equipmentService.CreateAsync(equipment);
+            if (error != null) return BadRequest(new { message = error });
+            return CreatedAtAction(nameof(GetEquipment), new { equipmentid = created!.EquipmentId }, created);
         }
 
         [HttpPut("{equipmentid}")]
         public async Task<IActionResult> PutEquipment(int equipmentid, Equipment equipment)
         {
-            var success = await _equipmentService.UpdateAsync(equipmentid, equipment);
+            var (success, error) = await _equipmentService.UpdateAsync(equipmentid, equipment);
+            if (error != null) return BadRequest(new { message = error });
             if (!success) return NotFound();
             return NoContent();
         }

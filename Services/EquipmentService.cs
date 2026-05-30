@@ -49,7 +49,7 @@ namespace Fitness.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Equipment> CreateAsync(Equipment equipment)
+        public async Task<(Equipment? Entity, string? Error)> CreateAsync(Equipment equipment)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -62,15 +62,12 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)equipment.Model ?? DBNull.Value; command.Parameters.Add(p2);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result != null && result != DBNull.Value)
-                {
-                    equipment.EquipmentId = Convert.ToInt32(result);
-                }
-                return equipment;
+                if (result == null || result == DBNull.Value) return (equipment, null);
+                return (null, result.ToString());
             }
         }
 
-        public async Task<bool> UpdateAsync(int id, Equipment equipment)
+        public async Task<(bool Success, string? Error)> UpdateAsync(int id, Equipment equipment)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -84,8 +81,10 @@ namespace Fitness.Services
                 var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = (object)equipment.Model ?? DBNull.Value; command.Parameters.Add(p3);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                if (result == null || result == DBNull.Value) return (true, null);
+                var str = result.ToString();
+                if (str == "NOT_FOUND") return (false, null);
+                return (false, str);
             }
         }
 

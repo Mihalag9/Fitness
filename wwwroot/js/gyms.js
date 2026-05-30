@@ -1015,6 +1015,18 @@ function eqValidateForm() {
         if (/^\d/.test(model)) { showToast('Модель не может начинаться с цифры'); return false; }
         if (/\s{2,}/.test(model)) { showToast('Пробелы не могут идти подряд'); return false; }
     }
+
+    const duplicate = allEquipment.some(eq =>
+        eq.equipmentName.toLowerCase() === name.toLowerCase() &&
+        (eq.brand || '').toLowerCase() === (brand || '').toLowerCase() &&
+        (eq.model || '').toLowerCase() === (model || '').toLowerCase() &&
+        eq.equipmentId !== eqCurrentEditId
+    );
+    if (duplicate) {
+        showToast('Оборудование с таким названием, брендом и моделью уже существует');
+        return false;
+    }
+
     return true;
 }
 
@@ -1141,7 +1153,7 @@ async function eqCreateEquipment() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newItem)
         });
-        if (!response.ok) { const errText = await response.text(); throw new Error(`Ошибка ${response.status}: ${errText}`); }
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
         eqCloseModal();
         eqClearAllFilters();
         await eqRenderTable();
@@ -1164,8 +1176,7 @@ async function eqUpdateEquipment(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
-        if (response.status === 400) { showToast('Неверный запрос (несоответствие ID)'); return false; }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
         eqCloseModal();
         eqRestoreFiltersToDOM();
         await eqRenderTable();

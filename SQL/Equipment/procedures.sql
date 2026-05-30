@@ -24,27 +24,31 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: add_equipment
 CREATE OR REPLACE FUNCTION add_equipment(p_equipmentname VARCHAR, p_brand VARCHAR, p_model VARCHAR)
-RETURNS INTEGER AS $$
+RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
     INSERT INTO "Equipment" ("EquipmentName", "Brand", "Model") 
     VALUES (trim(p_equipmentname), trim(p_brand), NULLIF(trim(p_model), '')) 
     RETURNING "EquipmentId" INTO new_id;
-    RETURN new_id;
+    RETURN NULL;
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: update_equipment
 CREATE OR REPLACE FUNCTION update_equipment(p_id INTEGER, p_equipmentname VARCHAR, p_brand VARCHAR, p_model VARCHAR)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Equipment" WHERE "EquipmentId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Equipment" WHERE "EquipmentId" = p_id) THEN RETURN 'NOT_FOUND'; END IF;
     UPDATE "Equipment" 
     SET "EquipmentName" = trim(p_equipmentname), 
         "Brand" = trim(p_brand), 
         "Model" = NULLIF(trim(p_model), '') 
     WHERE "EquipmentId" = p_id;
-    RETURN TRUE;
+    RETURN NULL;
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
