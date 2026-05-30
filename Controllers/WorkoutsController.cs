@@ -106,6 +106,15 @@ public class WorkoutsController : ControllerBase
         return Ok(gyms);
     }
 
+    // GET: api/Workouts/5/edit-data
+    [HttpGet("{workoutid}/edit-data")]
+    public async Task<ActionResult<object>> GetEditData(int workoutid)
+    {
+        var data = await _workoutService.GetEditDataAsync(workoutid);
+        if (data == null) return NotFound();
+        return Ok(data);
+    }
+
     // PUT: api/Workouts/5/gyms
     [HttpPut("{workoutid}/gyms")]
     public async Task<IActionResult> PutGymLink(int workoutid, [FromBody] GymLinkDto dto)
@@ -113,18 +122,18 @@ public class WorkoutsController : ControllerBase
         if (dto == null || dto.GymId <= 0)
             return BadRequest();
 
-        var (success, error) = await _workoutService.AddGymLinkAsync(dto.GymId, workoutid);
-        if (!success) return BadRequest(error ?? "Ошибка");
-        return NoContent();
+        var result = await _workoutService.AddGymLinkAsync(dto.GymId, workoutid);
+        if (!result.Success) return BadRequest(new { message = result.Error ?? "Ошибка" });
+        return Ok(result);
     }
 
     // DELETE: api/Workouts/5/gyms/3
     [HttpDelete("{workoutid}/gyms/{gymid}")]
     public async Task<IActionResult> DeleteGymLink(int workoutid, int gymid)
     {
-        var success = await _workoutService.RemoveGymLinkAsync(gymid, workoutid);
-        if (!success) return NotFound();
-        return NoContent();
+        var result = await _workoutService.RemoveGymLinkAsync(gymid, workoutid);
+        if (!result.Success) return NotFound(new { message = result.Error });
+        return Ok(result);
     }
 }
 
