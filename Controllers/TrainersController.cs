@@ -13,16 +13,18 @@ public class TrainersController : ControllerBase
         _trainerService = trainerService;
     }
 
-    // GET: api/Trainers?fullName=...&noExperience=...
+    // GET: api/Trainers?fullName=...&noExperience=...&workoutName=...&role=...
     [HttpGet]
     public async Task<ActionResult<object>> GetTrainers(
         [FromQuery] string? fullName,
         [FromQuery] string? experienceSort,
-        [FromQuery] bool? noExperience)
+        [FromQuery] bool? noExperience,
+        [FromQuery] string? workoutName,
+        [FromQuery] string? role)
     {
         if (fullName?.Length > 50) return BadRequest(new { message = "ФИО не должно превышать 50 символов" });
 
-        var trainers = await _trainerService.GetAllAsync(fullName, experienceSort, noExperience);
+        var trainers = await _trainerService.GetAllAsync(fullName, experienceSort, noExperience, workoutName, role);
         var stats = await _trainerService.GetStatisticsAsync();
         return Ok(new { Items = trainers, Statistics = stats });
     }
@@ -47,6 +49,51 @@ public class TrainersController : ControllerBase
     {
         var stats = await _trainerService.GetStatisticsAsync();
         return Ok(stats);
+    }
+
+    // GET: api/Trainers/roles
+    [HttpGet("roles")]
+    public async Task<ActionResult<IEnumerable<string>>> GetRoles()
+    {
+        var roles = await _trainerService.GetRolesAsync();
+        return Ok(roles);
+    }
+
+    // GET: api/Trainers/5/roles
+    [HttpGet("{trainerid}/roles")]
+    public async Task<ActionResult<IEnumerable<TrainerService.TrainerRoleView>>> GetRolesByTrainer(int trainerid)
+    {
+        var roles = await _trainerService.GetRolesByTrainerAsync(trainerid);
+        return Ok(roles);
+    }
+
+    // PUT: api/Trainers/5/roles
+    [HttpPut("{trainerid}/roles")]
+    public async Task<IActionResult> AddTrainerRole(int trainerid, [FromBody] TrainerRoleDto dto)
+    {
+        if (dto == null || dto.WorkoutId <= 0)
+            return BadRequest();
+
+        var (success, error) = await _trainerService.AddTrainerRoleAsync(trainerid, dto.WorkoutId, dto.Role);
+        if (!success) return BadRequest(error ?? "Ошибка");
+        return NoContent();
+    }
+
+    // DELETE: api/Trainers/5/roles/3
+    [HttpDelete("{trainerid}/roles/{workoutid}")]
+    public async Task<IActionResult> DeleteTrainerRole(int trainerid, int workoutid)
+    {
+        var (success, error) = await _trainerService.DeleteTrainerRoleAsync(trainerid, workoutid);
+        if (!success) return NotFound(error);
+        return NoContent();
+    }
+
+    // GET: api/Trainers/workouts/dictionary
+    [HttpGet("workouts/dictionary")]
+    public async Task<ActionResult<IEnumerable<TrainerService.WorkoutView>>> GetWorkoutsDictionary()
+    {
+        var workouts = await _trainerService.GetWorkoutsDictionaryAsync();
+        return Ok(workouts);
     }
 
     // POST: api/Trainers
@@ -84,4 +131,10 @@ public class TrainersController : ControllerBase
 
         return NoContent();
     }
+}
+
+public class TrainerRoleDto
+{
+    public int WorkoutId { get; set; }
+    public string Role { get; set; } = null!;
 }

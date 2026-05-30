@@ -13,14 +13,36 @@ namespace Fitness.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Trainer>> GetAllAsync(string? fullName, string? experienceSort, bool? noExperience)
+        public async Task<IEnumerable<TrainerView>> GetAllAsync(string? fullName, string? experienceSort, bool? noExperience, string? workoutName, string? role)
         {
-            return await _context.Trainers
-                .FromSqlRaw("SELECT * FROM get_all_trainers({0}, {1}, {2})",
-                    (object)fullName ?? DBNull.Value,
-                    noExperience ?? false,
-                    (object)experienceSort ?? DBNull.Value)
-                .ToListAsync();
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var items = new List<TrainerView>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_all_trainers(@p0, @p1, @p2, @p3, @p4)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = (object)fullName ?? DBNull.Value; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = noExperience ?? false; command.Parameters.Add(p1);
+                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)experienceSort ?? DBNull.Value; command.Parameters.Add(p2);
+                var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = (object)workoutName ?? DBNull.Value; command.Parameters.Add(p3);
+                var p4 = command.CreateParameter(); p4.ParameterName = "@p4"; p4.Value = (object)role ?? DBNull.Value; command.Parameters.Add(p4);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        items.Add(new TrainerView
+                        {
+                            TrainerId = reader.GetInt32(0),
+                            FullName = reader.GetString(1),
+                            Experience = reader.IsDBNull(2) ? null : reader.GetInt32(2),
+                            Specializations = reader.IsDBNull(3) ? null : reader.GetString(3)
+                        });
+                    }
+                }
+            }
+            return items;
         }
 
         public async Task<Trainer?> GetByIdAsync(int id)
@@ -97,13 +119,140 @@ namespace Fitness.Services
 
                 if (string.IsNullOrEmpty(statsJson)) return new TrainerStatistics();
 
-                return JsonSerializer.Deserialize < TrainerStatistics > (statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new TrainerStatistics();
+                return JsonSerializer.Deserialize<TrainerStatistics>(statsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new TrainerStatistics();
             }
+        }
+
+        public async Task<IEnumerable<string>> GetRolesAsync()
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var items = new List<string>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_trainer_roles()";
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        items.Add(reader.GetString(0));
+                    }
+                }
+            }
+            return items;
+        }
+
+        public async Task<IEnumerable<TrainerRoleView>> GetRolesByTrainerAsync(int trainerId)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var items = new List<TrainerRoleView>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_roles_by_trainer(@p0)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = trainerId; command.Parameters.Add(p0);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        items.Add(new TrainerRoleView
+                        {
+                            WorkoutId = reader.GetInt32(0),
+                            WorkoutName = reader.GetString(1),
+                            TRole = reader.GetString(2)
+                        });
+                    }
+                }
+            }
+            return items;
+        }
+
+        public async Task<(bool Success, string? Error)> AddTrainerRoleAsync(int trainerId, int workoutId, string role)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT add_trainer_role(@p0, @p1, @p2)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = trainerId; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
+                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)role ?? DBNull.Value; command.Parameters.Add(p2);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return (true, null);
+                return (false, result.ToString());
+            }
+        }
+
+        public async Task<(bool Success, string? Error)> DeleteTrainerRoleAsync(int trainerId, int workoutId)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT delete_trainer_role(@p0, @p1)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = trainerId; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return (true, null);
+                return (false, result.ToString());
+            }
+        }
+
+        public async Task<IEnumerable<WorkoutView>> GetWorkoutsDictionaryAsync()
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            var items = new List<WorkoutView>();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM get_workouts_for_trainer_dictionary()";
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        items.Add(new WorkoutView
+                        {
+                            WorkoutId = reader.GetInt32(0),
+                            WorkoutName = reader.GetString(1)
+                        });
+                    }
+                }
+            }
+            return items;
         }
 
         private bool TrainerExists(int id)
         {
             return _context.Trainers.Any(e => e.TrainerId == id);
+        }
+
+        public class TrainerView
+        {
+            public int TrainerId { get; set; }
+            public string FullName { get; set; } = null!;
+            public int? Experience { get; set; }
+            public string? Specializations { get; set; }
+        }
+
+        public class TrainerRoleView
+        {
+            public int WorkoutId { get; set; }
+            public string WorkoutName { get; set; } = null!;
+            public string TRole { get; set; } = null!;
+        }
+
+        public class WorkoutView
+        {
+            public int WorkoutId { get; set; }
+            public string WorkoutName { get; set; } = null!;
         }
 
         public class TrainerStatistics

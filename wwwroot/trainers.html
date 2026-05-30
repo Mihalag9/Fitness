@@ -35,6 +35,10 @@
                     <option value="desc">По убыванию стажа</option>
                     <option value="no_exp">Без опыта</option>
                 </select>
+                <input type="text" id="filter-workoutName" placeholder="Тренировка" maxlength="50">
+                <select id="filter-role">
+                    <option value="">Все роли</option>
+                </select>
             </div>
             <div class="filter-actions" style="margin-top: 10px;">
                 <button id="apply-filters">Применить</button>
@@ -52,7 +56,7 @@
 
         <table id="trainers-table">
             <thead>
-                <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Действия</th></tr>
+                <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Специализация</th><th>Действия</th></tr>
             </thead>
             <tbody id="trainers-body"></tbody>
         </table>
@@ -72,6 +76,48 @@
                 <div class="form-actions" style="margin-top: 10px;">
                     <button id="submit-btn">Добавить</button>
                     <button id="cancel-btn">Отмена</button>
+                </div>
+
+                <div id="spec-section" class="gym-section">
+                    <h3>Специализации</h3>
+                    <p id="spec-section-hint" class="gym-section-hint">
+                        Сохраните тренера, чтобы назначить специализации
+                    </p>
+                    <div id="spec-controls" class="hidden">
+                        <div class="gym-controls-row">
+                            <div class="gym-controls-field">
+                                <label>Тренировка</label>
+                                <div class="autocomplete-wrap">
+                                    <input type="text" id="spec-workout-input"
+                                           placeholder="Начните вводить название" autocomplete="off">
+                                    <div id="spec-workout-dropdown" class="dropdown-list hidden"></div>
+                                </div>
+                            </div>
+                            <div class="gym-controls-field" style="width:180px;">
+                                <label>Роль</label>
+                                <select id="spec-role-select">
+                                    <option value="ведущий тренер">ведущий тренер</option>
+                                    <option value="тренер">тренер</option>
+                                    <option value="стажер">стажер</option>
+                                </select>
+                            </div>
+                            <div class="gym-controls-btn">
+                                <label>&nbsp;</label>
+                                <button id="add-spec-btn">Добавить</button>
+                            </div>
+                        </div>
+                        <div id="spec-limit-hint" class="gym-limit-hint hidden">
+                            Максимум 3 специализации на тренера
+                        </div>
+                        <div class="gym-table-wrap">
+                            <table id="spec-table">
+                                <thead>
+                                    <tr><th>Тренировка</th><th>Роль</th><th>Действия</th></tr>
+                                </thead>
+                                <tbody id="spec-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

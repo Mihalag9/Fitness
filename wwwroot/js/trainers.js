@@ -21,6 +21,8 @@ const modalTitle = document.getElementById('modal-title');
 // Фильтры
 const filterFullName = document.getElementById('filter-fullName');
 const filterExperienceSort = document.getElementById('filter-experienceSort');
+const filterWorkoutName = document.getElementById('filter-workoutName');
+const filterRole = document.getElementById('filter-role');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
@@ -31,19 +33,25 @@ let appliedFilters = {};
 function snapshotFilters() {
     appliedFilters = {
         fullName: filterFullName.value,
-        experienceSort: filterExperienceSort.value
+        experienceSort: filterExperienceSort.value,
+        workoutName: filterWorkoutName.value,
+        role: filterRole.value
     };
 }
 
 function restoreFiltersToDOM() {
     filterFullName.value = appliedFilters.fullName || '';
     filterExperienceSort.value = appliedFilters.experienceSort || '';
+    filterWorkoutName.value = appliedFilters.workoutName || '';
+    filterRole.value = appliedFilters.role || '';
 }
 
 function clearAllFilters() {
     appliedFilters = {};
     filterFullName.value = '';
     filterExperienceSort.value = '';
+    filterWorkoutName.value = '';
+    filterRole.value = '';
 }
 
 // ---- Вспомогательные функции ----
@@ -56,6 +64,11 @@ function clearForm() {
 
 function resetModal(isEdit) {
     clearForm();
+    specSectionHint.textContent = isEdit ? 'Загрузка...' : 'Сохраните тренера, чтобы назначить специализации';
+    specSectionHint.classList.remove('hidden');
+    specControls.classList.add('hidden');
+    specBody.innerHTML = '';
+    currentSpecCount = 0;
     if (isEdit) {
         modalTitle.textContent = 'Редактировать тренера';
         submitBtn.textContent = 'Сохранить';
@@ -71,6 +84,7 @@ function openModal() {
 
 function closeModal() {
     modal.classList.remove('show');
+    justCreated = false;
     resetModal(false);
 }
 
@@ -86,6 +100,7 @@ function openEditModal(trainer) {
     editIdField.value = trainer.trainerId;
     currentEditId = trainer.trainerId;
     openModal();
+    enableSpecSection(trainer.trainerId);
 }
 
 // ---- Валидация формы перед отправкой ----
@@ -131,6 +146,9 @@ async function renderTable() {
             params.append('experienceSort', appliedFilters.experienceSort);
         }
 
+        if (appliedFilters.workoutName) params.append('workoutName', appliedFilters.workoutName.trim());
+        if (appliedFilters.role) params.append('role', appliedFilters.role);
+
         const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -142,7 +160,11 @@ async function renderTable() {
             row.insertCell(0).textContent = trainer.trainerId;
             row.insertCell(1).textContent = trainer.fullName;
             row.insertCell(2).textContent = (trainer.experience != null && trainer.experience > 0) ? trainer.experience : '—';
-            const actionsCell = row.insertCell(3);
+            const specCell = row.insertCell(3);
+            specCell.textContent = trainer.specializations || '—';
+            specCell.style.whiteSpace = 'pre-line';
+            specCell.title = trainer.specializations || '';
+            const actionsCell = row.insertCell(4);
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
@@ -183,10 +205,14 @@ async function createTrainer() {
             const errText = await response.text();
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
-        closeModal();
-        clearAllFilters();
-        await renderTable();
-        showToast('Тренер добавлен', 'success');
+        const created = await response.json();
+        editIdField.value = created.trainerId;
+        currentEditId = created.trainerId;
+        justCreated = true;
+        modalTitle.textContent = 'Редактировать тренера';
+        submitBtn.textContent = 'Сохранить';
+        enableSpecSection(created.trainerId);
+        showToast('Тренер добавлен. Теперь можно назначить специализации.', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -253,7 +279,10 @@ async function deleteTrainer(id) {
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----
+let justCreated = false;
+
 async function onSubmit() {
+    if (justCreated) { closeModal(); return; }
     if (currentEditId !== null) {
         await updateTrainer(currentEditId);
     } else {
@@ -326,6 +355,191 @@ addTrainerBtn.addEventListener('click', openCreateModal);
 
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+// ---- Загрузка ролей для фильтра ----
+async function loadRoles() {
+    try {
+        const response = await fetch(`${API_URL}/roles`);
+        if (response.ok) {
+            const roles = await response.json();
+            roles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                filterRole.appendChild(option);
+            });
+        }
+    } catch (err) {
+        console.error('Ошибка загрузки ролей:', err);
+    }
+}
+
+// ==========================================
+// СПЕЦИАЛИЗАЦИИ (РОЛИ ТРЕНЕРА)
+// ==========================================
+
+const MAX_SPECS = 3;
+
+const specSection = document.getElementById('spec-section');
+const specSectionHint = document.getElementById('spec-section-hint');
+const specControls = document.getElementById('spec-controls');
+const specWorkoutInput = document.getElementById('spec-workout-input');
+const specWorkoutDropdown = document.getElementById('spec-workout-dropdown');
+const specRoleSelect = document.getElementById('spec-role-select');
+const addSpecBtn = document.getElementById('add-spec-btn');
+const specLimitHint = document.getElementById('spec-limit-hint');
+const specBody = document.getElementById('spec-body');
+
+let allWorkouts = [];
+let selectedSpecWorkoutId = null;
+let specDropdownIndex = -1;
+let currentSpecCount = 0;
+
+function enableSpecSection(trainerId) {
+    currentEditId = trainerId;
+    specSectionHint.classList.add('hidden');
+    specControls.classList.remove('hidden');
+    specWorkoutInput.value = '';
+    selectedSpecWorkoutId = null;
+    loadWorkoutsDictionary();
+    loadSpecLinks(trainerId);
+}
+
+function updateSpecLimitState() {
+    const limitReached = currentSpecCount >= MAX_SPECS;
+    specWorkoutInput.disabled = limitReached;
+    specRoleSelect.disabled = limitReached;
+    addSpecBtn.disabled = limitReached;
+    specLimitHint.classList.toggle('hidden', !limitReached);
+}
+
+// ---- Загрузка справочника тренировок ----
+async function loadWorkoutsDictionary() {
+    try {
+        const response = await fetch(`${API_URL}/workouts/dictionary`);
+        if (response.ok) allWorkouts = await response.json();
+    } catch (err) {
+        console.error('Ошибка загрузки тренировок:', err);
+    }
+}
+
+// ---- Загрузка привязанных ролей ----
+async function loadSpecLinks(trainerId) {
+    try {
+        const response = await fetch(`${API_URL}/${trainerId}/roles`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const roles = await response.json();
+
+        currentSpecCount = roles.length;
+        specBody.innerHTML = '';
+        roles.forEach(role => {
+            const row = specBody.insertRow();
+            row.insertCell(0).textContent = role.workoutName;
+            row.insertCell(1).textContent = role.tRole;
+            const actionsCell = row.insertCell(2);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Удалить';
+            deleteBtn.onclick = () => removeSpec(trainerId, role.workoutId);
+            actionsCell.appendChild(deleteBtn);
+        });
+        updateSpecLimitState();
+    } catch (err) {
+        showToast(`Ошибка загрузки специализаций: ${err.message}`);
+    }
+}
+
+// ---- Автодополнение тренировок ----
+function getFilteredWorkouts(query) {
+    if (!query) return [];
+    const q = query.toLowerCase().trim();
+    const linkedIds = new Set();
+    const rows = specBody.querySelectorAll('tr');
+    return allWorkouts.filter(w => w.workoutName.toLowerCase().includes(q));
+}
+
+function renderWorkoutDropdown(filtered) {
+    specWorkoutDropdown.innerHTML = '';
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item no-results';
+        div.textContent = 'Ничего не найдено';
+        specWorkoutDropdown.appendChild(div);
+        return;
+    }
+    filtered.forEach((workout, i) => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        if (i === specDropdownIndex) div.classList.add('active');
+        div.textContent = workout.workoutName;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            specWorkoutInput.value = workout.workoutName;
+            selectedSpecWorkoutId = workout.workoutId;
+            specWorkoutDropdown.classList.remove('show');
+        });
+        specWorkoutDropdown.appendChild(div);
+    });
+}
+
+function onSpecWorkoutInput() {
+    specDropdownIndex = -1;
+    selectedSpecWorkoutId = null;
+    const query = specWorkoutInput.value.trim();
+    const filtered = getFilteredWorkouts(query);
+    renderWorkoutDropdown(filtered);
+    if (filtered.length > 0) specWorkoutDropdown.classList.add('show');
+    else specWorkoutDropdown.classList.remove('show');
+}
+
+function onSpecWorkoutKeydown(e) {
+    const items = specWorkoutDropdown.querySelectorAll('.dropdown-item:not(.no-results)');
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (items.length > 0) { specDropdownIndex = Math.min(specDropdownIndex + 1, items.length - 1); renderWorkoutDropdown(getFilteredWorkouts(specWorkoutInput.value.trim())); } }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (items.length > 0) { specDropdownIndex = Math.max(specDropdownIndex - 1, 0); renderWorkoutDropdown(getFilteredWorkouts(specWorkoutInput.value.trim())); } }
+    else if ((e.key === 'Enter' || e.key === 'Tab') && specDropdownIndex >= 0 && specDropdownIndex < items.length) { e.preventDefault(); items[specDropdownIndex].dispatchEvent(new Event('mousedown')); }
+    else if (e.key === 'Escape') { specWorkoutDropdown.classList.remove('show'); }
+}
+
+// ---- Добавление специализации ----
+async function addSpec() {
+    if (!currentEditId) return;
+    if (!selectedSpecWorkoutId) { showToast('Выберите тренировку'); return; }
+
+    const role = specRoleSelect.value;
+    const response = await fetch(`${API_URL}/${currentEditId}/roles`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workoutId: selectedSpecWorkoutId, role })
+    });
+    if (!response.ok) {
+        const err = await response.json().catch(() => null);
+        showToast(err?.message || 'Ошибка добавления');
+        return;
+    }
+    specWorkoutInput.value = '';
+    selectedSpecWorkoutId = null;
+    await loadSpecLinks(currentEditId);
+    await renderTable();
+}
+
+// ---- Удаление специализации ----
+async function removeSpec(trainerId, workoutId) {
+    if (!confirm('Удалить эту специализацию?')) return;
+    const response = await fetch(`${API_URL}/${trainerId}/roles/${workoutId}`, { method: 'DELETE' });
+    if (!response.ok) {
+        const err = await response.json().catch(() => null);
+        showToast(err?.message || 'Ошибка удаления');
+        return;
+    }
+    await loadSpecLinks(trainerId);
+    await renderTable();
+}
+
+// ---- Обработчики специализаций ----
+addSpecBtn.addEventListener('click', addSpec);
+specWorkoutInput.addEventListener('input', onSpecWorkoutInput);
+specWorkoutInput.addEventListener('keydown', onSpecWorkoutKeydown);
+specWorkoutInput.addEventListener('blur', () => setTimeout(() => specWorkoutDropdown.classList.remove('show'), 200));
 
 // ==========================================
 // ВКЛАДКА «ОТЗЫВЫ»
@@ -715,4 +929,5 @@ revTrainerInput.addEventListener('keydown', onRevTrainerKeydown);
 revTrainerInput.addEventListener('blur', () => setTimeout(() => revTrainerDropdown.classList.remove('show'), 200));
 
 // Загружаем данные тренеров при старте
+loadRoles();
 renderTable();
