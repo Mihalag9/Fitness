@@ -75,7 +75,7 @@ public class TrainersController : ControllerBase
             return BadRequest();
 
         var (success, error) = await _trainerService.AddTrainerRoleAsync(trainerid, dto.WorkoutId, dto.Role);
-        if (!success) return BadRequest(error ?? "Ошибка");
+        if (!success) return BadRequest(new { message = error ?? "Ошибка" });
         return NoContent();
     }
 
@@ -84,7 +84,7 @@ public class TrainersController : ControllerBase
     public async Task<IActionResult> DeleteTrainerRole(int trainerid, int workoutid)
     {
         var (success, error) = await _trainerService.DeleteTrainerRoleAsync(trainerid, workoutid);
-        if (!success) return NotFound(error);
+        if (!success) return NotFound(new { message = error });
         return NoContent();
     }
 
