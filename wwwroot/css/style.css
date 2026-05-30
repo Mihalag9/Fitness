@@ -98,6 +98,11 @@ th, td {
     text-align: left;
 }
 
+th {
+    background: #34495e;
+    color: white;
+}
+
 /* Карточки — единая ширина 95% */
 .form-card, .stats-card, .filter-card {
     background: white;
