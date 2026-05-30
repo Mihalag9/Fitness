@@ -181,8 +181,14 @@ function openEditModal(item) {
 
 function renderTable(items) {
     tbody.innerHTML = '';
+    currentScheduleItems = items;
     items.forEach(item => {
         const row = tbody.insertRow();
+        row.style.cursor = 'pointer';
+        row.onclick = (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+            selectSchedule(item);
+        };
         row.insertCell(0).textContent = item.scheduleId;
         row.insertCell(1).textContent = item.trainerName || '—';
         row.insertCell(2).textContent = item.workoutName;
@@ -197,11 +203,11 @@ function renderTable(items) {
         const editBtn = document.createElement('button');
         editBtn.textContent = '\u270F\uFE0F';
         editBtn.title = 'Редактировать';
-        editBtn.onclick = () => openEditModal(item);
+        editBtn.onclick = (e) => { e.stopPropagation(); openEditModal(item); };
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '\uD83D\uDDD1\uFE0F';
         deleteBtn.title = 'Удалить';
-        deleteBtn.onclick = () => deleteSchedule(item.scheduleId);
+        deleteBtn.onclick = (e) => { e.stopPropagation(); deleteSchedule(item.scheduleId); };
         actionsCell.appendChild(editBtn);
         actionsCell.appendChild(deleteBtn);
     });
@@ -235,6 +241,7 @@ function cacheDictionaries(data) {
     allWorkouts = data.workouts || [];
     allGyms = data.gyms || [];
     allTypes = data.workoutTypes || [];
+    allClients = data.clients || [];
 }
 
 async function renderPage() {
@@ -257,6 +264,30 @@ async function renderPage() {
         renderStats(data.statistics);
         renderTypeOptions(allTypes, filterTypeSelect, true);
         renderTypeOptions(allTypes, modalTypeSelect, false);
+
+        allBookings = [];
+        for (const item of data.items) {
+            const resp = await fetch(`${API_URL}/${item.scheduleId}/bookings`);
+            if (resp.ok) {
+                const bData = await resp.json();
+                (bData.items || []).forEach(b => {
+                    allBookings.push({
+                        ...b,
+                        scheduleId: item.scheduleId,
+                        maxParticipants: item.maxParticipants || 0
+                    });
+                });
+            }
+        }
+
+        if (selectedScheduleId) {
+            if (!data.items.find(i => i.scheduleId === selectedScheduleId)) {
+                selectedScheduleId = null;
+                bookingsSection.classList.add('hidden');
+            } else {
+                loadBookingsFromCache();
+            }
+        }
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }
@@ -487,7 +518,255 @@ modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }
 applyBtn.addEventListener('click', () => { snapshotFilters(); renderPage(); });
 clearBtn.addEventListener('click', () => { clearAllFilters(); renderPage(); });
 
+// ==========================================
+// ЗАПИСИ НА ЗАНЯТИЯ (BOOKINGS)
+// ==========================================
+
+let allClients = [];
+let selectedScheduleId = null;
+let allBookings = [];
+let filteredBookings = [];
+let bookingPage = 1;
+const BOOKINGS_PER_PAGE = 5;
+let bookingFilterClientName = '';
+let bookingFilterAttended = '';
+
+const bookingsSection = document.getElementById('bookings-section');
+const bookingsScheduleInfo = document.getElementById('bookings-schedule-info');
+const bookingsSlotsInfo = document.getElementById('bookings-slots-info');
+const bookingsBody = document.getElementById('bookings-body');
+const bookingsPagination = document.getElementById('bookings-pagination');
+const bookingFilterClientInput = document.getElementById('booking-filter-client');
+const bookingFilterClientDropdown = document.getElementById('booking-filter-client-dropdown');
+const bookingFilterAttendedSelect = document.getElementById('booking-filter-attended');
+const addBookingBtn = document.getElementById('add-booking-btn');
+
+const bookingModal = document.getElementById('booking-modal');
+const bookingModalClose = document.getElementById('booking-modal-close');
+const bookingClientInput = document.getElementById('booking-client-input');
+const bookingClientDropdown = document.getElementById('booking-client-dropdown');
+const bookingSubmitBtn = document.getElementById('booking-submit-btn');
+const bookingCancelBtn = document.getElementById('booking-cancel-btn');
+
+let selectedBookingClientId = null;
+let bookingClientAC = null;
+let filterBookingClientAC = null;
+let selectedScheduleItem = null;
+
+function selectSchedule(item) {
+    selectedScheduleId = item.scheduleId;
+    selectedScheduleItem = item;
+    bookingPage = 1;
+    bookingFilterClientName = '';
+    bookingFilterAttended = '';
+    bookingFilterClientInput.value = '';
+    bookingFilterAttendedSelect.value = '';
+
+    const d = new Date(item.workDate);
+    const dateStr = d.toLocaleDateString('ru-RU');
+    bookingsScheduleInfo.textContent =
+        `${item.workoutName} | ${item.trainerName || '—'} | ${dateStr} | ${item.startTime.substring(0, 5)}–${item.endTime.substring(0, 5)}`;
+
+    document.querySelectorAll('#schedules-body tr').forEach(r => r.style.background = '');
+    const rows = document.querySelectorAll('#schedules-body tr');
+    rows.forEach(r => {
+        if (r.cells[0].textContent == item.scheduleId) {
+            r.style.background = '#e8f4fd';
+        }
+    });
+
+    bookingsSection.classList.remove('hidden');
+    loadBookingsFromCache();
+}
+
+function loadBookingsFromCache() {
+    filteredBookings = allBookings.filter(b => {
+        if (b.scheduleId !== selectedScheduleId) return false;
+        if (bookingFilterClientName && !b.clientName.toLowerCase().includes(bookingFilterClientName.toLowerCase())) return false;
+        if (bookingFilterAttended !== '' && String(b.attended) !== bookingFilterAttended) return false;
+        return true;
+    });
+    renderBookingsTable();
+    renderBookingsPagination();
+    renderBookingsSlotsInfo();
+}
+
+function renderBookingsTable() {
+    bookingsBody.innerHTML = '';
+    const start = (bookingPage - 1) * BOOKINGS_PER_PAGE;
+    const pageItems = filteredBookings.slice(start, start + BOOKINGS_PER_PAGE);
+
+    if (pageItems.length === 0) {
+        const row = bookingsBody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 4;
+        cell.textContent = 'Нет записей';
+        cell.style.textAlign = 'center';
+        cell.style.color = '#999';
+        return;
+    }
+
+    pageItems.forEach(b => {
+        const row = bookingsBody.insertRow();
+        row.insertCell(0).textContent = b.clientName;
+        const dateCell = row.insertCell(1);
+        const bd = new Date(b.bookedAt);
+        dateCell.textContent = bd.toLocaleDateString('ru-RU') + ' ' + bd.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+        const attendedCell = row.insertCell(2);
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = b.attended === true;
+        checkbox.style.cursor = 'pointer';
+        checkbox.style.width = '18px';
+        checkbox.style.height = '18px';
+        checkbox.onchange = () => toggleAttended(b.clientId);
+        attendedCell.appendChild(checkbox);
+
+        const actionsCell = row.insertCell(3);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '\uD83D\uDDD1\uFE0F';
+        deleteBtn.title = 'Удалить запись';
+        deleteBtn.onclick = () => deleteBooking(b.clientId);
+        actionsCell.appendChild(deleteBtn);
+    });
+}
+
+function renderBookingsPagination() {
+    bookingsPagination.innerHTML = '';
+    const totalPages = Math.ceil(filteredBookings.length / BOOKINGS_PER_PAGE);
+    if (totalPages <= 1) return;
+
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '\u25C0';
+    prevBtn.disabled = bookingPage <= 1;
+    prevBtn.onclick = () => { bookingPage--; renderBookingsTable(); renderBookingsPagination(); };
+    bookingsPagination.appendChild(prevBtn);
+
+    const label = document.createElement('span');
+    label.textContent = `Стр. ${bookingPage} из ${totalPages}`;
+    bookingsPagination.appendChild(label);
+
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = '\u25B6';
+    nextBtn.disabled = bookingPage >= totalPages;
+    nextBtn.onclick = () => { bookingPage++; renderBookingsTable(); renderBookingsPagination(); };
+    bookingsPagination.appendChild(nextBtn);
+}
+
+function renderBookingsSlotsInfo() {
+    if (!selectedScheduleItem) return;
+    const booked = allBookings.filter(b => b.scheduleId === selectedScheduleId).length;
+    const max = selectedScheduleItem.maxParticipants || 0;
+    bookingsSlotsInfo.textContent = `Занято: ${booked} / ${max} мест`;
+}
+
+async function loadBookingsForSchedule(scheduleId) {
+    try {
+        const response = await fetch(`${API_URL}/${scheduleId}/bookings`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        return data.items || [];
+    } catch (err) {
+        showToast(`Ошибка загрузки записей: ${err.message}`);
+        return [];
+    }
+}
+
+async function createBooking() {
+    if (!selectedBookingClientId) { showToast('Выберите клиента'); return; }
+    if (!selectedScheduleId) { showToast('Выберите расписание'); return; }
+
+    try {
+        const response = await fetch(`${API_URL}/${selectedScheduleId}/bookings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: selectedBookingClientId })
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+
+        closeBookingModal();
+        await renderPage();
+        showToast(data?.message || 'Клиент добавлен', 'success');
+    } catch (err) {
+        showToast(`Не удалось добавить: ${err.message}`);
+    }
+}
+
+async function deleteBooking(clientId) {
+    if (!confirm('Удалить эту запись?')) return;
+    try {
+        const response = await fetch(`${API_URL}/${selectedScheduleId}/bookings/${clientId}`, { method: 'DELETE' });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+
+        await renderPage();
+        showToast(data?.message || 'Запись удалена', 'success');
+    } catch (err) {
+        showToast(`Ошибка удаления: ${err.message}`);
+    }
+}
+
+async function toggleAttended(clientId) {
+    try {
+        const response = await fetch(`${API_URL}/${selectedScheduleId}/bookings/${clientId}/attended`, { method: 'PUT' });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+
+        const booking = allBookings.find(b => b.clientId === clientId && b.scheduleId === selectedScheduleId);
+        if (booking) booking.attended = !booking.attended;
+        renderBookingsTable();
+    } catch (err) {
+        showToast(`Ошибка: ${err.message}`);
+    }
+}
+
+let currentScheduleItems = [];
+
+function openBookingModal() {
+    bookingClientInput.value = '';
+    selectedBookingClientId = null;
+    bookingModal.classList.add('show');
+}
+
+function closeBookingModal() {
+    bookingModal.classList.remove('show');
+    bookingClientInput.value = '';
+    selectedBookingClientId = null;
+}
+
+bookingSubmitBtn.addEventListener('click', createBooking);
+bookingCancelBtn.addEventListener('click', closeBookingModal);
+bookingModalClose.addEventListener('click', closeBookingModal);
+bookingModal.addEventListener('click', (e) => { if (e.target === bookingModal) closeBookingModal(); });
+
+bookingFilterAttendedSelect.addEventListener('change', () => {
+    bookingFilterAttended = bookingFilterAttendedSelect.value;
+    bookingPage = 1;
+    loadBookingsFromCache();
+});
+
+addBookingBtn.addEventListener('click', openBookingModal);
+
+bookingFilterClientInput.addEventListener('input', () => {
+    bookingFilterClientName = bookingFilterClientInput.value.trim();
+    bookingPage = 1;
+    loadBookingsFromCache();
+});
+
 (async function init() {
     await renderPage();
     initAutocompletes();
+
+    filterBookingClientAC = setupAutocomplete(
+        bookingFilterClientInput, bookingFilterClientDropdown, allClients,
+        () => {}, (item) => item.fullName
+    );
+
+    bookingClientAC = setupAutocomplete(
+        bookingClientInput, bookingClientDropdown, allClients,
+        (item) => { selectedBookingClientId = item ? item.clientId : null; },
+        (item) => item.fullName
+    );
 })();

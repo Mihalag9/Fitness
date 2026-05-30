@@ -89,6 +89,49 @@
         <tbody id="schedules-body"></tbody>
     </table>
 
+    <!-- ==================== ЗАПИСИ НА ЗАНЯТИЕ ==================== -->
+    <div id="bookings-section" class="hidden" style="width:95%;margin:20px auto;background:#fff;border-radius:8px;padding:20px;box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+        <h2 style="margin-top:0;">Записи на: <span id="bookings-schedule-info" style="color:#007bff;"></span></h2>
+
+        <div class="filter-grid filter-grid-compact" style="margin-bottom:10px;">
+            <div class="form-group">
+                <label>Клиент</label>
+                <div class="autocomplete-wrap">
+                    <input type="text" id="booking-filter-client" placeholder="ФИО клиента" autocomplete="off" maxlength="50">
+                    <div id="booking-filter-client-dropdown" class="dropdown-list hidden"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Посещение</label>
+                <select id="booking-filter-attended">
+                    <option value="">Все</option>
+                    <option value="true">Посетил</option>
+                    <option value="false">Не посетил</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span id="booking-slots-info" style="font-weight:500;"></span>
+            <button id="add-booking-btn" style="margin-left:auto;">+ Добавить клиента</button>
+        </div>
+
+        <table id="bookings-table" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Клиент</th>
+                    <th>Дата записи</th>
+                    <th>Посещено</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="bookings-body"></tbody>
+        </table>
+
+        <div id="bookings-pagination" style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:10px;"></div>
+    </div>
+
+    <!-- ==================== МОДАЛКА РАСПИСАНИЯ ==================== -->
     <div id="schedule-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close" id="modal-close">&times;</span>
@@ -137,6 +180,27 @@
             <div class="form-actions" style="margin-top: 10px;">
                 <button id="submit-btn">Добавить</button>
                 <button id="cancel-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== МОДАЛКА ЗАПИСИ НА ЗАНЯТИЕ ==================== -->
+    <div id="booking-modal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <span class="modal-close" id="booking-modal-close">&times;</span>
+            <h2>Добавить клиента</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Клиент</label>
+                    <div class="autocomplete-wrap">
+                        <input type="text" id="booking-client-input" placeholder="Начните вводить ФИО" autocomplete="off" maxlength="50">
+                        <div id="booking-client-dropdown" class="dropdown-list hidden"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top: 10px;">
+                <button id="booking-submit-btn">Добавить</button>
+                <button id="booking-cancel-btn">Отмена</button>
             </div>
         </div>
     </div>
