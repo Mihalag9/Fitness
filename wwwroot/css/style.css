@@ -154,9 +154,24 @@ tr:hover {
 .form-grid input, .form-grid select,
 .filter-grid input, .filter-grid select {
     margin: 5px 0;
-    width: 250px;
     box-sizing: border-box;
     height: 38px;
+}
+
+/* Компактная сетка фильтров */
+.filter-grid-compact .form-group {
+    width: 160px;
+}
+
+.filter-grid-compact > input,
+.filter-grid-compact > select {
+    width: 160px;
+    margin: 5px 0;
+}
+
+.filter-grid-compact .form-group input,
+.filter-grid-compact .form-group select {
+    width: 100%;
 }
 
 /* Кнопки управления */

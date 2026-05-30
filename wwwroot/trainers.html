@@ -20,16 +20,20 @@
     <!-- Блок фильтров -->
     <div class="filter-card">
         <h2>Фильтры</h2>
-        <input type="text" id="filter-fullName" placeholder="ФИО">
-        <select id="filter-experienceSort">
-            <option value="">Без сортировки</option>
-            <option value="asc">По возрастанию стажа</option>
-            <option value="desc">По убыванию стажа</option>
-            <option value="no_exp">Без опыта</option>
-        </select>
-        <button id="apply-filters">Применить</button>
-        <button id="clear-filters">Очистить</button>
-        <button id="add-trainer-btn" style="margin-left:auto;">+ Добавить тренера</button>
+        <div class="filter-grid filter-grid-compact">
+            <input type="text" id="filter-fullName" placeholder="ФИО">
+            <select id="filter-experienceSort">
+                <option value="">Без сортировки</option>
+                <option value="asc">По возрастанию стажа</option>
+                <option value="desc">По убыванию стажа</option>
+                <option value="no_exp">Без опыта</option>
+            </select>
+        </div>
+        <div class="filter-actions" style="margin-top: 10px;">
+            <button id="apply-filters">Применить</button>
+            <button id="clear-filters">Очистить</button>
+            <button id="add-trainer-btn" style="margin-left:auto;">+ Добавить тренера</button>
+        </div>
     </div>
 
     <!-- Блок статистики -->
