@@ -556,6 +556,10 @@ async function saveInventoryQuantity(equipmentId, newQuantity) {
         showToast('Количество должно быть не менее 1');
         return;
     }
+    if (newQuantity > 100) {
+        showToast('Количество не может превышать 100 единиц');
+        return;
+    }
 
     try {
         const response = await fetch(`${API_URL}/${currentEditId}/inventory`, {
@@ -584,6 +588,10 @@ async function addInventoryItem() {
     }
     if (isNaN(quantity) || quantity < 1) {
         showToast('Количество должно быть не менее 1');
+        return;
+    }
+    if (quantity > 100) {
+        showToast('Количество не может превышать 100 единиц');
         return;
     }
     if (currentInventoryIds.has(equipmentId)) {

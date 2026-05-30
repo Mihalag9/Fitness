@@ -1,7 +1,7 @@
 CREATE TABLE "Abonnement" (
     "AbonnementId"       SERIAL PRIMARY KEY,
     "AbonnementType"     VARCHAR(100) NOT NULL UNIQUE,
-    "Price"              NUMERIC(10, 2) NOT NULL CHECK ("Price" >= 0),
+    "Price"              NUMERIC(10, 2) NOT NULL CHECK ("Price" >= 0 AND "Price" <= 100000),
     "DurationMonths"     INTEGER NOT NULL CHECK ("DurationMonths" > 0),
     "AccessStartTime"    TIME NOT NULL DEFAULT '08:00:00',
     "AccessEndTime"      TIME NOT NULL DEFAULT '23:00:00',
@@ -62,7 +62,7 @@ CREATE TABLE "Purchase" (
 CREATE TABLE "Inventory" (
     "EquipmentId"    INTEGER NOT NULL REFERENCES "Equipment"("EquipmentId") ON DELETE CASCADE,
     "GymId"          INTEGER NOT NULL REFERENCES "Gym"("GymId") ON DELETE CASCADE,
-    "Quantity"       INTEGER NOT NULL DEFAULT 1 CHECK ("Quantity" > 0),
+    "Quantity"       INTEGER NOT NULL DEFAULT 1 CHECK ("Quantity" > 0 AND "Quantity" <= 100),
 
     PRIMARY KEY ("EquipmentId", "GymId")
 );

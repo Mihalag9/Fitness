@@ -42,7 +42,7 @@ namespace Fitness.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<(Abonnement? Entity, string? Error)> CreateAsync(Abonnement abonnement)
+        public async Task<(Abonnement? Entity, string? Message)> CreateAsync(Abonnement abonnement)
         {
             var error = Validate(abonnement);
             if (error != null) return (null, error);
@@ -65,15 +65,20 @@ namespace Fitness.Services
                 var p6 = command.CreateParameter(); p6.ParameterName = "@p6"; p6.Value = abonnement.AccessEndTime; command.Parameters.Add(p6);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result != null && result != DBNull.Value)
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
                 {
-                    abonnement.AbonnementId = Convert.ToInt32(result);
+                    var idStr = msg.Split('(').Last().Replace(")", "").Replace("ID: ", "").Trim();
+                    int.TryParse(idStr, out int newId);
+                    abonnement.AbonnementId = newId;
+                    return (abonnement, msg);
                 }
-                return (abonnement, null);
+                return (null, msg ?? "Не удалось создать абонемент");
             }
         }
 
-        public async Task<(bool Success, string? Error)> UpdateAsync(int id, Abonnement abonnement)
+        public async Task<(bool Success, string? Message)> UpdateAsync(int id, Abonnement abonnement)
         {
             var error = Validate(abonnement);
             if (error != null) return (false, error);
@@ -97,12 +102,15 @@ namespace Fitness.Services
                 var p7 = command.CreateParameter(); p7.ParameterName = "@p7"; p7.Value = abonnement.AccessEndTime; command.Parameters.Add(p7);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return (false, null);
-                return ((bool)result, null);
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось обновить абонемент");
             }
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<(bool Success, string? Message)> DeleteAsync(int id)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -113,8 +121,11 @@ namespace Fitness.Services
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось удалить абонемент");
             }
         }
 
@@ -159,6 +170,9 @@ namespace Fitness.Services
 
             if (abonnement.Price <= 1000)
                 return "Цена должна быть больше 1000 рублей";
+
+            if (abonnement.Price > 100000)
+                return "Цена не может превышать 100 000 рублей";
 
             if (abonnement.DurationMonths < 1 || abonnement.DurationMonths > 18)
                 return "Срок действия должен быть от 1 до 18 месяцев";

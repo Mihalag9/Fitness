@@ -173,6 +173,10 @@ function validateForm(data) {
         showToast('Цена должна быть больше 1000 рублей');
         return false;
     }
+    if (data.price > 100000) {
+        showToast('Цена не может превышать 100 000 рублей');
+        return false;
+    }
     if (isNaN(data.durationMonths) || data.durationMonths < 1 || data.durationMonths > 18) {
         showToast('Срок действия должен быть от 1 до 18 месяцев');
         return false;
@@ -251,14 +255,12 @@ async function createAbonnement() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newAbonnement)
         });
-        if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
-        }
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
         closeModal();
         clearAllFilters();
         await renderTable();
-        showToast('Абонемент добавлен', 'success');
+        showToast(data?.message || 'Абонемент добавлен', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -278,14 +280,12 @@ async function updateAbonnement(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
-        if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
-        }
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
         closeModal();
         restoreFiltersToDOM();
         await renderTable();
-        showToast('Абонемент обновлён', 'success');
+        showToast(data?.message || 'Абонемент обновлён', 'success');
         return true;
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
@@ -339,26 +339,19 @@ async function deleteAbonnement(id) {
     if (!confirm('Удалить этот абонемент?')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (response.status === 404) {
-            showToast('Абонемент не найден (возможно, уже удалён)');
-            return;
-        }
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
 
-        // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
         if (id === currentEditId) {
             closeModal();
         }
 
         restoreFiltersToDOM();
         await renderTable();
+        showToast(data?.message || 'Абонемент удалён', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
-        return;
     }
-    showToast('Абонемент удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----

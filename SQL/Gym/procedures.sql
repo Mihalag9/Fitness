@@ -94,9 +94,13 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION upsert_inventory(p_gymid INTEGER, p_equipmentid INTEGER, p_quantity INTEGER)
 RETURNS TEXT AS $$
 BEGIN
+    IF p_quantity > 100 THEN
+        RAISE EXCEPTION 'Количество не может превышать 100 единиц';
+    END IF;
+
     IF p_quantity <= 0 THEN
         DELETE FROM "Inventory" WHERE "GymId" = p_gymid AND "EquipmentId" = p_equipmentid;
-        RETURN NULL;
+        RETURN 'Оборудование удалено из зала';
     END IF;
     
     BEGIN
@@ -108,7 +112,7 @@ BEGIN
         RETURN SQLERRM;
     END;
     
-    RETURN NULL;
+    RETURN 'Количество обновлено';
 END;
 $$ LANGUAGE plpgsql;
 

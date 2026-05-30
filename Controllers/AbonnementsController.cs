@@ -55,34 +55,28 @@ public class AbonnementsController : ControllerBase
 
     // POST: api/Abonnements
     [HttpPost]
-    public async Task<ActionResult<Abonnement>> PostAbonnement(Abonnement abonnement)
+    public async Task<ActionResult> PostAbonnement(Abonnement abonnement)
     {
-        var (entity, error) = await _abonnementService.CreateAsync(abonnement);
-        if (error != null) return BadRequest(new { message = error });
-        return CreatedAtAction(nameof(GetAbonnement), new { abonnementid = entity!.AbonnementId }, entity);
+        var (entity, message) = await _abonnementService.CreateAsync(abonnement);
+        if (entity == null) return BadRequest(new { message });
+        return Ok(new { message, entity });
     }
 
     // PUT: api/Abonnements/5
     [HttpPut("{abonnementid}")]
     public async Task<IActionResult> PutAbonnement(int abonnementid, Abonnement abonnement)
     {
-        var (success, error) = await _abonnementService.UpdateAsync(abonnementid, abonnement);
-        if (error != null) return BadRequest(new { message = error });
-        if (!success) return NotFound();
-        return NoContent();
+        var (success, message) = await _abonnementService.UpdateAsync(abonnementid, abonnement);
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 
     // DELETE: api/Abonnements/5
     [HttpDelete("{abonnementid}")]
     public async Task<IActionResult> DeleteAbonnement(int abonnementid)
     {
-        var success = await _abonnementService.DeleteAsync(abonnementid);
-
-        if (!success)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
+        var (success, message) = await _abonnementService.DeleteAsync(abonnementid);
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 }

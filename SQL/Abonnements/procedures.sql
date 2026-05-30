@@ -42,33 +42,58 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: add_abonnement
 CREATE OR REPLACE FUNCTION add_abonnement(p_type VARCHAR, p_price NUMERIC, p_months INTEGER, p_weekday BOOLEAN, p_weekend BOOLEAN, p_start TIME, p_end TIME)
-RETURNS INTEGER AS $$
+RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
+    IF p_price > 100000 THEN
+        RAISE EXCEPTION 'Цена не может превышать 100 000 рублей';
+    END IF;
+
     INSERT INTO "Abonnement" ("AbonnementType", "Price", "DurationMonths", "WeekdayAccess", "WeekendAccess", "AccessStartTime", "AccessEndTime")
     VALUES (trim(p_type), p_price, p_months, p_weekday, p_weekend, p_start, p_end) RETURNING "AbonnementId" INTO new_id;
-    RETURN new_id;
+
+    RETURN 'Абонемент "' || trim(p_type) || '" успешно создан (ID: ' || new_id || ')';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: update_abonnement
 CREATE OR REPLACE FUNCTION update_abonnement(p_id INTEGER, p_type VARCHAR, p_price NUMERIC, p_months INTEGER, p_weekday BOOLEAN, p_weekend BOOLEAN, p_start TIME, p_end TIME)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Abonnement" WHERE "AbonnementId" = p_id) THEN RETURN FALSE; END IF;
-    UPDATE "Abonnement" SET "AbonnementType" = trim(p_type), "Price" = p_price, "DurationMonths" = p_months, 
-    "WeekdayAccess" = p_weekday, "WeekendAccess" = p_weekend, "AccessStartTime" = p_start, "AccessEndTime" = p_end 
+    IF NOT EXISTS (SELECT 1 FROM "Abonnement" WHERE "AbonnementId" = p_id) THEN
+        RETURN 'Абонемент не найден';
+    END IF;
+
+    IF p_price > 100000 THEN
+        RAISE EXCEPTION 'Цена не может превышать 100 000 рублей';
+    END IF;
+
+    UPDATE "Abonnement" SET "AbonnementType" = trim(p_type), "Price" = p_price, "DurationMonths" = p_months,
+    "WeekdayAccess" = p_weekday, "WeekendAccess" = p_weekend, "AccessStartTime" = p_start, "AccessEndTime" = p_end
     WHERE "AbonnementId" = p_id;
-    RETURN TRUE;
+
+    RETURN 'Абонемент "' || trim(p_type) || '" успешно обновлён';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: delete_abonnement
 CREATE OR REPLACE FUNCTION delete_abonnement(p_id INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
+DECLARE v_type VARCHAR;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Abonnement" WHERE "AbonnementId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Abonnement" WHERE "AbonnementId" = p_id) THEN
+        RETURN 'Абонемент не найден';
+    END IF;
+
+    SELECT "AbonnementType" INTO v_type FROM "Abonnement" WHERE "AbonnementId" = p_id;
     DELETE FROM "Abonnement" WHERE "AbonnementId" = p_id;
-    RETURN TRUE;
+
+    RETURN 'Абонемент "' || v_type || '" успешно удалён';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
