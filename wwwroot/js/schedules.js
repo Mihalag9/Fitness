@@ -200,6 +200,10 @@ function renderTable(items) {
         row.insertCell(6).textContent = item.startTime.substring(0, 5);
         row.insertCell(7).textContent = item.endTime.substring(0, 5);
         const actionsCell = row.insertCell(8);
+        const bookingsBtn = document.createElement('button');
+        bookingsBtn.textContent = '\uD83D\uDC65';
+        bookingsBtn.title = 'Записи на занятие';
+        bookingsBtn.onclick = (e) => { e.stopPropagation(); selectSchedule(item); };
         const editBtn = document.createElement('button');
         editBtn.textContent = '\u270F\uFE0F';
         editBtn.title = 'Редактировать';
@@ -208,6 +212,7 @@ function renderTable(items) {
         deleteBtn.textContent = '\uD83D\uDDD1\uFE0F';
         deleteBtn.title = 'Удалить';
         deleteBtn.onclick = (e) => { e.stopPropagation(); deleteSchedule(item.scheduleId); };
+        actionsCell.appendChild(bookingsBtn);
         actionsCell.appendChild(editBtn);
         actionsCell.appendChild(deleteBtn);
     });
