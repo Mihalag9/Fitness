@@ -79,20 +79,28 @@ namespace Fitness.Controllers
             return Ok(items);
         }
 
+        [HttpGet("{gymid}/edit-data")]
+        public async Task<ActionResult<object>> GetEditData(int gymid)
+        {
+            var data = await _gymService.GetEditDataAsync(gymid);
+            if (data == null) return NotFound();
+            return Ok(data);
+        }
+
         [HttpPut("{gymid}/inventory")]
         public async Task<IActionResult> PutInventory(int gymid, [FromBody] InventoryUpdateDto dto)
         {
-            var (success, error) = await _gymService.UpsertInventoryAsync(gymid, dto.EquipmentId, dto.Quantity);
-            if (!success) return BadRequest(new { message = error });
-            return NoContent();
+            var result = await _gymService.UpsertInventoryAsync(gymid, dto.EquipmentId, dto.Quantity);
+            if (!result.Success) return BadRequest(new { message = result.Error });
+            return Ok(result);
         }
 
         [HttpDelete("{gymid}/inventory/{equipmentid}")]
         public async Task<IActionResult> DeleteInventoryItem(int gymid, int equipmentid)
         {
-            var success = await _gymService.DeleteInventoryItemAsync(gymid, equipmentid);
-            if (!success) return NotFound();
-            return NoContent();
+            var result = await _gymService.DeleteInventoryItemAsync(gymid, equipmentid);
+            if (!result.Success) return NotFound();
+            return Ok(result);
         }
 
         [HttpGet("equipment")]

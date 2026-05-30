@@ -587,10 +587,8 @@ async function saveInventoryQuantity(equipmentId, newQuantity) {
             body: JSON.stringify({ equipmentId, quantity: newQuantity })
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        await loadInventory(currentEditId);
-        restoreFiltersToDOM();
-        await renderTable();
-        await updateStats();
+        const result = await response.json();
+        applyInventoryResult(result);
         showToast('Количество обновлено', 'success');
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
@@ -626,13 +624,11 @@ async function addInventoryItem() {
             const err = await response.json().catch(() => null);
             throw new Error(err?.message || `HTTP ${response.status}`);
         }
+        const result = await response.json();
         equipmentInput.value = '';
         selectedEquipmentId = null;
         equipmentQuantity.value = '1';
-        await loadInventory(currentEditId);
-        restoreFiltersToDOM();
-        await renderTable();
-        await updateStats();
+        applyInventoryResult(result);
         showToast('Оборудование добавлено в зал', 'success');
     } catch (err) {
         showToast(`Ошибка добавления: ${err.message}`);
@@ -646,14 +642,77 @@ async function deleteInventoryItem(gymId, equipmentId) {
             method: 'DELETE'
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        await loadInventory(gymId);
-        restoreFiltersToDOM();
-        await renderTable();
-        await updateStats();
+        const result = await response.json();
+        applyInventoryResult(result);
         showToast('Оборудование удалено из зала', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
     }
+}
+
+// ---- Отрисовка таблицы залов (общая) ----
+function renderGymTable(items, statistics) {
+    tbody.innerHTML = '';
+    items.forEach(gym => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = gym.gymId;
+        row.insertCell(1).textContent = gym.gymName;
+        const equipCell = row.insertCell(2);
+        equipCell.textContent = gym.equipmentList || '—';
+        equipCell.style.whiteSpace = 'normal';
+        equipCell.style.maxWidth = '400px';
+
+        const actionsCell = row.insertCell(3);
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать';
+        editBtn.onclick = () => openEditModal(gym);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => deleteGym(gym.gymId);
+
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+    allGyms = items;
+    totalSpan.textContent = statistics.totalGyms;
+    totalEquipmentSpan.textContent = statistics.totalEquipmentUnits;
+}
+
+// ---- Загрузка данных модала редактирования (1 запрос) ----
+async function loadEditData(gymId) {
+    try {
+        const response = await fetch(`${API_URL}/${gymId}/edit-data`);
+        if (!response.ok) throw new Error('Ошибка загрузки данных зала');
+        const data = await response.json();
+
+        allEquipment = data.equipment;
+
+        currentInventoryIds.clear();
+        data.inventory.forEach(item => currentInventoryIds.add(item.equipmentId));
+        allInventoryItems = data.inventory;
+        inventoryPage = 1;
+
+        refreshInvBrands();
+        invFilterBrand.value = '';
+        invFilterName.value = '';
+        invFilterSort.value = '';
+
+        renderInventoryPage();
+    } catch (err) {
+        showToast(`Ошибка: ${err.message}`);
+    }
+}
+
+// ---- Применение результата CRUD инвентаря ----
+function applyInventoryResult(result) {
+    allInventoryItems = result.inventory;
+    currentInventoryIds.clear();
+    result.inventory.forEach(item => currentInventoryIds.add(item.equipmentId));
+    renderInventoryPage();
+    renderGymTable(result.items, result.statistics);
 }
 
 // ---- Main table ----
@@ -669,37 +728,8 @@ async function renderTable() {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
-        allGyms = result.items;
 
-        tbody.innerHTML = '';
-        result.items.forEach(gym => {
-            const row = tbody.insertRow();
-            row.insertCell(0).textContent = gym.gymId;
-            row.insertCell(1).textContent = gym.gymName;
-            const equipCell = row.insertCell(2);
-            equipCell.textContent = gym.equipmentList || '—';
-            equipCell.style.whiteSpace = 'normal';
-            equipCell.style.maxWidth = '400px';
-
-            const actionsCell = row.insertCell(3);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => openEditModal(gym);
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => deleteGym(gym.gymId);
-
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
-        
-        // Обновляем статистику
-        const data = result.statistics;
-        totalSpan.textContent = data.totalGyms;
-        totalEquipmentSpan.textContent = data.totalEquipmentUnits;
+        renderGymTable(result.items, result.statistics);
 
         // Бренды из ответа
         if (result.brands) {
@@ -727,8 +757,7 @@ function openEditModal(gym) {
     inventoryGymName.textContent = gym.gymName;
     addEquipmentBtn.textContent = 'Добавить';
     openModal();
-    loadEquipmentDictionary();
-    loadInventory(gym.gymId);
+    loadEditData(gym.gymId);
 }
 
 // ---- CRUD Gym ----
@@ -754,8 +783,7 @@ async function createGym() {
         inventoryCard.classList.remove('hidden');
         inventoryGymName.textContent = gymNameInput.value.trim();
         addEquipmentBtn.textContent = 'Добавить';
-        loadEquipmentDictionary();
-        loadInventory(created.gymId);
+        loadEditData(created.gymId);
         clearAllFilters();
         await renderTable();
         showToast('Зал добавлен. Теперь можно добавить оборудование.', 'success');

@@ -137,7 +137,7 @@ namespace Fitness.Services
             return items;
         }
 
-        public async Task<(bool Success, string? Error)> UpsertInventoryAsync(int gymId, int equipmentId, int quantity)
+        public async Task<GymInventoryResult> UpsertInventoryAsync(int gymId, int equipmentId, int quantity)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -150,12 +150,19 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = quantity; command.Parameters.Add(p2);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return (true, null);
-                return (false, result.ToString());
+                if (result != null && result != DBNull.Value)
+                {
+                    return new GymInventoryResult { Success = false, Error = result.ToString() };
+                }
             }
+
+            var inventory = await GetInventoryByGymAsync(gymId);
+            var items = await GetAllAsync(null, null, null, null);
+            var stats = await GetStatisticsAsync();
+            return new GymInventoryResult { Success = true, Inventory = inventory, Items = items, Statistics = stats };
         }
 
-        public async Task<bool> DeleteInventoryItemAsync(int gymId, int equipmentId)
+        public async Task<GymInventoryResult> DeleteInventoryItemAsync(int gymId, int equipmentId)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -167,9 +174,16 @@ namespace Fitness.Services
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = equipmentId; command.Parameters.Add(p1);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                if (result == null || result == DBNull.Value || !(bool)result)
+                {
+                    return new GymInventoryResult { Success = false, Error = "Оборудование не найдено в зале" };
+                }
             }
+
+            var inventory = await GetInventoryByGymAsync(gymId);
+            var items = await GetAllAsync(null, null, null, null);
+            var stats = await GetStatisticsAsync();
+            return new GymInventoryResult { Success = true, Inventory = inventory, Items = items, Statistics = stats };
         }
 
         public async Task<IEnumerable<EquipmentView>> GetAllEquipmentAsync()
@@ -218,6 +232,22 @@ namespace Fitness.Services
             return brands;
         }
 
+        public async Task<GymEditData?> GetEditDataAsync(int id)
+        {
+            var gym = await GetByIdAsync(id);
+            if (gym == null) return null;
+
+            var inventory = await GetInventoryByGymAsync(id);
+            var equipment = await GetAllEquipmentAsync();
+
+            return new GymEditData
+            {
+                Gym = gym,
+                Inventory = inventory,
+                Equipment = equipment
+            };
+        }
+
         public async Task<GymStatistics> GetStatisticsAsync()
         {
             var connection = _context.Database.GetDbConnection();
@@ -263,6 +293,22 @@ namespace Fitness.Services
         {
             public int TotalGyms { get; set; }
             public int TotalEquipmentUnits { get; set; }
+        }
+
+        public class GymEditData
+        {
+            public Gym Gym { get; set; } = null!;
+            public IEnumerable<InventoryItemView> Inventory { get; set; } = Enumerable.Empty<InventoryItemView>();
+            public IEnumerable<EquipmentView> Equipment { get; set; } = Enumerable.Empty<EquipmentView>();
+        }
+
+        public class GymInventoryResult
+        {
+            public bool Success { get; set; }
+            public string? Error { get; set; }
+            public IEnumerable<InventoryItemView> Inventory { get; set; } = Enumerable.Empty<InventoryItemView>();
+            public IEnumerable<GymView> Items { get; set; } = Enumerable.Empty<GymView>();
+            public GymStatistics Statistics { get; set; } = new();
         }
     }
 }
