@@ -17,55 +17,155 @@
 
     <h1>Управление тренерами фитнес-клуба</h1>
 
-    <!-- Блок фильтров -->
-    <div class="filter-card">
-        <h2>Фильтры</h2>
-        <div class="filter-grid filter-grid-compact">
-            <input type="text" id="filter-fullName" placeholder="ФИО" maxlength="50">
-            <select id="filter-experienceSort">
-                <option value="">Без сортировки</option>
-                <option value="asc">По возрастанию стажа</option>
-                <option value="desc">По убыванию стажа</option>
-                <option value="no_exp">Без опыта</option>
-            </select>
-        </div>
-        <div class="filter-actions" style="margin-top: 10px;">
-            <button id="apply-filters">Применить</button>
-            <button id="clear-filters">Очистить</button>
-            <button id="add-trainer-btn" style="margin-left:auto;">+ Добавить тренера</button>
-        </div>
+    <div class="page-tabs">
+        <button class="page-tab active" data-tab="trainers">Тренеры</button>
+        <button class="page-tab" data-tab="reviews">Отзывы</button>
     </div>
 
-    <!-- Блок статистики -->
-    <div class="stats-card">
-        <h2>Статистика</h2>
-        <p>Всего тренеров: <span id="total-count">0</span></p>
-        <p>Со стажем более 2 лет: <span id="exp-count">0</span></p>
-        <p>Без опыта: <span id="no-exp-count">0</span></p>
-    </div>
+    <!-- ==================== ВКЛАДКА: ТРЕНЕРЫ ==================== -->
+    <div id="tab-trainers" class="tab-content active">
 
-    <!-- Таблица с данными -->
-    <table id="trainers-table">
-        <thead>
-            <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Действия</th></tr>
-        </thead>
-        <tbody id="trainers-body"></tbody>
-    </table>
-    <div id="trainer-modal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" id="modal-close">&times;</span>
-            <h2 id="modal-title">Добавить тренера</h2>
-            <input type="hidden" id="edit-id">
-            <div class="form-grid">
-                <input type="text" id="fullName" placeholder="ФИО" required maxlength="50">
-                <div class="form-group">
-                    <label>Стаж (лет)</label>
-                    <input type="number" id="experience" placeholder="0" min="0">
+        <div class="filter-card">
+            <h2>Фильтры</h2>
+            <div class="filter-grid filter-grid-compact">
+                <input type="text" id="filter-fullName" placeholder="ФИО" maxlength="50">
+                <select id="filter-experienceSort">
+                    <option value="">Без сортировки</option>
+                    <option value="asc">По возрастанию стажа</option>
+                    <option value="desc">По убыванию стажа</option>
+                    <option value="no_exp">Без опыта</option>
+                </select>
+            </div>
+            <div class="filter-actions" style="margin-top: 10px;">
+                <button id="apply-filters">Применить</button>
+                <button id="clear-filters">Очистить</button>
+                <button id="add-trainer-btn" style="margin-left:auto;">+ Добавить тренера</button>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h2>Статистика</h2>
+            <p>Всего тренеров: <span id="total-count">0</span></p>
+            <p>Со стажем более 2 лет: <span id="exp-count">0</span></p>
+            <p>Без опыта: <span id="no-exp-count">0</span></p>
+        </div>
+
+        <table id="trainers-table">
+            <thead>
+                <tr><th>ID</th><th>ФИО</th><th>Стаж (лет)</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="trainers-body"></tbody>
+        </table>
+
+        <div id="trainer-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close" id="modal-close">&times;</span>
+                <h2 id="modal-title">Добавить тренера</h2>
+                <input type="hidden" id="edit-id">
+                <div class="form-grid">
+                    <input type="text" id="fullName" placeholder="ФИО" required maxlength="50">
+                    <div class="form-group">
+                        <label>Стаж (лет)</label>
+                        <input type="number" id="experience" placeholder="0" min="0">
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 10px;">
+                    <button id="submit-btn">Добавить</button>
+                    <button id="cancel-btn">Отмена</button>
                 </div>
             </div>
-            <div class="form-actions" style="margin-top: 10px;">
-                <button id="submit-btn">Добавить</button>
-                <button id="cancel-btn">Отмена</button>
+        </div>
+    </div>
+
+    <!-- ==================== ВКЛАДКА: ОТЗЫВЫ ==================== -->
+    <div id="tab-reviews" class="tab-content">
+
+        <div class="filter-card">
+            <h2>Фильтры</h2>
+            <div class="filter-grid filter-grid-compact">
+                <div class="form-group">
+                    <label>Клиент</label>
+                    <input type="text" id="rev-filter-client" placeholder="ФИО клиента" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>Тренер</label>
+                    <input type="text" id="rev-filter-trainer" placeholder="ФИО тренера" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>Дата от</label>
+                    <input type="date" id="rev-filter-dateFrom" min="2010-01-01" max="2030-12-31">
+                </div>
+                <div class="form-group">
+                    <label>Дата до</label>
+                    <input type="date" id="rev-filter-dateTo" min="2010-01-01" max="2030-12-31">
+                </div>
+                <div class="form-group">
+                    <label>Сортировка рейтинга</label>
+                    <select id="rev-filter-ratingSort">
+                        <option value="">Без сортировки</option>
+                        <option value="asc">По возрастанию</option>
+                        <option value="desc">По убыванию</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions" style="margin-top: 10px;">
+                <button id="rev-apply-filters">Применить</button>
+                <button id="rev-clear-filters">Очистить</button>
+                <button id="rev-add-btn" style="margin-left:auto;">+ Добавить отзыв</button>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h2>Статистика отзывов</h2>
+            <p>Всего отзывов: <span id="rev-total-count">0</span></p>
+            <p>Средний рейтинг: <span id="rev-avg-rating">0</span></p>
+        </div>
+
+        <table id="reviews-table">
+            <thead>
+                <tr><th>Клиент</th><th>Тренер</th><th>Дата</th><th>Текст</th><th>Рейтинг</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="reviews-body"></tbody>
+        </table>
+
+        <div id="review-modal" class="modal">
+            <div class="modal-content modal-wide">
+                <span class="modal-close" id="rev-modal-close">&times;</span>
+                <h2 id="rev-modal-title">Добавить отзыв</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Клиент</label>
+                        <div class="autocomplete-wrap">
+                            <input type="text" id="rev-client-input" placeholder="Начните вводить ФИО" autocomplete="off" maxlength="50">
+                            <div id="rev-client-dropdown" class="dropdown-list hidden"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Тренер</label>
+                        <div class="autocomplete-wrap">
+                            <input type="text" id="rev-trainer-input" placeholder="Начните вводить ФИО" autocomplete="off" maxlength="50">
+                            <div id="rev-trainer-dropdown" class="dropdown-list hidden"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Рейтинг (1-5)</label>
+                        <select id="rev-rating">
+                            <option value="5">5 — Отлично</option>
+                            <option value="4">4 — Хорошо</option>
+                            <option value="3">3 — Нормально</option>
+                            <option value="2">2 — Плохо</option>
+                            <option value="1">1 — Ужасно</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Текст отзыва (необязательно)</label>
+                    <textarea id="rev-text" rows="4" maxlength="300" placeholder="Напишите отзыв..." style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:14px;resize:vertical;"></textarea>
+                </div>
+                <div class="form-actions" style="margin-top: 10px;">
+                    <button id="rev-submit-btn">Добавить</button>
+                    <button id="rev-cancel-btn">Отмена</button>
+                </div>
             </div>
         </div>
     </div>

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Fitness.Models;
+using Fitness.Services;
 
 namespace Fitness.Controllers
 {
@@ -8,93 +8,95 @@ namespace Fitness.Controllers
     [ApiController]
     public class ReviewsController : ControllerBase
     {
-        private readonly FitnessContext _context;
+        private readonly ReviewService _reviewService;
 
-        public ReviewsController(FitnessContext context)
+        public ReviewsController(ReviewService reviewService)
         {
-            _context = context;
+            _reviewService = reviewService;
         }
 
         // GET: api/Reviews
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Review>>> GetReviews()
+        public async Task<ActionResult<object>> GetReviews(
+            [FromQuery] string? clientName,
+            [FromQuery] string? trainerName,
+            [FromQuery] DateOnly? dateFrom,
+            [FromQuery] DateOnly? dateTo,
+            [FromQuery] string? ratingSort)
         {
-            return await _context.Reviews.ToListAsync();
-        }
+            if (clientName?.Length > 50) return BadRequest(new { message = "Имя клиента не должно превышать 50 символов" });
+            if (trainerName?.Length > 50) return BadRequest(new { message = "Имя тренера не должно превышать 50 символов" });
 
-        // GET: api/Reviews/5/10
-        [HttpGet("{clientid}/{trainerid}")]
-        public async Task<ActionResult<Review>> GetReview(int clientid, int trainerid)
-        {
-            var review = await _context.Reviews.FindAsync(clientid, trainerid);
-
-            if (review == null)
-            {
-                return NotFound();
-            }
-
-            return review;
-        }
-
-        // PUT: api/Reviews/5/10
-        [HttpPut("{clientid}/{trainerid}")]
-        public async Task<IActionResult> PutReview(int clientid, int trainerid, Review review)
-        {
-            if (clientid != review.ClientId || trainerid != review.TrainerId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(review).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ReviewExists(clientid, trainerid))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            var items = await _reviewService.GetAllAsync(clientName, trainerName, dateFrom, dateTo, ratingSort);
+            var stats = await _reviewService.GetStatisticsAsync();
+            return Ok(new { Items = items, Statistics = stats });
         }
 
         // POST: api/Reviews
         [HttpPost]
-        public async Task<ActionResult<Review>> PostReview(Review review)
+        public async Task<IActionResult> PostReview([FromBody] ReviewCreateDto dto)
         {
-            _context.Reviews.Add(review);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetReview), new { clientid = review.ClientId, trainerid = review.TrainerId }, review);
+            var (success, error) = await _reviewService.CreateAsync(dto.ClientId, dto.TrainerId, dto.ReviewText, dto.Rating);
+            if (error != null) return BadRequest(new { message = error });
+            return Ok();
         }
 
-        // DELETE: api/Reviews/5/10
-        [HttpDelete("{clientid}/{trainerid}")]
-        public async Task<IActionResult> DeleteReview(int clientid, int trainerid)
+        // PUT: api/Reviews
+        [HttpPut]
+        public async Task<IActionResult> PutReview([FromBody] ReviewUpdateDto dto)
         {
-            var review = await _context.Reviews.FindAsync(clientid, trainerid);
-            if (review == null)
-            {
-                return NotFound();
-            }
-
-            _context.Reviews.Remove(review);
-            await _context.SaveChangesAsync();
-
+            var (success, error) = await _reviewService.UpdateAsync(dto.ClientId, dto.TrainerId, dto.ReviewText, dto.Rating);
+            if (error != null) return BadRequest(new { message = error });
+            if (!success) return NotFound();
             return NoContent();
         }
 
-        private bool ReviewExists(int clientid, int trainerid)
+        // DELETE: api/Reviews
+        [HttpDelete]
+        public async Task<IActionResult> DeleteReview([FromBody] ReviewDeleteDto dto)
         {
-            return _context.Reviews.Any(e => e.ClientId == clientid && e.TrainerId == trainerid);
+            var (success, error) = await _reviewService.DeleteAsync(dto.ClientId, dto.TrainerId);
+            if (error != null) return BadRequest(new { message = error });
+            if (!success) return NotFound();
+            return NoContent();
         }
+
+        // GET: api/Reviews/clients
+        [HttpGet("clients")]
+        public async Task<ActionResult<IEnumerable<ReviewService.ClientView>>> GetClientsDictionary()
+        {
+            var clients = await _reviewService.GetClientsDictionaryAsync();
+            return Ok(clients);
+        }
+
+        // GET: api/Reviews/trainers
+        [HttpGet("trainers")]
+        public async Task<ActionResult<IEnumerable<ReviewService.TrainerView>>> GetTrainersDictionary()
+        {
+            var trainers = await _reviewService.GetTrainersDictionaryAsync();
+            return Ok(trainers);
+        }
+    }
+
+    public class ReviewCreateDto
+    {
+        public int ClientId { get; set; }
+        public int TrainerId { get; set; }
+        public string? ReviewText { get; set; }
+        public int Rating { get; set; }
+    }
+
+    public class ReviewUpdateDto
+    {
+        public int ClientId { get; set; }
+        public int TrainerId { get; set; }
+        public string? ReviewText { get; set; }
+        public int Rating { get; set; }
+    }
+
+    public class ReviewDeleteDto
+    {
+        public int ClientId { get; set; }
+        public int TrainerId { get; set; }
     }
 }

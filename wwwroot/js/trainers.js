@@ -317,7 +317,7 @@ experienceInput.addEventListener('keydown', function (e) {
     }
 });
 
-// ---- Инициализация и обработчики событий ----
+// ---- Инициализация и обработчики событий (Тренеры) ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', closeModal);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
@@ -327,5 +327,387 @@ addTrainerBtn.addEventListener('click', openCreateModal);
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-// Загружаем данные при старте
+// ==========================================
+// ВКЛАДКА «ОТЗЫВЫ»
+// ==========================================
+
+const REV_API = 'https://localhost:7159/api/Reviews';
+
+// DOM-элементы отзывов
+const revTbody = document.getElementById('reviews-body');
+const revTotalSpan = document.getElementById('rev-total-count');
+const revAvgRatingSpan = document.getElementById('rev-avg-rating');
+
+const revClientInput = document.getElementById('rev-client-input');
+const revClientDropdown = document.getElementById('rev-client-dropdown');
+const revTrainerInput = document.getElementById('rev-trainer-input');
+const revTrainerDropdown = document.getElementById('rev-trainer-dropdown');
+const revRatingSelect = document.getElementById('rev-rating');
+const revTextInput = document.getElementById('rev-text');
+const revSubmitBtn = document.getElementById('rev-submit-btn');
+const revCancelBtn = document.getElementById('rev-cancel-btn');
+const revModal = document.getElementById('review-modal');
+const revModalClose = document.getElementById('rev-modal-close');
+const revModalTitle = document.getElementById('rev-modal-title');
+
+const revFilterClient = document.getElementById('rev-filter-client');
+const revFilterTrainer = document.getElementById('rev-filter-trainer');
+const revFilterDateFrom = document.getElementById('rev-filter-dateFrom');
+const revFilterDateTo = document.getElementById('rev-filter-dateTo');
+const revFilterRatingSort = document.getElementById('rev-filter-ratingSort');
+const revApplyFiltersBtn = document.getElementById('rev-apply-filters');
+const revClearFiltersBtn = document.getElementById('rev-clear-filters');
+const revAddBtn = document.getElementById('rev-add-btn');
+
+let allRevClients = [];
+let allRevTrainers = [];
+let selectedRevClientId = null;
+let selectedRevTrainerId = null;
+let revClientDropdownIndex = -1;
+let revTrainerDropdownIndex = -1;
+let revEditClientId = null;
+let revEditTrainerId = null;
+
+let revAppliedFilters = {};
+
+function revSnapshotFilters() {
+    revAppliedFilters = {
+        clientName: revFilterClient.value,
+        trainerName: revFilterTrainer.value,
+        dateFrom: revFilterDateFrom.value,
+        dateTo: revFilterDateTo.value,
+        ratingSort: revFilterRatingSort.value
+    };
+}
+
+function revRestoreFiltersToDOM() {
+    revFilterClient.value = revAppliedFilters.clientName || '';
+    revFilterTrainer.value = revAppliedFilters.trainerName || '';
+    revFilterDateFrom.value = revAppliedFilters.dateFrom || '';
+    revFilterDateTo.value = revAppliedFilters.dateTo || '';
+    revFilterRatingSort.value = revAppliedFilters.ratingSort || '';
+}
+
+function revClearAllFilters() {
+    revAppliedFilters = {};
+    revFilterClient.value = '';
+    revFilterTrainer.value = '';
+    revFilterDateFrom.value = '';
+    revFilterDateTo.value = '';
+    revFilterRatingSort.value = '';
+}
+
+// ---- Модальное окно отзывов ----
+function revResetModal(isEdit) {
+    revClientInput.value = '';
+    revTrainerInput.value = '';
+    revRatingSelect.value = '5';
+    revTextInput.value = '';
+    selectedRevClientId = null;
+    selectedRevTrainerId = null;
+    revEditClientId = null;
+    revEditTrainerId = null;
+    if (isEdit) {
+        revModalTitle.textContent = 'Редактировать отзыв';
+        revSubmitBtn.textContent = 'Сохранить';
+    } else {
+        revModalTitle.textContent = 'Добавить отзыв';
+        revSubmitBtn.textContent = 'Добавить';
+    }
+}
+
+function revOpenModal() { revModal.classList.add('show'); }
+function revCloseModal() { revModal.classList.remove('show'); revResetModal(false); }
+
+function revOpenCreateModal() { revResetModal(false); revOpenModal(); }
+
+function revOpenEditModal(review) {
+    revResetModal(true);
+    revClientInput.value = review.clientName;
+    selectedRevClientId = review.clientId;
+    revTrainerInput.value = review.trainerName;
+    selectedRevTrainerId = review.trainerId;
+    revRatingSelect.value = review.rating || '5';
+    revTextInput.value = review.reviewText || '';
+    revEditClientId = review.clientId;
+    revEditTrainerId = review.trainerId;
+    revOpenModal();
+}
+
+// ---- Валидация отзыва ----
+function validateRevForm() {
+    if (!selectedRevClientId) { showToast('Выберите клиента'); return false; }
+    if (!selectedRevTrainerId) { showToast('Выберите тренера'); return false; }
+    const rating = parseInt(revRatingSelect.value);
+    if (isNaN(rating) || rating < 1 || rating > 5) { showToast('Рейтинг должен быть от 1 до 5'); return false; }
+    const text = revTextInput.value.trim();
+    if (text.length > 300) { showToast('Текст отзыва не должен превышать 300 символов'); return false; }
+    return true;
+}
+
+// ---- Автодополнение клиентов ----
+function getFilteredRevClients(query) {
+    if (!query) return [];
+    const q = query.toLowerCase().trim();
+    return allRevClients.filter(c => c.fullName.toLowerCase().includes(q));
+}
+
+function renderRevClientDropdown(filtered) {
+    revClientDropdown.innerHTML = '';
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item no-results';
+        div.textContent = 'Ничего не найдено';
+        revClientDropdown.appendChild(div);
+        return;
+    }
+    filtered.forEach((client, i) => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        if (i === revClientDropdownIndex) div.classList.add('active');
+        div.textContent = client.fullName;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            revClientInput.value = client.fullName;
+            selectedRevClientId = client.clientId;
+            revClientDropdown.classList.remove('show');
+        });
+        revClientDropdown.appendChild(div);
+    });
+}
+
+function onRevClientInput() {
+    revClientDropdownIndex = -1;
+    selectedRevClientId = null;
+    const query = revClientInput.value.trim();
+    const filtered = getFilteredRevClients(query);
+    renderRevClientDropdown(filtered);
+    if (filtered.length > 0) revClientDropdown.classList.add('show');
+    else revClientDropdown.classList.remove('show');
+}
+
+function onRevClientKeydown(e) {
+    const items = revClientDropdown.querySelectorAll('.dropdown-item:not(.no-results)');
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (items.length > 0) { revClientDropdownIndex = Math.min(revClientDropdownIndex + 1, items.length - 1); renderRevClientDropdown(getFilteredRevClients(revClientInput.value.trim())); } }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (items.length > 0) { revClientDropdownIndex = Math.max(revClientDropdownIndex - 1, 0); renderRevClientDropdown(getFilteredRevClients(revClientInput.value.trim())); } }
+    else if ((e.key === 'Enter' || e.key === 'Tab') && revClientDropdownIndex >= 0 && revClientDropdownIndex < items.length) { e.preventDefault(); items[revClientDropdownIndex].dispatchEvent(new Event('mousedown')); }
+    else if (e.key === 'Escape') { revClientDropdown.classList.remove('show'); }
+}
+
+// ---- Автодополнение тренеров ----
+function getFilteredRevTrainers(query) {
+    if (!query) return [];
+    const q = query.toLowerCase().trim();
+    return allRevTrainers.filter(t => t.fullName.toLowerCase().includes(q));
+}
+
+function renderRevTrainerDropdown(filtered) {
+    revTrainerDropdown.innerHTML = '';
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item no-results';
+        div.textContent = 'Ничего не найдено';
+        revTrainerDropdown.appendChild(div);
+        return;
+    }
+    filtered.forEach((trainer, i) => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        if (i === revTrainerDropdownIndex) div.classList.add('active');
+        div.textContent = trainer.fullName;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            revTrainerInput.value = trainer.fullName;
+            selectedRevTrainerId = trainer.trainerId;
+            revTrainerDropdown.classList.remove('show');
+        });
+        revTrainerDropdown.appendChild(div);
+    });
+}
+
+function onRevTrainerInput() {
+    revTrainerDropdownIndex = -1;
+    selectedRevTrainerId = null;
+    const query = revTrainerInput.value.trim();
+    const filtered = getFilteredRevTrainers(query);
+    renderRevTrainerDropdown(filtered);
+    if (filtered.length > 0) revTrainerDropdown.classList.add('show');
+    else revTrainerDropdown.classList.remove('show');
+}
+
+function onRevTrainerKeydown(e) {
+    const items = revTrainerDropdown.querySelectorAll('.dropdown-item:not(.no-results)');
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (items.length > 0) { revTrainerDropdownIndex = Math.min(revTrainerDropdownIndex + 1, items.length - 1); renderRevTrainerDropdown(getFilteredRevTrainers(revTrainerInput.value.trim())); } }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (items.length > 0) { revTrainerDropdownIndex = Math.max(revTrainerDropdownIndex - 1, 0); renderRevTrainerDropdown(getFilteredRevTrainers(revTrainerInput.value.trim())); } }
+    else if ((e.key === 'Enter' || e.key === 'Tab') && revTrainerDropdownIndex >= 0 && revTrainerDropdownIndex < items.length) { e.preventDefault(); items[revTrainerDropdownIndex].dispatchEvent(new Event('mousedown')); }
+    else if (e.key === 'Escape') { revTrainerDropdown.classList.remove('show'); }
+}
+
+// ---- Отрисовка таблицы отзывов ----
+async function revRenderTable() {
+    try {
+        const params = new URLSearchParams();
+        if (revAppliedFilters.clientName) params.append('clientName', revAppliedFilters.clientName.trim());
+        if (revAppliedFilters.trainerName) params.append('trainerName', revAppliedFilters.trainerName.trim());
+        if (revAppliedFilters.dateFrom) params.append('dateFrom', revAppliedFilters.dateFrom);
+        if (revAppliedFilters.dateTo) params.append('dateTo', revAppliedFilters.dateTo);
+        if (revAppliedFilters.ratingSort) params.append('ratingSort', revAppliedFilters.ratingSort);
+
+        const url = params.toString() ? `${REV_API}?${params.toString()}` : REV_API;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+
+        revTbody.innerHTML = '';
+        result.items.forEach(review => {
+            const row = revTbody.insertRow();
+            row.insertCell(0).textContent = review.clientName;
+            row.insertCell(1).textContent = review.trainerName;
+            row.insertCell(2).textContent = new Date(review.createdAt).toLocaleDateString('ru-RU');
+            const textCell = row.insertCell(3);
+            textCell.textContent = review.reviewText || '—';
+            textCell.style.maxWidth = '300px';
+            textCell.style.whiteSpace = 'normal';
+            row.insertCell(4).textContent = review.rating || '—';
+            const actionsCell = row.insertCell(5);
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️';
+            editBtn.title = 'Редактировать';
+            editBtn.onclick = () => revOpenEditModal(review);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Удалить';
+            deleteBtn.onclick = () => revDelete(review);
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(deleteBtn);
+        });
+
+        const stats = result.statistics;
+        revTotalSpan.textContent = stats.totalReviews;
+        revAvgRatingSpan.textContent = stats.avgRating || '0';
+    } catch (err) {
+        showToast(`Ошибка загрузки: ${err.message}`);
+    }
+}
+
+// ---- CRUD отзывов ----
+async function revCreate() {
+    if (!validateRevForm()) return;
+    try {
+        const response = await fetch(REV_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: selectedRevClientId,
+                trainerId: selectedRevTrainerId,
+                reviewText: revTextInput.value.trim() || null,
+                rating: parseInt(revRatingSelect.value)
+            })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        revCloseModal();
+        revClearAllFilters();
+        await revRenderTable();
+        showToast('Отзыв добавлен', 'success');
+    } catch (err) {
+        showToast(`Не удалось добавить: ${err.message}`);
+    }
+}
+
+async function revUpdate() {
+    if (!selectedRevClientId || !selectedRevTrainerId) { showToast('Заполните все поля'); return; }
+    try {
+        const response = await fetch(REV_API, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: revEditClientId,
+                trainerId: revEditTrainerId,
+                reviewText: revTextInput.value.trim() || null,
+                rating: parseInt(revRatingSelect.value)
+            })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        revCloseModal();
+        await revRenderTable();
+        showToast('Отзыв обновлён', 'success');
+    } catch (err) {
+        showToast(`Ошибка обновления: ${err.message}`);
+    }
+}
+
+async function revDelete(review) {
+    if (!confirm('Удалить этот отзыв?')) return;
+    try {
+        const response = await fetch(REV_API, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: review.clientId, trainerId: review.trainerId })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        showToast('Отзыв удалён', 'success');
+        await revRenderTable();
+    } catch (err) {
+        showToast(`Ошибка удаления: ${err.message}`);
+    }
+}
+
+function revOnSubmit() {
+    if (revEditClientId !== null) { revUpdate(); }
+    else { revCreate(); }
+}
+
+// ---- Загрузка справочников ----
+async function loadRevDictionaries() {
+    try {
+        const [clientsResp, trainersResp] = await Promise.all([
+            fetch(`${REV_API}/clients`),
+            fetch(`${REV_API}/trainers`)
+        ]);
+        if (clientsResp.ok) allRevClients = await clientsResp.json();
+        if (trainersResp.ok) allRevTrainers = await trainersResp.json();
+    } catch (err) {
+        console.error('Ошибка загрузки справочников:', err);
+    }
+}
+
+// ==========================================
+// ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+// ==========================================
+
+let revTabLoaded = false;
+
+document.querySelectorAll('.page-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+
+        if (tab.dataset.tab === 'reviews' && !revTabLoaded) {
+            revTabLoaded = true;
+            loadRevDictionaries();
+            revRenderTable();
+        }
+    });
+});
+
+// ---- Инициализация отзывов ----
+revSubmitBtn.addEventListener('click', revOnSubmit);
+revCancelBtn.addEventListener('click', revCloseModal);
+revApplyFiltersBtn.addEventListener('click', () => { revSnapshotFilters(); revRenderTable(); });
+revClearFiltersBtn.addEventListener('click', () => { revClearAllFilters(); revRenderTable(); });
+revAddBtn.addEventListener('click', revOpenCreateModal);
+revModalClose.addEventListener('click', revCloseModal);
+revModal.addEventListener('click', (e) => { if (e.target === revModal) revCloseModal(); });
+
+revClientInput.addEventListener('input', onRevClientInput);
+revClientInput.addEventListener('keydown', onRevClientKeydown);
+revClientInput.addEventListener('blur', () => setTimeout(() => revClientDropdown.classList.remove('show'), 200));
+
+revTrainerInput.addEventListener('input', onRevTrainerInput);
+revTrainerInput.addEventListener('keydown', onRevTrainerKeydown);
+revTrainerInput.addEventListener('blur', () => setTimeout(() => revTrainerDropdown.classList.remove('show'), 200));
+
+// Загружаем данные тренеров при старте
 renderTable();
