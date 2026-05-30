@@ -477,6 +477,8 @@ function purchResetModal(isEdit) {
     purchEditClientId = null;
     purchEditAbonnementId = null;
     purchEditPurchaseDate = null;
+    purchClientInput.disabled = false;
+    purchAbonnementInput.disabled = false;
     if (isEdit) {
         purchModalTitle.textContent = 'Редактировать продажу';
         purchSubmitBtn.textContent = 'Сохранить';
@@ -503,6 +505,8 @@ function purchOpenEditModal(purchase) {
     purchEditClientId = purchase.clientId;
     purchEditAbonnementId = purchase.abonnementId;
     purchEditPurchaseDate = purchase.purchaseDate;
+    purchClientInput.disabled = true;
+    purchAbonnementInput.disabled = true;
     purchOpenModal();
 }
 
