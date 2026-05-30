@@ -1,98 +1,87 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Fitness.Models;
+using Fitness.Services;
 
 [Route("api/[controller]")]
 [ApiController]
 public class SchedulesController : ControllerBase
 {
-    private readonly FitnessContext _context;
-    public SchedulesController(FitnessContext context)
+    private readonly ScheduleService _scheduleService;
+
+    public SchedulesController(ScheduleService scheduleService)
     {
-        _context = context;
+        _scheduleService = scheduleService;
     }
 
-    // GET: api/Schedule
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Schedule>>> GetSchedule()
+    // GET: api/Schedules/page-data
+    [HttpGet("page-data")]
+    public async Task<ActionResult<ScheduleService.SchedulePageData>> GetPageData(
+        [FromQuery] string? trainerName,
+        [FromQuery] string? gymName,
+        [FromQuery] string? workoutName,
+        [FromQuery] int? workoutTypeId,
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo)
     {
-        return await _context.Schedules.ToListAsync();
+        if (trainerName?.Length > 50) return BadRequest(new { message = "ФИО тренера не должно превышать 50 символов" });
+        if (gymName?.Length > 50) return BadRequest(new { message = "Название зала не должно превышать 50 символов" });
+        if (workoutName?.Length > 50) return BadRequest(new { message = "Название тренировки не должно превышать 50 символов" });
+
+        var pageData = await _scheduleService.GetPageDataAsync(trainerName, gymName, workoutName, workoutTypeId, dateFrom, dateTo);
+        return Ok(pageData);
     }
 
-    // GET: api/Schedule/5
+    // GET: api/Schedules/5
     [HttpGet("{scheduleid}")]
-    public async Task<ActionResult<Schedule>> GetSchedule(int scheduleid)
+    public async Task<ActionResult<ScheduleService.ScheduleView>> GetSchedule(int scheduleid)
     {
-        var schedule = await _context.Schedules.FindAsync(scheduleid);
-
-        if (schedule == null)
-        {
-            return NotFound();
-        }
-
-        return schedule;
+        var schedule = await _scheduleService.GetByIdAsync(scheduleid);
+        if (schedule == null) return NotFound();
+        return Ok(schedule);
     }
 
-    // PUT: api/Schedule/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{scheduleid}")]
-    public async Task<IActionResult> PutSchedule(int? scheduleid, Schedule schedule)
-    {
-        if (scheduleid != schedule.ScheduleId)
-        {
-            return BadRequest();
-        }
-
-        _context.Entry(schedule).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!ScheduleExists(scheduleid))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
-
-        return NoContent();
-    }
-
-    // POST: api/Schedule
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    // POST: api/Schedules
     [HttpPost]
-    public async Task<ActionResult<Schedule>> PostSchedule(Schedule schedule)
+    public async Task<ActionResult> PostSchedule([FromBody] ScheduleDto dto)
     {
-        _context.Schedules.Add(schedule);
-        await _context.SaveChangesAsync();
+        if (dto == null) return BadRequest(new { message = "Тело запроса обязательно" });
+        if (dto.WorkoutId <= 0) return BadRequest(new { message = "Не указана тренировка" });
+        if (dto.GymId <= 0) return BadRequest(new { message = "Не указан зал" });
+        if (dto.WorkoutTypeId <= 0) return BadRequest(new { message = "Не указан тип тренировки" });
+        if (string.IsNullOrWhiteSpace(dto.StartTime)) return BadRequest(new { message = "Не указано время начала" });
 
-        return CreatedAtAction("GetSchedule", new { scheduleid = schedule.ScheduleId }, schedule);
+        var (entity, error) = await _scheduleService.CreateAsync(dto);
+        if (error != null) return BadRequest(new { message = error });
+        if (entity == null) return BadRequest(new { message = "Не удалось создать запись" });
+
+        return Ok(entity);
     }
 
-    // DELETE: api/Schedule/5
-    [HttpDelete("{scheduleid}")]
-    public async Task<IActionResult> DeleteSchedule(int? scheduleid)
+    // PUT: api/Schedules/5
+    [HttpPut("{scheduleid}")]
+    public async Task<IActionResult> PutSchedule(int scheduleid, [FromBody] ScheduleDto dto)
     {
-        var schedule = await _context.Schedules.FindAsync(scheduleid);
-        if (schedule == null)
-        {
-            return NotFound();
-        }
+        if (dto == null) return BadRequest(new { message = "Тело запроса обязательно" });
+        if (dto.WorkoutId <= 0) return BadRequest(new { message = "Не указана тренировка" });
+        if (dto.GymId <= 0) return BadRequest(new { message = "Не указан зал" });
+        if (dto.WorkoutTypeId <= 0) return BadRequest(new { message = "Не указан тип тренировки" });
+        if (string.IsNullOrWhiteSpace(dto.StartTime)) return BadRequest(new { message = "Не указано время начала" });
 
-        _context.Schedules.Remove(schedule);
-        await _context.SaveChangesAsync();
+        var (success, error) = await _scheduleService.UpdateAsync(scheduleid, dto);
+        if (error != null) return BadRequest(new { message = error });
+        if (!success) return NotFound();
 
         return NoContent();
     }
 
-    private bool ScheduleExists(int? scheduleid)
+    // DELETE: api/Schedules/5
+    [HttpDelete("{scheduleid}")]
+    public async Task<IActionResult> DeleteSchedule(int scheduleid)
     {
-        return _context.Schedules.Any(e => e.ScheduleId == scheduleid);
+        var (success, error) = await _scheduleService.DeleteAsync(scheduleid);
+        if (error != null) return BadRequest(new { message = error });
+        if (!success) return NotFound();
+
+        return NoContent();
     }
 }
