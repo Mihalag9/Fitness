@@ -32,6 +32,22 @@ namespace Fitness.Controllers
             return Ok(new { Items = items, Statistics = stats });
         }
 
+        // GET: api/Reviews/page-data
+        [HttpGet("page-data")]
+        public async Task<ActionResult<object>> GetPageData(
+            [FromQuery] string? clientName,
+            [FromQuery] string? trainerName,
+            [FromQuery] DateOnly? dateFrom,
+            [FromQuery] DateOnly? dateTo,
+            [FromQuery] string? ratingSort)
+        {
+            if (clientName?.Length > 50) return BadRequest(new { message = "Имя клиента не должно превышать 50 символов" });
+            if (trainerName?.Length > 50) return BadRequest(new { message = "Имя тренера не должно превышать 50 символов" });
+
+            var data = await _reviewService.GetPageDataAsync(clientName, trainerName, dateFrom, dateTo, ratingSort);
+            return Ok(data);
+        }
+
         // POST: api/Reviews
         [HttpPost]
         public async Task<IActionResult> PostReview([FromBody] ReviewCreateDto dto)

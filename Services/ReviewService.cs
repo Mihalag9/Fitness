@@ -166,6 +166,22 @@ namespace Fitness.Services
             return items;
         }
 
+        public async Task<ReviewPageData> GetPageDataAsync(string? clientName, string? trainerName, DateOnly? dateFrom, DateOnly? dateTo, string? ratingSort)
+        {
+            var items = await GetAllAsync(clientName, trainerName, dateFrom, dateTo, ratingSort);
+            var stats = await GetStatisticsAsync();
+            var clients = await GetClientsDictionaryAsync();
+            var trainers = await GetTrainersDictionaryAsync();
+
+            return new ReviewPageData
+            {
+                Items = items,
+                Statistics = stats,
+                Clients = clients,
+                Trainers = trainers
+            };
+        }
+
         public class ReviewView
         {
             public int ClientId { get; set; }
@@ -194,6 +210,14 @@ namespace Fitness.Services
         {
             public int TrainerId { get; set; }
             public string FullName { get; set; } = null!;
+        }
+
+        public class ReviewPageData
+        {
+            public IEnumerable<ReviewView> Items { get; set; } = Enumerable.Empty<ReviewView>();
+            public ReviewStatistics Statistics { get; set; } = new();
+            public IEnumerable<ClientView> Clients { get; set; } = Enumerable.Empty<ClientView>();
+            public IEnumerable<TrainerView> Trainers { get; set; } = Enumerable.Empty<TrainerView>();
         }
     }
 }

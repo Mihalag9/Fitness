@@ -170,41 +170,6 @@ namespace Fitness.Services
             return items;
         }
 
-        public async Task<(bool Success, string? Error)> AddTrainerRoleAsync(int trainerId, int workoutId, string role)
-        {
-            var connection = _context.Database.GetDbConnection();
-            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
-
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT add_trainer_role(@p0, @p1, @p2)";
-                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = trainerId; command.Parameters.Add(p0);
-                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
-                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)role ?? DBNull.Value; command.Parameters.Add(p2);
-
-                var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return (true, null);
-                return (false, result.ToString());
-            }
-        }
-
-        public async Task<(bool Success, string? Error)> DeleteTrainerRoleAsync(int trainerId, int workoutId)
-        {
-            var connection = _context.Database.GetDbConnection();
-            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
-
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT delete_trainer_role(@p0, @p1)";
-                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = trainerId; command.Parameters.Add(p0);
-                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
-
-                var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return (true, null);
-                return (false, result.ToString());
-            }
-        }
-
         public async Task<IEnumerable<WorkoutView>> GetWorkoutsDictionaryAsync()
         {
             var connection = _context.Database.GetDbConnection();
@@ -227,6 +192,79 @@ namespace Fitness.Services
                 }
             }
             return items;
+        }
+
+        public async Task<TrainerPageData> GetPageDataAsync(string? fullName, string? experienceSort, bool? noExperience, string? workoutName, string? role)
+        {
+            var items = await GetAllAsync(fullName, experienceSort, noExperience, workoutName, role);
+            var stats = await GetStatisticsAsync();
+            var roles = await GetRolesAsync();
+
+            return new TrainerPageData
+            {
+                Items = items,
+                Statistics = stats,
+                Roles = roles
+            };
+        }
+
+        public async Task<TrainerEditData?> GetEditDataAsync(int id)
+        {
+            var trainer = await GetByIdAsync(id);
+            if (trainer == null) return null;
+
+            var roles = await GetRolesByTrainerAsync(id);
+            var workouts = await GetWorkoutsDictionaryAsync();
+
+            return new TrainerEditData
+            {
+                Trainer = trainer,
+                Roles = roles,
+                Workouts = workouts
+            };
+        }
+
+        public async Task<(bool Success, string? Error, IEnumerable<TrainerRoleView>? Roles)> AddTrainerRoleAsync(int trainerId, int workoutId, string role)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT add_trainer_role(@p0, @p1, @p2)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = trainerId; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
+                var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)role ?? DBNull.Value; command.Parameters.Add(p2);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value)
+                {
+                    var roles = await GetRolesByTrainerAsync(trainerId);
+                    return (true, null, roles);
+                }
+                return (false, result.ToString(), null);
+            }
+        }
+
+        public async Task<(bool Success, string? Error, IEnumerable<TrainerRoleView>? Roles)> DeleteTrainerRoleAsync(int trainerId, int workoutId)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT delete_trainer_role(@p0, @p1)";
+                var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = trainerId; command.Parameters.Add(p0);
+                var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = workoutId; command.Parameters.Add(p1);
+
+                var result = await command.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value)
+                {
+                    var roles = await GetRolesByTrainerAsync(trainerId);
+                    return (true, null, roles);
+                }
+                return (false, result.ToString(), null);
+            }
         }
 
         private bool TrainerExists(int id)
@@ -260,6 +298,20 @@ namespace Fitness.Services
             public int TotalTrainers { get; set; }
             public int TrainersWithExperience { get; set; }
             public int TrainersWithoutExperience { get; set; }
+        }
+
+        public class TrainerPageData
+        {
+            public IEnumerable<TrainerView> Items { get; set; } = Enumerable.Empty<TrainerView>();
+            public TrainerStatistics Statistics { get; set; } = new();
+            public IEnumerable<string> Roles { get; set; } = Enumerable.Empty<string>();
+        }
+
+        public class TrainerEditData
+        {
+            public Trainer Trainer { get; set; } = null!;
+            public IEnumerable<TrainerRoleView> Roles { get; set; } = Enumerable.Empty<TrainerRoleView>();
+            public IEnumerable<WorkoutView> Workouts { get; set; } = Enumerable.Empty<WorkoutView>();
         }
     }
 }

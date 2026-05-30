@@ -51,6 +51,30 @@ public class TrainersController : ControllerBase
         return Ok(stats);
     }
 
+    // GET: api/Trainers/page-data
+    [HttpGet("page-data")]
+    public async Task<ActionResult<object>> GetPageData(
+        [FromQuery] string? fullName,
+        [FromQuery] string? experienceSort,
+        [FromQuery] bool? noExperience,
+        [FromQuery] string? workoutName,
+        [FromQuery] string? role)
+    {
+        if (fullName?.Length > 50) return BadRequest(new { message = "ФИО не должно превышать 50 символов" });
+
+        var data = await _trainerService.GetPageDataAsync(fullName, experienceSort, noExperience, workoutName, role);
+        return Ok(data);
+    }
+
+    // GET: api/Trainers/5/edit-data
+    [HttpGet("{trainerid}/edit-data")]
+    public async Task<ActionResult<object>> GetEditData(int trainerid)
+    {
+        var data = await _trainerService.GetEditDataAsync(trainerid);
+        if (data == null) return NotFound();
+        return Ok(data);
+    }
+
     // GET: api/Trainers/roles
     [HttpGet("roles")]
     public async Task<ActionResult<IEnumerable<string>>> GetRoles()
@@ -74,18 +98,18 @@ public class TrainersController : ControllerBase
         if (dto == null || dto.WorkoutId <= 0)
             return BadRequest();
 
-        var (success, error) = await _trainerService.AddTrainerRoleAsync(trainerid, dto.WorkoutId, dto.Role);
+        var (success, error, roles) = await _trainerService.AddTrainerRoleAsync(trainerid, dto.WorkoutId, dto.Role);
         if (!success) return BadRequest(new { message = error ?? "Ошибка" });
-        return NoContent();
+        return Ok(roles);
     }
 
     // DELETE: api/Trainers/5/roles/3
     [HttpDelete("{trainerid}/roles/{workoutid}")]
     public async Task<IActionResult> DeleteTrainerRole(int trainerid, int workoutid)
     {
-        var (success, error) = await _trainerService.DeleteTrainerRoleAsync(trainerid, workoutid);
+        var (success, error, roles) = await _trainerService.DeleteTrainerRoleAsync(trainerid, workoutid);
         if (!success) return NotFound(new { message = error });
-        return NoContent();
+        return Ok(roles);
     }
 
     // GET: api/Trainers/workouts/dictionary

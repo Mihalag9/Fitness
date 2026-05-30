@@ -140,58 +140,6 @@ function validateTrainerForm() {
     return true;
 }
 
-// ---- Отрисовка таблицы ----
-async function renderTable() {
-    try {
-        const params = new URLSearchParams();
-        if (appliedFilters.fullName) params.append('fullName', appliedFilters.fullName.trim());
-        
-        if (appliedFilters.experienceSort === 'no_exp') {
-            params.append('noExperience', 'true');
-        } else if (appliedFilters.experienceSort === 'asc' || appliedFilters.experienceSort === 'desc') {
-            params.append('experienceSort', appliedFilters.experienceSort);
-        }
-
-        if (appliedFilters.workoutName) params.append('workoutName', appliedFilters.workoutName.trim());
-        if (appliedFilters.role) params.append('role', appliedFilters.role);
-
-        const url = params.toString() ? `${API_URL}?${params.toString()}` : API_URL;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        
-        tbody.innerHTML = '';
-        result.items.forEach(trainer => {
-            const row = tbody.insertRow();
-            row.insertCell(0).textContent = trainer.trainerId;
-            row.insertCell(1).textContent = trainer.fullName;
-            row.insertCell(2).textContent = (trainer.experience != null && trainer.experience > 0) ? trainer.experience : '—';
-            const specCell = row.insertCell(3);
-            specCell.textContent = trainer.specializations || '—';
-            specCell.style.whiteSpace = 'pre-line';
-            specCell.title = trainer.specializations || '';
-            const actionsCell = row.insertCell(4);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => openEditModal(trainer);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => deleteTrainer(trainer.trainerId);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
-        
-        const data = result.statistics;
-        totalSpan.textContent = data.totalTrainers;
-        expSpan.textContent = data.trainersWithExperience;
-        noExpSpan.textContent = data.trainersWithoutExperience;
-    } catch (err) {
-        showToast(`Ошибка загрузки: ${err.message}`);
-    }
-}
-
 // ---- Добавление нового ----
 async function createTrainer() {
     if (!validateTrainerForm()) return false;
@@ -218,7 +166,7 @@ async function createTrainer() {
         modalTitle.textContent = 'Редактировать тренера';
         submitBtn.textContent = 'Сохранить';
         enableSpecSection(created.trainerId);
-        await renderTable();
+        await loadPageData();
         showToast('Тренер добавлен. Теперь можно назначить специализации.', 'success');
         return true;
     } catch (err) {
@@ -250,7 +198,7 @@ async function updateTrainer(id) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         closeModal();
         restoreFiltersToDOM();
-        await renderTable();
+        await loadPageData();
         showToast('Тренер обновлён', 'success');
         return true;
     } catch (err) {
@@ -277,7 +225,7 @@ async function deleteTrainer(id) {
         }
 
         restoreFiltersToDOM();
-        await renderTable();
+        await loadPageData();
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
         return;
@@ -300,12 +248,12 @@ async function onSubmit() {
 // ---- Фильтры ----
 function onApplyFilters() {
     snapshotFilters();
-    renderTable();
+    loadPageData();
 }
 
 function onClearFilters() {
     clearAllFilters();
-    renderTable();
+    loadPageData();
 }
 
 // ---- Автоформатирование ФИО при вводе ----
@@ -364,21 +312,65 @@ addTrainerBtn.addEventListener('click', openCreateModal);
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-// ---- Загрузка ролей для фильтра ----
-async function loadRoles() {
+// ---- Загрузка всех данных тренеров (1 запрос) ----
+async function loadPageData() {
     try {
-        const response = await fetch(`${API_URL}/roles`);
-        if (response.ok) {
-            const roles = await response.json();
-            roles.forEach(role => {
-                const option = document.createElement('option');
-                option.value = role;
-                option.textContent = role;
-                filterRole.appendChild(option);
-            });
+        const params = new URLSearchParams();
+        if (appliedFilters.fullName) params.append('fullName', appliedFilters.fullName.trim());
+        if (appliedFilters.experienceSort === 'no_exp') {
+            params.append('noExperience', 'true');
+        } else if (appliedFilters.experienceSort === 'asc' || appliedFilters.experienceSort === 'desc') {
+            params.append('experienceSort', appliedFilters.experienceSort);
         }
+        if (appliedFilters.workoutName) params.append('workoutName', appliedFilters.workoutName.trim());
+        if (appliedFilters.role) params.append('role', appliedFilters.role);
+
+        const url = params.toString() ? `${API_URL}/page-data?${params.toString()}` : `${API_URL}/page-data`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+
+        // Заполняем_roles для фильтра
+        filterRole.innerHTML = '<option value="">Все роли</option>';
+        result.roles.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role;
+            option.textContent = role;
+            filterRole.appendChild(option);
+        });
+        restoreFiltersToDOM();
+
+        // Отрисовка таблицы
+        tbody.innerHTML = '';
+        result.items.forEach(trainer => {
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = trainer.trainerId;
+            row.insertCell(1).textContent = trainer.fullName;
+            row.insertCell(2).textContent = (trainer.experience != null && trainer.experience > 0) ? trainer.experience : '—';
+            const specCell = row.insertCell(3);
+            specCell.textContent = trainer.specializations || '—';
+            specCell.style.whiteSpace = 'pre-line';
+            specCell.title = trainer.specializations || '';
+            const actionsCell = row.insertCell(4);
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️';
+            editBtn.title = 'Редактировать';
+            editBtn.onclick = () => openEditModal(trainer);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Удалить';
+            deleteBtn.onclick = () => deleteTrainer(trainer.trainerId);
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(deleteBtn);
+        });
+
+        // Статистика
+        const data = result.statistics;
+        totalSpan.textContent = data.totalTrainers;
+        expSpan.textContent = data.trainersWithExperience;
+        noExpSpan.textContent = data.trainersWithoutExperience;
     } catch (err) {
-        console.error('Ошибка загрузки ролей:', err);
+        showToast(`Ошибка загрузки: ${err.message}`);
     }
 }
 
@@ -409,8 +401,7 @@ function enableSpecSection(trainerId) {
     specControls.classList.remove('hidden');
     specWorkoutInput.value = '';
     selectedSpecWorkoutId = null;
-    loadWorkoutsDictionary();
-    loadSpecLinks(trainerId);
+    loadEditData(trainerId);
 }
 
 function updateSpecLimitState() {
@@ -421,40 +412,39 @@ function updateSpecLimitState() {
     specLimitHint.classList.toggle('hidden', !limitReached);
 }
 
-// ---- Загрузка справочника тренировок ----
-async function loadWorkoutsDictionary() {
+// ---- Загрузка всех данных для модала редактирования (1 запрос) ----
+async function loadEditData(trainerId) {
     try {
-        const response = await fetch(`${API_URL}/workouts/dictionary`);
-        if (response.ok) allWorkouts = await response.json();
+        const response = await fetch(`${API_URL}/${trainerId}/edit-data`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        // Справочник тренировок для автокомплита
+        allWorkouts = data.workouts;
+
+        // Роли тренера
+        renderSpecLinks(data.roles);
     } catch (err) {
-        console.error('Ошибка загрузки тренировок:', err);
+        showToast(`Ошибка загрузки данных: ${err.message}`);
     }
 }
 
-// ---- Загрузка привязанных ролей ----
-async function loadSpecLinks(trainerId) {
-    try {
-        const response = await fetch(`${API_URL}/${trainerId}/roles`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const roles = await response.json();
-
-        currentSpecCount = roles.length;
-        specBody.innerHTML = '';
-        roles.forEach(role => {
-            const row = specBody.insertRow();
-            row.insertCell(0).textContent = role.workoutName;
-            row.insertCell(1).textContent = role.tRole;
-            const actionsCell = row.insertCell(2);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => removeSpec(trainerId, role.workoutId);
-            actionsCell.appendChild(deleteBtn);
-        });
-        updateSpecLimitState();
-    } catch (err) {
-        showToast(`Ошибка загрузки специализаций: ${err.message}`);
-    }
+// ---- Отрисовка специализаций ----
+function renderSpecLinks(roles) {
+    currentSpecCount = roles.length;
+    specBody.innerHTML = '';
+    roles.forEach(role => {
+        const row = specBody.insertRow();
+        row.insertCell(0).textContent = role.workoutName;
+        row.insertCell(1).textContent = role.tRole;
+        const actionsCell = row.insertCell(2);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => removeSpec(currentEditId, role.workoutId);
+        actionsCell.appendChild(deleteBtn);
+    });
+    updateSpecLimitState();
 }
 
 // ---- Автодополнение тренировок ----
@@ -524,10 +514,11 @@ async function addSpec() {
         showToast(err?.message || 'Ошибка добавления');
         return;
     }
+    const roles = await response.json();
     specWorkoutInput.value = '';
     selectedSpecWorkoutId = null;
-    await loadSpecLinks(currentEditId);
-    await renderTable();
+    renderSpecLinks(roles);
+    await loadPageData();
 }
 
 // ---- Удаление специализации ----
@@ -539,8 +530,9 @@ async function removeSpec(trainerId, workoutId) {
         showToast(err?.message || 'Ошибка удаления');
         return;
     }
-    await loadSpecLinks(trainerId);
-    await renderTable();
+    const roles = await response.json();
+    renderSpecLinks(roles);
+    await loadPageData();
 }
 
 // ---- Обработчики специализаций ----
@@ -767,8 +759,75 @@ function onRevTrainerKeydown(e) {
     else if (e.key === 'Escape') { revTrainerDropdown.classList.remove('show'); }
 }
 
-// ---- Отрисовка таблицы отзывов ----
-async function revRenderTable() {
+// ---- CRUD отзывов ----
+async function revCreate() {
+    if (!validateRevForm()) return;
+    try {
+        const response = await fetch(REV_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: selectedRevClientId,
+                trainerId: selectedRevTrainerId,
+                reviewText: revTextInput.value.trim() || null,
+                rating: parseInt(revRatingSelect.value)
+            })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        revCloseModal();
+        revClearAllFilters();
+        await loadReviewsPageData();
+        showToast('Отзыв добавлен', 'success');
+    } catch (err) {
+        showToast(`Не удалось добавить: ${err.message}`);
+    }
+}
+
+async function revUpdate() {
+    if (!selectedRevClientId || !selectedRevTrainerId) { showToast('Заполните все поля'); return; }
+    try {
+        const response = await fetch(REV_API, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientId: revEditClientId,
+                trainerId: revEditTrainerId,
+                reviewText: revTextInput.value.trim() || null,
+                rating: parseInt(revRatingSelect.value)
+            })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        revCloseModal();
+        await loadReviewsPageData();
+        showToast('Отзыв обновлён', 'success');
+    } catch (err) {
+        showToast(`Ошибка обновления: ${err.message}`);
+    }
+}
+
+async function revDelete(review) {
+    if (!confirm('Удалить этот отзыв?')) return;
+    try {
+        const response = await fetch(REV_API, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: review.clientId, trainerId: review.trainerId })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        showToast('Отзыв удалён', 'success');
+        await loadReviewsPageData();
+    } catch (err) {
+        showToast(`Ошибка удаления: ${err.message}`);
+    }
+}
+
+function revOnSubmit() {
+    if (revEditClientId !== null) { revUpdate(); }
+    else { revCreate(); }
+}
+
+// ---- Загрузка всех данных отзывов (1 запрос) ----
+async function loadReviewsPageData() {
     try {
         const params = new URLSearchParams();
         if (revAppliedFilters.clientName) params.append('clientName', revAppliedFilters.clientName.trim());
@@ -777,11 +836,16 @@ async function revRenderTable() {
         if (revAppliedFilters.dateTo) params.append('dateTo', revAppliedFilters.dateTo);
         if (revAppliedFilters.ratingSort) params.append('ratingSort', revAppliedFilters.ratingSort);
 
-        const url = params.toString() ? `${REV_API}?${params.toString()}` : REV_API;
+        const url = params.toString() ? `${REV_API}/page-data?${params.toString()}` : `${REV_API}/page-data`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
 
+        // Справочники для автокомплита
+        allRevClients = result.clients;
+        allRevTrainers = result.trainers;
+
+        // Отрисовка таблицы
         revTbody.innerHTML = '';
         result.items.forEach(review => {
             const row = revTbody.insertRow();
@@ -805,6 +869,7 @@ async function revRenderTable() {
             actionsCell.appendChild(deleteBtn);
         });
 
+        // Статистика
         const stats = result.statistics;
         revTotalSpan.textContent = stats.totalReviews;
         revBestTrainerSpan.textContent = stats.bestTrainerName
@@ -812,87 +877,6 @@ async function revRenderTable() {
             : '—';
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
-    }
-}
-
-// ---- CRUD отзывов ----
-async function revCreate() {
-    if (!validateRevForm()) return;
-    try {
-        const response = await fetch(REV_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                clientId: selectedRevClientId,
-                trainerId: selectedRevTrainerId,
-                reviewText: revTextInput.value.trim() || null,
-                rating: parseInt(revRatingSelect.value)
-            })
-        });
-        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
-        revCloseModal();
-        revClearAllFilters();
-        await revRenderTable();
-        showToast('Отзыв добавлен', 'success');
-    } catch (err) {
-        showToast(`Не удалось добавить: ${err.message}`);
-    }
-}
-
-async function revUpdate() {
-    if (!selectedRevClientId || !selectedRevTrainerId) { showToast('Заполните все поля'); return; }
-    try {
-        const response = await fetch(REV_API, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                clientId: revEditClientId,
-                trainerId: revEditTrainerId,
-                reviewText: revTextInput.value.trim() || null,
-                rating: parseInt(revRatingSelect.value)
-            })
-        });
-        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
-        revCloseModal();
-        await revRenderTable();
-        showToast('Отзыв обновлён', 'success');
-    } catch (err) {
-        showToast(`Ошибка обновления: ${err.message}`);
-    }
-}
-
-async function revDelete(review) {
-    if (!confirm('Удалить этот отзыв?')) return;
-    try {
-        const response = await fetch(REV_API, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clientId: review.clientId, trainerId: review.trainerId })
-        });
-        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
-        showToast('Отзыв удалён', 'success');
-        await revRenderTable();
-    } catch (err) {
-        showToast(`Ошибка удаления: ${err.message}`);
-    }
-}
-
-function revOnSubmit() {
-    if (revEditClientId !== null) { revUpdate(); }
-    else { revCreate(); }
-}
-
-// ---- Загрузка справочников ----
-async function loadRevDictionaries() {
-    try {
-        const [clientsResp, trainersResp] = await Promise.all([
-            fetch(`${REV_API}/clients`),
-            fetch(`${REV_API}/trainers`)
-        ]);
-        if (clientsResp.ok) allRevClients = await clientsResp.json();
-        if (trainersResp.ok) allRevTrainers = await trainersResp.json();
-    } catch (err) {
-        console.error('Ошибка загрузки справочников:', err);
     }
 }
 
@@ -911,8 +895,7 @@ document.querySelectorAll('.page-tab').forEach(tab => {
 
         if (tab.dataset.tab === 'reviews' && !revTabLoaded) {
             revTabLoaded = true;
-            loadRevDictionaries();
-            revRenderTable();
+            loadReviewsPageData();
         }
     });
 });
@@ -920,8 +903,8 @@ document.querySelectorAll('.page-tab').forEach(tab => {
 // ---- Инициализация отзывов ----
 revSubmitBtn.addEventListener('click', revOnSubmit);
 revCancelBtn.addEventListener('click', revCloseModal);
-revApplyFiltersBtn.addEventListener('click', () => { revSnapshotFilters(); revRenderTable(); });
-revClearFiltersBtn.addEventListener('click', () => { revClearAllFilters(); revRenderTable(); });
+revApplyFiltersBtn.addEventListener('click', () => { revSnapshotFilters(); loadReviewsPageData(); });
+revClearFiltersBtn.addEventListener('click', () => { revClearAllFilters(); loadReviewsPageData(); });
 revAddBtn.addEventListener('click', revOpenCreateModal);
 revModalClose.addEventListener('click', revCloseModal);
 revModal.addEventListener('click', (e) => { if (e.target === revModal) revCloseModal(); });
@@ -935,5 +918,4 @@ revTrainerInput.addEventListener('keydown', onRevTrainerKeydown);
 revTrainerInput.addEventListener('blur', () => setTimeout(() => revTrainerDropdown.classList.remove('show'), 200));
 
 // Загружаем данные тренеров при старте
-loadRoles();
-renderTable();
+loadPageData();
