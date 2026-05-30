@@ -770,8 +770,7 @@ document.querySelectorAll('.page-tab').forEach(tab => {
         tab.classList.add('active');
         document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
 
-        if (tab.dataset.tab === 'purchases' && !purchTabLoaded) {
-            purchTabLoaded = true;
+        if (tab.dataset.tab === 'purchases') {
             loadPurchDictionaries();
             purchRenderTable();
         }
