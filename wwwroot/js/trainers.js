@@ -570,8 +570,7 @@ async function revRenderTable() {
             row.insertCell(2).textContent = new Date(review.createdAt).toLocaleDateString('ru-RU');
             const textCell = row.insertCell(3);
             textCell.textContent = review.reviewText || '—';
-            textCell.style.maxWidth = '300px';
-            textCell.style.whiteSpace = 'normal';
+            textCell.title = review.reviewText || '';
             row.insertCell(4).textContent = review.rating || '—';
             const actionsCell = row.insertCell(5);
             const editBtn = document.createElement('button');
