@@ -47,8 +47,8 @@ namespace Fitness.Services
                 AddNullableParam(command, "@p1", gymName);
                 AddNullableParam(command, "@p2", workoutName);
                 AddNullableIntParam(command, "@p3", workoutTypeId);
-                AddNullableDateParam(command, "@p4", dateFrom);
-                AddNullableDateParam(command, "@p5", dateTo);
+                AddNullableDateOnlyParam(command, "@p4", dateFrom);
+                AddNullableDateOnlyParam(command, "@p5", dateTo);
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -124,8 +124,8 @@ namespace Fitness.Services
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = dto.WorkoutId; command.Parameters.Add(p1);
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = dto.GymId; command.Parameters.Add(p2);
                 var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = dto.WorkoutTypeId; command.Parameters.Add(p3);
-                var p4 = command.CreateParameter(); p4.ParameterName = "@p4"; p4.Value = dto.WorkDate; command.Parameters.Add(p4);
-                var p5 = command.CreateParameter(); p5.ParameterName = "@p5"; p5.Value = dto.StartTime; command.Parameters.Add(p5);
+                var p4 = command.CreateParameter(); p4.ParameterName = "@p4"; p4.Value = DateOnly.FromDateTime(dto.WorkDate); command.Parameters.Add(p4);
+                var p5 = command.CreateParameter(); p5.ParameterName = "@p5"; p5.Value = TimeOnly.Parse(dto.StartTime); command.Parameters.Add(p5);
 
                 try
                 {
@@ -166,8 +166,8 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = dto.WorkoutId; command.Parameters.Add(p2);
                 var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = dto.GymId; command.Parameters.Add(p3);
                 var p4 = command.CreateParameter(); p4.ParameterName = "@p4"; p4.Value = dto.WorkoutTypeId; command.Parameters.Add(p4);
-                var p5 = command.CreateParameter(); p5.ParameterName = "@p5"; p5.Value = dto.WorkDate; command.Parameters.Add(p5);
-                var p6 = command.CreateParameter(); p6.ParameterName = "@p6"; p6.Value = dto.StartTime; command.Parameters.Add(p6);
+                var p5 = command.CreateParameter(); p5.ParameterName = "@p5"; p5.Value = DateOnly.FromDateTime(dto.WorkDate); command.Parameters.Add(p5);
+                var p6 = command.CreateParameter(); p6.ParameterName = "@p6"; p6.Value = TimeOnly.Parse(dto.StartTime); command.Parameters.Add(p6);
 
                 try
                 {
@@ -332,6 +332,14 @@ namespace Fitness.Services
             var p = command.CreateParameter();
             p.ParameterName = name;
             p.Value = (object)value ?? DBNull.Value;
+            command.Parameters.Add(p);
+        }
+
+        private static void AddNullableDateOnlyParam(System.Data.Common.DbCommand command, string name, DateTime? value)
+        {
+            var p = command.CreateParameter();
+            p.ParameterName = name;
+            p.Value = value.HasValue ? (object)DateOnly.FromDateTime(value.Value) : DBNull.Value;
             command.Parameters.Add(p);
         }
 
