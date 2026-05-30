@@ -180,7 +180,7 @@ namespace Fitness.Services
         public class ReviewStatistics
         {
             public int TotalReviews { get; set; }
-            public double AvgRating { get; set; }
+            public string? BestTrainerName { get; set; }
         }
 
         public class ClientView

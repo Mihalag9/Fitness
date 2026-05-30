@@ -336,7 +336,7 @@ const REV_API = 'https://localhost:7159/api/Reviews';
 // DOM-элементы отзывов
 const revTbody = document.getElementById('reviews-body');
 const revTotalSpan = document.getElementById('rev-total-count');
-const revAvgRatingSpan = document.getElementById('rev-avg-rating');
+const revBestTrainerSpan = document.getElementById('rev-best-trainer');
 
 const revClientInput = document.getElementById('rev-client-input');
 const revClientDropdown = document.getElementById('rev-client-dropdown');
@@ -407,6 +407,8 @@ function revResetModal(isEdit) {
     selectedRevTrainerId = null;
     revEditClientId = null;
     revEditTrainerId = null;
+    revClientInput.disabled = false;
+    revTrainerInput.disabled = false;
     if (isEdit) {
         revModalTitle.textContent = 'Редактировать отзыв';
         revSubmitBtn.textContent = 'Сохранить';
@@ -431,6 +433,8 @@ function revOpenEditModal(review) {
     revTextInput.value = review.reviewText || '';
     revEditClientId = review.clientId;
     revEditTrainerId = review.trainerId;
+    revClientInput.disabled = true;
+    revTrainerInput.disabled = true;
     revOpenModal();
 }
 
@@ -584,7 +588,7 @@ async function revRenderTable() {
 
         const stats = result.statistics;
         revTotalSpan.textContent = stats.totalReviews;
-        revAvgRatingSpan.textContent = stats.avgRating || '0';
+        revBestTrainerSpan.textContent = stats.bestTrainerName || '—';
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }

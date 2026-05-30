@@ -126,7 +126,15 @@ DECLARE result JSON;
 BEGIN
     SELECT json_build_object(
         'totalReviews', COUNT(*),
-        'avgRating', ROUND(AVG("Rating")::numeric, 1)
+        'bestTrainerName', (
+            SELECT t."FullName"
+            FROM "Review" r2
+            JOIN "Trainer" t ON r2."TrainerId" = t."TrainerId"
+            WHERE r2."Rating" IS NOT NULL
+            GROUP BY t."TrainerId", t."FullName"
+            ORDER BY AVG(r2."Rating") DESC
+            LIMIT 1
+        )
     ) INTO result
     FROM "Review";
     RETURN result;
