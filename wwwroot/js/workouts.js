@@ -1,4 +1,4 @@
-const API_URL = 'https://localhost:7159/api/Workouts';
+const API_URL = '/api/Workouts';
 
 // DOM-элементы
 const tbody = document.getElementById('workouts-body');

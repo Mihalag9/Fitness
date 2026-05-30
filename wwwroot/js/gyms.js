@@ -1,5 +1,5 @@
-﻿const API_URL = 'https://localhost:7159/api/Gyms';
-const EQ_API_URL = 'https://localhost:7159/api/Equipment';
+﻿const API_URL = '/api/Gyms';
+const EQ_API_URL = '/api/Equipment';
 
 const tbody = document.getElementById('gyms-body');
 const gymNameInput = document.getElementById('gymName');

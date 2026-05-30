@@ -1,6 +1,6 @@
 // API URL
-const API_URL = 'https://localhost:7159/api/Trainers';
-const REV_API = 'https://localhost:7159/api/Reviews';
+const API_URL = '/api/Trainers';
+const REV_API = '/api/Reviews';
 
 // DOM-элементы
 const tbody = document.getElementById('trainers-body');

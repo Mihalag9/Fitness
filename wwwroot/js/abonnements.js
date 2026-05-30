@@ -1,6 +1,6 @@
 // API URL
-const API_URL = 'https://localhost:7159/api/Abonnements';
-const PURCH_API = 'https://localhost:7159/api/Purchases';
+const API_URL = '/api/Abonnements';
+const PURCH_API = '/api/Purchases';
 
 // DOM-элементы
 const tbody = document.getElementById('abonnements-body');

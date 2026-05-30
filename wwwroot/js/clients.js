@@ -1,5 +1,5 @@
 // API URL (порт уточните по своему проекту)
-const API_URL = 'https://localhost:7159/api/Clients';
+const API_URL = '/api/Clients';
 
 // DOM-элементы
 const tbody = document.getElementById('clients-body');
