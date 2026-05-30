@@ -24,8 +24,8 @@ namespace Fitness.Controllers
             [FromQuery] DateOnly? dateFrom,
             [FromQuery] DateOnly? dateTo)
         {
-            if (clientName?.Length > 100) return BadRequest(new { message = "Имя клиента не должно превышать 100 символов" });
-            if (abonnementType?.Length > 100) return BadRequest(new { message = "Название абонемента не должно превышать 100 символов" });
+            if (clientName?.Length > 50) return BadRequest(new { message = "Имя клиента не должно превышать 50 символов" });
+            if (abonnementType?.Length > 50) return BadRequest(new { message = "Название абонемента не должно превышать 50 символов" });
 
             var items = await _purchaseService.GetAllAsync(clientName, abonnementType, status, dateFrom, dateTo);
             var stats = await _purchaseService.GetStatisticsAsync();
