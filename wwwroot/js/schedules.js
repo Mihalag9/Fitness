@@ -283,7 +283,7 @@ async function renderPage() {
         if (selectedScheduleId) {
             if (!data.items.find(i => i.scheduleId === selectedScheduleId)) {
                 selectedScheduleId = null;
-                bookingsSection.classList.add('hidden');
+                bookingsModal.classList.remove('show');
             } else {
                 loadBookingsFromCache();
             }
@@ -531,9 +531,10 @@ const BOOKINGS_PER_PAGE = 5;
 let bookingFilterClientName = '';
 let bookingFilterAttended = '';
 
-const bookingsSection = document.getElementById('bookings-section');
+const bookingsModal = document.getElementById('bookings-modal');
+const bookingsModalClose = document.getElementById('bookings-modal-close');
 const bookingsScheduleInfo = document.getElementById('bookings-schedule-info');
-const bookingsSlotsInfo = document.getElementById('bookings-slots-info');
+const bookingsSlotsInfo = document.getElementById('booking-slots-info');
 const bookingsBody = document.getElementById('bookings-body');
 const bookingsPagination = document.getElementById('bookings-pagination');
 const bookingFilterClientInput = document.getElementById('booking-filter-client');
@@ -567,15 +568,7 @@ function selectSchedule(item) {
     bookingsScheduleInfo.textContent =
         `${item.workoutName} | ${item.trainerName || '—'} | ${dateStr} | ${item.startTime.substring(0, 5)}–${item.endTime.substring(0, 5)}`;
 
-    document.querySelectorAll('#schedules-body tr').forEach(r => r.style.background = '');
-    const rows = document.querySelectorAll('#schedules-body tr');
-    rows.forEach(r => {
-        if (r.cells[0].textContent == item.scheduleId) {
-            r.style.background = '#e8f4fd';
-        }
-    });
-
-    bookingsSection.classList.remove('hidden');
+    bookingsModal.classList.add('show');
     loadBookingsFromCache();
 }
 
@@ -740,6 +733,9 @@ bookingSubmitBtn.addEventListener('click', createBooking);
 bookingCancelBtn.addEventListener('click', closeBookingModal);
 bookingModalClose.addEventListener('click', closeBookingModal);
 bookingModal.addEventListener('click', (e) => { if (e.target === bookingModal) closeBookingModal(); });
+
+bookingsModalClose.addEventListener('click', () => { bookingsModal.classList.remove('show'); });
+bookingsModal.addEventListener('click', (e) => { if (e.target === bookingsModal) bookingsModal.classList.remove('show'); });
 
 bookingFilterAttendedSelect.addEventListener('change', () => {
     bookingFilterAttended = bookingFilterAttendedSelect.value;
