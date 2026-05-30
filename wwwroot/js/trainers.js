@@ -131,6 +131,11 @@ function validateTrainerForm() {
         return false;
     }
 
+    if (experience && (parseInt(experience) < 0 || parseInt(experience) > 60)) {
+        showToast('Стаж должен быть от 0 до 60 лет');
+        return false;
+    }
+
     return true;
 }
 
@@ -212,6 +217,7 @@ async function createTrainer() {
         modalTitle.textContent = 'Редактировать тренера';
         submitBtn.textContent = 'Сохранить';
         enableSpecSection(created.trainerId);
+        await renderTable();
         showToast('Тренер добавлен. Теперь можно назначить специализации.', 'success');
         return true;
     } catch (err) {
@@ -332,6 +338,7 @@ experienceInput.addEventListener('input', function () {
     if (val.length > 1) {
         val = val.replace(/^0+/, '');
     }
+    if (val && parseInt(val) > 60) val = '60';
     this.value = val;
 });
 
