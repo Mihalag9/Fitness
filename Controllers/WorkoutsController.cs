@@ -31,6 +31,8 @@ public class WorkoutsController : ControllerBase
         [FromQuery] int? maxParticipantsMax,
         [FromQuery] string? participantsSort)
     {
+        if (workoutName?.Length > 50) return BadRequest(new { message = "Название не должно превышать 50 символов" });
+
         var workouts = await _workoutService.GetAllAsync(workoutName, durationFrom, durationTo, maxParticipantsMin, maxParticipantsMax, participantsSort);
         var stats = await _workoutService.GetStatisticsAsync();
         return Ok(new { Items = workouts, Statistics = stats });

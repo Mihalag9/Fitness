@@ -20,6 +20,8 @@ public class TrainersController : ControllerBase
         [FromQuery] string? experienceSort,
         [FromQuery] bool? noExperience)
     {
+        if (fullName?.Length > 50) return BadRequest(new { message = "ФИО не должно превышать 50 символов" });
+
         var trainers = await _trainerService.GetAllAsync(fullName, experienceSort, noExperience);
         var stats = await _trainerService.GetStatisticsAsync();
         return Ok(new { Items = trainers, Statistics = stats });

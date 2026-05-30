@@ -27,15 +27,15 @@
     <div class="filter-card">
         <h2>Фильтры</h2>
         <div class="filter-grid filter-grid-compact">
-            <input type="text" id="filter-gymName" placeholder="Название зала">
+            <input type="text" id="filter-gymName" placeholder="Название зала" maxlength="30">
             <select id="filter-hasEquipment">
                 <option value="">Все залы</option>
                 <option value="true">С оборудованием</option>
                 <option value="false">Без оборудования</option>
             </select>
-            <input type="text" id="filter-equipmentName" placeholder="Название оборудования">
+            <input type="text" id="filter-equipmentName" placeholder="Название оборудования" maxlength="40">
             <div class="autocomplete-wrap">
-                <input type="text" id="filter-brand" placeholder="Бренд" autocomplete="off">
+                <input type="text" id="filter-brand" placeholder="Бренд" autocomplete="off" maxlength="20">
                 <div id="filter-brand-dropdown" class="dropdown-list hidden"></div>
             </div>
         </div>
@@ -102,9 +102,9 @@
                     </div>
 
                     <div class="inventory-filters" id="inventory-filters">
-                        <input type="text" id="inv-filter-name" placeholder="Поиск по названию">
+                        <input type="text" id="inv-filter-name" placeholder="Поиск по названию" maxlength="40">
                         <div class="autocomplete-wrap">
-                            <input type="text" id="inv-filter-brand" placeholder="Бренд" autocomplete="off">
+                            <input type="text" id="inv-filter-brand" placeholder="Бренд" autocomplete="off" maxlength="20">
                             <div id="inv-filter-brand-dropdown" class="dropdown-list hidden"></div>
                         </div>
                         <select id="inv-filter-sort">
@@ -140,9 +140,9 @@
         <div class="filter-card">
             <h2>Фильтры</h2>
             <div class="filter-grid filter-grid-compact">
-                <input type="text" id="eq-filter-name" placeholder="Название оборудования">
+                <input type="text" id="eq-filter-name" placeholder="Название оборудования" maxlength="40">
                 <div class="autocomplete-wrap">
-                    <input type="text" id="eq-filter-brand" placeholder="Бренд" autocomplete="off">
+                    <input type="text" id="eq-filter-brand" placeholder="Бренд" autocomplete="off" maxlength="20">
                     <div id="eq-filter-brand-dropdown" class="dropdown-list hidden"></div>
                 </div>
             </div>

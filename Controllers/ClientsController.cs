@@ -21,6 +21,9 @@ public class ClientsController : ControllerBase
         [FromQuery] DateOnly? birthDateFrom,
         [FromQuery] DateOnly? birthDateTo)
     {
+        if (fullName?.Length > 50) return BadRequest(new { message = "ФИО не должно превышать 50 символов" });
+        if (phone?.Length > 20) return BadRequest(new { message = "Телефон не должен превышать 20 символов" });
+
         var clients = await _clientService.GetAllAsync(fullName, phone, birthDateFrom, birthDateTo);
         var stats = await _clientService.GetStatisticsAsync();
         return Ok(new { Items = clients, Statistics = stats });

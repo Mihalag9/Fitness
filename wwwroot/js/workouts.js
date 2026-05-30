@@ -391,13 +391,19 @@ async function renderTable() {
             gymCell.style.whiteSpace = 'normal';
             gymCell.style.maxWidth = '300px';
             if (workout.gymList) {
-                gymCell.innerHTML = `<a href="#" class="gym-link-btn" title="Управлять залами">${workout.gymList}</a>`;
-                gymCell.querySelector('.gym-link-btn').onclick = (e) => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.className = 'gym-link-btn';
+                link.title = 'Управлять залами';
+                link.textContent = workout.gymList;
+                link.onclick = (e) => {
                     e.preventDefault();
                     openEditModal(workout);
                 };
+                gymCell.appendChild(link);
             } else {
-                gymCell.innerHTML = '<span style="color:#999;">—</span>';
+                gymCell.textContent = '—';
+                gymCell.style.color = '#999';
             }
             const actionsCell = row.insertCell(5);
             const editBtn = document.createElement('button');

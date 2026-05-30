@@ -24,6 +24,8 @@ public class AbonnementsController : ControllerBase
         [FromQuery] string? sortField,
         [FromQuery] string? sortDirection)
     {
+        if (abonnementType?.Length > 30) return BadRequest(new { message = "Название не должно превышать 30 символов" });
+
         var abonnements = await _abonnementService.GetAllAsync(abonnementType, weekdayAccess, weekendAccess, priceMin, priceMax, sortField, sortDirection);
         var stats = await _abonnementService.GetStatisticsAsync();
         return Ok(new { Items = abonnements, Statistics = stats });

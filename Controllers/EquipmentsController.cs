@@ -20,6 +20,9 @@ namespace Fitness.Controllers
             [FromQuery] string? equipmentName,
             [FromQuery] string? brand)
         {
+            if (equipmentName?.Length > 40) return BadRequest(new { message = "Название оборудования не должно превышать 40 символов" });
+            if (brand?.Length > 20) return BadRequest(new { message = "Бренд не должен превышать 20 символов" });
+
             var items = await _equipmentService.GetAllAsync(equipmentName, brand);
             var stats = await _equipmentService.GetStatisticsAsync();
             var brands = await _equipmentService.GetBrandsAsync();
