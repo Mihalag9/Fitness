@@ -8,6 +8,7 @@ SELECT
     w."WorkoutId",
     w."WorkoutName",
     w."DurationMinutes",
+    w."MaxParticipants",
     g."GymId",
     g."GymName",
     wt."WorkoutTypeId",

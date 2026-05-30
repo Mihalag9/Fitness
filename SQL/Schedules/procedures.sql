@@ -14,6 +14,7 @@ RETURNS TABLE(
     "WorkoutId" INTEGER,
     "WorkoutName" VARCHAR,
     "DurationMinutes" INTEGER,
+    "MaxParticipants" INTEGER,
     "GymId" INTEGER,
     "GymName" VARCHAR,
     "WorkoutTypeId" INTEGER,
@@ -25,7 +26,7 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     SELECT v."ScheduleId", v."TrainerId", v."TrainerName", v."WorkoutId", v."WorkoutName",
-           v."DurationMinutes", v."GymId", v."GymName", v."WorkoutTypeId", v."WorkoutTypeName",
+           v."DurationMinutes", v."MaxParticipants", v."GymId", v."GymName", v."WorkoutTypeId", v."WorkoutTypeName",
            v."WorkDate", v."StartTime", v."EndTime"
     FROM vw_schedule_display v
     WHERE (p_trainer_name IS NULL OR v."TrainerName" ILIKE '%' || p_trainer_name || '%')
@@ -47,6 +48,7 @@ RETURNS TABLE(
     "WorkoutId" INTEGER,
     "WorkoutName" VARCHAR,
     "DurationMinutes" INTEGER,
+    "MaxParticipants" INTEGER,
     "GymId" INTEGER,
     "GymName" VARCHAR,
     "WorkoutTypeId" INTEGER,
@@ -58,7 +60,7 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     SELECT v."ScheduleId", v."TrainerId", v."TrainerName", v."WorkoutId", v."WorkoutName",
-           v."DurationMinutes", v."GymId", v."GymName", v."WorkoutTypeId", v."WorkoutTypeName",
+           v."DurationMinutes", v."MaxParticipants", v."GymId", v."GymName", v."WorkoutTypeId", v."WorkoutTypeName",
            v."WorkDate", v."StartTime", v."EndTime"
     FROM vw_schedule_display v
     WHERE v."ScheduleId" = p_id;

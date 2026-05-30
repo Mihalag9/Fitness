@@ -61,13 +61,14 @@ namespace Fitness.Services
                             WorkoutId = reader.GetInt32(3),
                             WorkoutName = reader.GetString(4),
                             DurationMinutes = reader.GetInt32(5),
-                            GymId = reader.GetInt32(6),
-                            GymName = reader.GetString(7),
-                            WorkoutTypeId = reader.GetInt32(8),
-                            WorkoutTypeName = reader.GetString(9),
-                            WorkDate = reader.GetDateTime(10),
-                            StartTime = reader.GetFieldValue<TimeOnly>(11).ToString("HH:mm"),
-                            EndTime = reader.GetFieldValue<TimeOnly>(12).ToString("HH:mm")
+                            MaxParticipants = reader.GetInt32(6),
+                            GymId = reader.GetInt32(7),
+                            GymName = reader.GetString(8),
+                            WorkoutTypeId = reader.GetInt32(9),
+                            WorkoutTypeName = reader.GetString(10),
+                            WorkDate = reader.GetDateTime(11),
+                            StartTime = reader.GetFieldValue<TimeOnly>(12).ToString("HH:mm"),
+                            EndTime = reader.GetFieldValue<TimeOnly>(13).ToString("HH:mm")
                         });
                     }
                 }
@@ -97,13 +98,14 @@ namespace Fitness.Services
                             WorkoutId = reader.GetInt32(3),
                             WorkoutName = reader.GetString(4),
                             DurationMinutes = reader.GetInt32(5),
-                            GymId = reader.GetInt32(6),
-                            GymName = reader.GetString(7),
-                            WorkoutTypeId = reader.GetInt32(8),
-                            WorkoutTypeName = reader.GetString(9),
-                            WorkDate = reader.GetDateTime(10),
-                            StartTime = reader.GetFieldValue<TimeOnly>(11).ToString("HH:mm"),
-                            EndTime = reader.GetFieldValue<TimeOnly>(12).ToString("HH:mm")
+                            MaxParticipants = reader.GetInt32(6),
+                            GymId = reader.GetInt32(7),
+                            GymName = reader.GetString(8),
+                            WorkoutTypeId = reader.GetInt32(9),
+                            WorkoutTypeName = reader.GetString(10),
+                            WorkDate = reader.GetDateTime(11),
+                            StartTime = reader.GetFieldValue<TimeOnly>(12).ToString("HH:mm"),
+                            EndTime = reader.GetFieldValue<TimeOnly>(13).ToString("HH:mm")
                         };
                     }
                 }
@@ -357,6 +359,7 @@ namespace Fitness.Services
             public int WorkoutId { get; set; }
             public string WorkoutName { get; set; } = null!;
             public int DurationMinutes { get; set; }
+            public int MaxParticipants { get; set; }
             public int GymId { get; set; }
             public string GymName { get; set; } = null!;
             public int WorkoutTypeId { get; set; }
