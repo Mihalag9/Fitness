@@ -169,6 +169,10 @@ tr:hover {
     margin: 5px 0;
 }
 
+.filter-grid-compact > .autocomplete-wrap {
+    width: 160px;
+}
+
 .filter-grid-compact .form-group input,
 .filter-grid-compact .form-group select {
     width: 100%;
@@ -588,6 +592,10 @@ button {
 
 .filter-grid .autocomplete-wrap {
     width: 250px;
+}
+
+.filter-grid-compact .autocomplete-wrap {
+    width: 160px;
 }
 
 .filter-grid .autocomplete-wrap input {
