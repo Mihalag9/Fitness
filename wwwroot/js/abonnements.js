@@ -1,5 +1,6 @@
 // API URL
 const API_URL = 'https://localhost:7159/api/Abonnements';
+const PURCH_API = 'https://localhost:7159/api/Purchases';
 
 // DOM-элементы
 const tbody = document.getElementById('abonnements-body');
@@ -394,8 +395,6 @@ modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }
 // ==========================================
 // ВКЛАДКА «ПРОДАЖИ»
 // ==========================================
-
-const PURCH_API = 'https://localhost:7159/api/Purchases';
 
 // DOM-элементы продаж
 const purchTbody = document.getElementById('purchases-body');

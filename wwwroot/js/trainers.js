@@ -1,5 +1,6 @@
 // API URL
 const API_URL = 'https://localhost:7159/api/Trainers';
+const REV_API = 'https://localhost:7159/api/Reviews';
 
 // DOM-элементы
 const tbody = document.getElementById('trainers-body');
@@ -551,8 +552,6 @@ specWorkoutInput.addEventListener('blur', () => setTimeout(() => specWorkoutDrop
 // ==========================================
 // ВКЛАДКА «ОТЗЫВЫ»
 // ==========================================
-
-const REV_API = 'https://localhost:7159/api/Reviews';
 
 // DOM-элементы отзывов
 const revTbody = document.getElementById('reviews-body');
