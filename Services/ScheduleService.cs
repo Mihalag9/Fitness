@@ -148,7 +148,7 @@ namespace Fitness.Services
                 }
                 catch (PostgresException ex) when (ex.SqlState == "P0001")
                 {
-                    return (null, ex.Message);
+                    return (null, ex.MessageText);
                 }
             }
         }
@@ -177,7 +177,7 @@ namespace Fitness.Services
                 }
                 catch (PostgresException ex) when (ex.SqlState == "P0001")
                 {
-                    return (false, ex.Message);
+                    return (false, ex.MessageText);
                 }
             }
         }
@@ -200,7 +200,7 @@ namespace Fitness.Services
                 }
                 catch (PostgresException ex) when (ex.SqlState == "P0001")
                 {
-                    return (false, ex.Message);
+                    return (false, ex.MessageText);
                 }
             }
         }
