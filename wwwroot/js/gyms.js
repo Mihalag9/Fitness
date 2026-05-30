@@ -1202,11 +1202,26 @@ function eqPreventLeadingDigit(e, input) {
     if (input.value.length === 0 && isDigit) e.preventDefault();
 }
 
-function eqAutoFormat(input) {
+function eqAutoFormatName(input) {
     let val = input.value;
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
     val = val.replace(/\s{2,}/g, ' ');
-    val = val.replace(/([a-zA-Zа-яА-ЯёЁ]+)/g, m => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase());
+    val = val.charAt(0).toUpperCase() + val.slice(1);
+    input.value = val;
+}
+
+function eqAutoFormatBrand(input) {
+    let val = input.value;
+    val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
+    val = val.replace(/\s{2,}/g, ' ');
+    val = val.charAt(0).toUpperCase() + val.slice(1);
+    input.value = val;
+}
+
+function eqAutoFormatModel(input) {
+    let val = input.value;
+    val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');
+    val = val.replace(/\s{2,}/g, ' ');
     input.value = val;
 }
 
@@ -1222,9 +1237,9 @@ eqModal.addEventListener('click', (e) => { if (e.target === eqModal) eqCloseModa
 eqNameInput.addEventListener('keydown', function (e) { eqPreventLeadingDigit(e, this); });
 eqBrandInput.addEventListener('keydown', function (e) { eqPreventLeadingDigit(e, this); });
 eqModelInput.addEventListener('keydown', function (e) { eqPreventLeadingDigit(e, this); });
-eqNameInput.addEventListener('input', function () { eqAutoFormat(this); });
-eqBrandInput.addEventListener('input', function () { eqAutoFormat(this); });
-eqModelInput.addEventListener('input', function () { eqAutoFormat(this); });
+eqNameInput.addEventListener('input', function () { eqAutoFormatName(this); });
+eqBrandInput.addEventListener('input', function () { eqAutoFormatBrand(this); });
+eqModelInput.addEventListener('input', function () { eqAutoFormatModel(this); });
 
 eqFilterBrand.addEventListener('input', onEqBrandInput);
 eqFilterBrand.addEventListener('keydown', onEqBrandKeydown);
