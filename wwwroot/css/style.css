@@ -103,14 +103,6 @@ th {
     color: white;
 }
 
-tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-tr:hover {
-    background-color: #f1f1f1;
-}
-
 /* Карточки — единая ширина 95% */
 .form-card, .stats-card, .filter-card {
     background: white;
@@ -193,11 +185,17 @@ input, select, button {
     font-size: 14px;
 }
 
-    input:focus, select:focus {
-        border-color: #007bff;
-        outline: none;
-        box-shadow: 0 0 5px rgba(0,123,255,0.3);
-    }
+        input:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+
+        input:disabled, select:disabled {
+            background: #e9ecef;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
 
 button {
     cursor: pointer;
@@ -394,6 +392,26 @@ button {
     min-width: 40px;
     text-align: center;
 }
+
+/* ==========================================
+   ТАБЛИЦА ОТЗЫВОВ
+   ========================================== */
+#reviews-table {
+    table-layout: fixed;
+}
+
+#reviews-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#reviews-table th:nth-child(1), #reviews-table td:nth-child(1) { width: 18%; }
+#reviews-table th:nth-child(2), #reviews-table td:nth-child(2) { width: 18%; }
+#reviews-table th:nth-child(3), #reviews-table td:nth-child(3) { width: 10%; }
+#reviews-table th:nth-child(4), #reviews-table td:nth-child(4) { width: 40%; }
+#reviews-table th:nth-child(5), #reviews-table td:nth-child(5) { width: 6%; text-align: center; }
+#reviews-table th:nth-child(6), #reviews-table td:nth-child(6) { width: 8%; text-align: center; }
 
 /* ==========================================
    МОДАЛЬНОЕ ОКНО
