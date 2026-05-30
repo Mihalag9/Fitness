@@ -1,5 +1,5 @@
 ﻿const API_URL = 'https://localhost:7159/api/Gyms';
-const EQUIPMENT_API_URL = 'https://localhost:7159/api/Equipment';
+const EQ_API_URL = 'https://localhost:7159/api/Equipment';
 
 const tbody = document.getElementById('gyms-body');
 const gymNameInput = document.getElementById('gymName');
@@ -912,8 +912,6 @@ document.querySelectorAll('.page-tab').forEach(tab => {
         }
     });
 });
-
-const EQ_API_URL = 'https://localhost:7159/api/Equipment';
 
 const eqTbody = document.getElementById('eq-tbody');
 const eqNameInput = document.getElementById('eq-name');
