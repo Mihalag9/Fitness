@@ -14,6 +14,7 @@ builder.Services.AddScoped<AbonnementService>();
 builder.Services.AddScoped<EquipmentService>();
 builder.Services.AddScoped<GymService>();
 builder.Services.AddScoped<WorkoutService>();
+builder.Services.AddScoped<PurchaseService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
 builder.Services.AddEndpointsApiExplorer();

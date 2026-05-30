@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Fitness.Models;
+using Fitness.Services;
 
 namespace Fitness.Controllers
 {
@@ -8,93 +8,95 @@ namespace Fitness.Controllers
     [ApiController]
     public class PurchasesController : ControllerBase
     {
-        private readonly FitnessContext _context;
+        private readonly PurchaseService _purchaseService;
 
-        public PurchasesController(FitnessContext context)
+        public PurchasesController(PurchaseService purchaseService)
         {
-            _context = context;
+            _purchaseService = purchaseService;
         }
 
         // GET: api/Purchases
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Purchase>>> GetPurchases()
+        public async Task<ActionResult<object>> GetPurchases(
+            [FromQuery] string? clientName,
+            [FromQuery] string? abonnementType,
+            [FromQuery] string? status,
+            [FromQuery] DateOnly? dateFrom,
+            [FromQuery] DateOnly? dateTo)
         {
-            return await _context.Purchases.ToListAsync();
-        }
+            if (clientName?.Length > 100) return BadRequest(new { message = "Имя клиента не должно превышать 100 символов" });
+            if (abonnementType?.Length > 100) return BadRequest(new { message = "Название абонемента не должно превышать 100 символов" });
 
-        // GET: api/Purchases/5/10/2024-01-15
-        [HttpGet("{clientid}/{abonnementid}/{purchasedate}")]
-        public async Task<ActionResult<Purchase>> GetPurchase(int clientid, int abonnementid, DateOnly purchasedate)
-        {
-            var purchase = await _context.Purchases.FindAsync(clientid, abonnementid, purchasedate);
-
-            if (purchase == null)
-            {
-                return NotFound();
-            }
-
-            return purchase;
-        }
-
-        // PUT: api/Purchases/5/10/2024-01-15
-        [HttpPut("{clientid}/{abonnementid}/{purchasedate}")]
-        public async Task<IActionResult> PutPurchase(int clientid, int abonnementid, DateOnly purchasedate, Purchase purchase)
-        {
-            if (clientid != purchase.ClientId || abonnementid != purchase.AbonnementId || purchasedate != purchase.PurchaseDate)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(purchase).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PurchaseExists(clientid, abonnementid, purchasedate))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            var items = await _purchaseService.GetAllAsync(clientName, abonnementType, status, dateFrom, dateTo);
+            var stats = await _purchaseService.GetStatisticsAsync();
+            return Ok(new { Items = items, Statistics = stats });
         }
 
         // POST: api/Purchases
         [HttpPost]
-        public async Task<ActionResult<Purchase>> PostPurchase(Purchase purchase)
+        public async Task<IActionResult> PostPurchase([FromBody] PurchaseCreateDto dto)
         {
-            _context.Purchases.Add(purchase);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetPurchase),new { clientid = purchase.ClientId, abonnementid = purchase.AbonnementId, purchasedate = purchase.PurchaseDate }, purchase);
+            var (success, error) = await _purchaseService.CreateAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate);
+            if (error != null) return BadRequest(new { message = error });
+            return Ok();
         }
 
-        // DELETE: api/Purchases/5/10/2024-01-15
-        [HttpDelete("{clientid}/{abonnementid}/{purchasedate}")]
-        public async Task<IActionResult> DeletePurchase(int clientid, int abonnementid, DateOnly purchasedate)
+        // PUT: api/Purchases
+        [HttpPut]
+        public async Task<IActionResult> PutPurchase([FromBody] PurchaseUpdateDto dto)
         {
-            var purchase = await _context.Purchases.FindAsync(clientid, abonnementid, purchasedate);
-            if (purchase == null)
-            {
-                return NotFound();
-            }
-
-            _context.Purchases.Remove(purchase);
-            await _context.SaveChangesAsync();
-
+            var (success, error) = await _purchaseService.UpdateAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate, dto.Status);
+            if (error != null) return BadRequest(new { message = error });
+            if (!success) return NotFound();
             return NoContent();
         }
 
-        private bool PurchaseExists(int clientid, int abonnementid, DateOnly purchasedate)
+        // DELETE: api/Purchases
+        [HttpDelete]
+        public async Task<IActionResult> DeletePurchase([FromBody] PurchaseDeleteDto dto)
         {
-            return _context.Purchases.Any(e => e.ClientId == clientid && e.AbonnementId == abonnementid && e.PurchaseDate == purchasedate);
+            var (success, error) = await _purchaseService.DeleteAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate);
+            if (error != null) return BadRequest(new { message = error });
+            if (!success) return NotFound();
+            return NoContent();
         }
+
+        // GET: api/Purchases/clients
+        [HttpGet("clients")]
+        public async Task<ActionResult<IEnumerable<PurchaseService.ClientView>>> GetClientsDictionary()
+        {
+            var clients = await _purchaseService.GetClientsDictionaryAsync();
+            return Ok(clients);
+        }
+
+        // GET: api/Purchases/abonnements
+        [HttpGet("abonnements")]
+        public async Task<ActionResult<IEnumerable<PurchaseService.AbonnementView>>> GetAbonnementsDictionary()
+        {
+            var abonnements = await _purchaseService.GetAbonnementsDictionaryAsync();
+            return Ok(abonnements);
+        }
+    }
+
+    public class PurchaseCreateDto
+    {
+        public int ClientId { get; set; }
+        public int AbonnementId { get; set; }
+        public DateOnly PurchaseDate { get; set; }
+    }
+
+    public class PurchaseUpdateDto
+    {
+        public int ClientId { get; set; }
+        public int AbonnementId { get; set; }
+        public DateOnly PurchaseDate { get; set; }
+        public string Status { get; set; } = null!;
+    }
+
+    public class PurchaseDeleteDto
+    {
+        public int ClientId { get; set; }
+        public int AbonnementId { get; set; }
+        public DateOnly PurchaseDate { get; set; }
     }
 }
