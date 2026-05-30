@@ -74,7 +74,7 @@ CREATE OR REPLACE FUNCTION add_schedule(
     p_work_date DATE,
     p_start_time TIME
 )
-RETURNS INTEGER AS $$
+RETURNS TEXT AS $$
 DECLARE
     new_id INTEGER;
     v_duration INTEGER;
@@ -87,7 +87,9 @@ BEGIN
     VALUES (p_trainer_id, p_workout_id, p_gym_id, p_workout_type_id, p_work_date, p_start_time, v_end_time)
     RETURNING "ScheduleId" INTO new_id;
 
-    RETURN new_id;
+    RETURN 'Запись расписания успешно создана (ID: ' || new_id || ')';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -101,13 +103,13 @@ CREATE OR REPLACE FUNCTION update_schedule(
     p_work_date DATE,
     p_start_time TIME
 )
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 DECLARE
     v_duration INTEGER;
     v_end_time TIME;
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM "Schedule" WHERE "ScheduleId" = p_id) THEN
-        RETURN FALSE;
+        RETURN 'Запись расписания не найдена';
     END IF;
 
     SELECT "DurationMinutes" INTO v_duration FROM "Workout" WHERE "WorkoutId" = p_workout_id;
@@ -123,19 +125,23 @@ BEGIN
         "EndTime" = v_end_time
     WHERE "ScheduleId" = p_id;
 
-    RETURN TRUE;
+    RETURN 'Запись расписания успешно обновлена';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: delete_schedule
 CREATE OR REPLACE FUNCTION delete_schedule(p_id INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM "Schedule" WHERE "ScheduleId" = p_id) THEN
-        RETURN FALSE;
+        RETURN 'Запись расписания не найдена';
     END IF;
     DELETE FROM "Schedule" WHERE "ScheduleId" = p_id;
-    RETURN TRUE;
+    RETURN 'Запись расписания успешно удалена';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 

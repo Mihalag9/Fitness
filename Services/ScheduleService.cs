@@ -1,6 +1,5 @@
 using Fitness.Models;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using System.Text.Json;
 
 namespace Fitness.Services
@@ -112,7 +111,7 @@ namespace Fitness.Services
             return null;
         }
 
-        public async Task<(Schedule? Entity, string? Error)> CreateAsync(ScheduleDto dto)
+        public async Task<(Schedule? Entity, string? Message)> CreateAsync(ScheduleDto dto)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -127,33 +126,30 @@ namespace Fitness.Services
                 var p4 = command.CreateParameter(); p4.ParameterName = "@p4"; p4.Value = DateOnly.FromDateTime(dto.WorkDate); command.Parameters.Add(p4);
                 var p5 = command.CreateParameter(); p5.ParameterName = "@p5"; p5.Value = TimeOnly.Parse(dto.StartTime); command.Parameters.Add(p5);
 
-                try
+                var result = await command.ExecuteScalarAsync();
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
                 {
-                    var result = await command.ExecuteScalarAsync();
-                    if (result != null && result != DBNull.Value)
+                    var idStr = msg.Split('(').Last().Replace(")", "").Replace("ID: ", "").Trim();
+                    int.TryParse(idStr, out int newId);
+                    var schedule = new Schedule
                     {
-                        var schedule = new Schedule
-                        {
-                            ScheduleId = Convert.ToInt32(result),
-                            TrainerId = dto.TrainerId,
-                            WorkoutId = dto.WorkoutId,
-                            GymId = dto.GymId,
-                            WorkoutTypeId = dto.WorkoutTypeId,
-                            WorkDate = DateOnly.FromDateTime(dto.WorkDate),
-                            StartTime = TimeOnly.Parse(dto.StartTime)
-                        };
-                        return (schedule, null);
-                    }
-                    return (null, "Не удалось создать запись");
+                        ScheduleId = newId,
+                        TrainerId = dto.TrainerId,
+                        WorkoutId = dto.WorkoutId,
+                        GymId = dto.GymId,
+                        WorkoutTypeId = dto.WorkoutTypeId,
+                        WorkDate = DateOnly.FromDateTime(dto.WorkDate),
+                        StartTime = TimeOnly.Parse(dto.StartTime)
+                    };
+                    return (schedule, msg);
                 }
-                catch (PostgresException ex) when (ex.SqlState == "P0001")
-                {
-                    return (null, ex.MessageText);
-                }
+                return (null, msg ?? "Не удалось создать запись");
             }
         }
 
-        public async Task<(bool Success, string? Error)> UpdateAsync(int id, ScheduleDto dto)
+        public async Task<(bool Success, string? Message)> UpdateAsync(int id, ScheduleDto dto)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -169,20 +165,16 @@ namespace Fitness.Services
                 var p5 = command.CreateParameter(); p5.ParameterName = "@p5"; p5.Value = DateOnly.FromDateTime(dto.WorkDate); command.Parameters.Add(p5);
                 var p6 = command.CreateParameter(); p6.ParameterName = "@p6"; p6.Value = TimeOnly.Parse(dto.StartTime); command.Parameters.Add(p6);
 
-                try
-                {
-                    var result = await command.ExecuteScalarAsync();
-                    if (result == null || result == DBNull.Value) return (false, null);
-                    return ((bool)result, null);
-                }
-                catch (PostgresException ex) when (ex.SqlState == "P0001")
-                {
-                    return (false, ex.MessageText);
-                }
+                var result = await command.ExecuteScalarAsync();
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось обновить запись");
             }
         }
 
-        public async Task<(bool Success, string? Error)> DeleteAsync(int id)
+        public async Task<(bool Success, string? Message)> DeleteAsync(int id)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -192,16 +184,12 @@ namespace Fitness.Services
                 command.CommandText = "SELECT delete_schedule(@p0)";
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
 
-                try
-                {
-                    var result = await command.ExecuteScalarAsync();
-                    if (result == null || result == DBNull.Value) return (false, null);
-                    return ((bool)result, null);
-                }
-                catch (PostgresException ex) when (ex.SqlState == "P0001")
-                {
-                    return (false, ex.MessageText);
-                }
+                var result = await command.ExecuteScalarAsync();
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось удалить запись");
             }
         }
 

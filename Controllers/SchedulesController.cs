@@ -50,11 +50,9 @@ public class SchedulesController : ControllerBase
         if (dto.WorkoutTypeId <= 0) return BadRequest(new { message = "Не указан тип тренировки" });
         if (string.IsNullOrWhiteSpace(dto.StartTime)) return BadRequest(new { message = "Не указано время начала" });
 
-        var (entity, error) = await _scheduleService.CreateAsync(dto);
-        if (error != null) return BadRequest(new { message = error });
-        if (entity == null) return BadRequest(new { message = "Не удалось создать запись" });
-
-        return Ok(entity);
+        var (entity, message) = await _scheduleService.CreateAsync(dto);
+        if (entity == null) return BadRequest(new { message });
+        return Ok(new { message, entity });
     }
 
     // PUT: api/Schedules/5
@@ -67,21 +65,17 @@ public class SchedulesController : ControllerBase
         if (dto.WorkoutTypeId <= 0) return BadRequest(new { message = "Не указан тип тренировки" });
         if (string.IsNullOrWhiteSpace(dto.StartTime)) return BadRequest(new { message = "Не указано время начала" });
 
-        var (success, error) = await _scheduleService.UpdateAsync(scheduleid, dto);
-        if (error != null) return BadRequest(new { message = error });
-        if (!success) return NotFound();
-
-        return NoContent();
+        var (success, message) = await _scheduleService.UpdateAsync(scheduleid, dto);
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 
     // DELETE: api/Schedules/5
     [HttpDelete("{scheduleid}")]
     public async Task<IActionResult> DeleteSchedule(int scheduleid)
     {
-        var (success, error) = await _scheduleService.DeleteAsync(scheduleid);
-        if (error != null) return BadRequest(new { message = error });
-        if (!success) return NotFound();
-
-        return NoContent();
+        var (success, message) = await _scheduleService.DeleteAsync(scheduleid);
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 }

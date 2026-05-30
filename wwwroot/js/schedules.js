@@ -271,13 +271,13 @@ async function createSchedule() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dto)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         closeModal();
         await renderPage();
-        showToast('Запись добавлена', 'success');
+        showToast(data?.message || 'Запись добавлена', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -294,13 +294,13 @@ async function updateSchedule(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dto)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         closeModal();
         await renderPage();
-        showToast('Запись обновлена', 'success');
+        showToast(data?.message || 'Запись обновлена', 'success');
         return true;
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
@@ -312,12 +312,12 @@ async function deleteSchedule(id) {
     if (!confirm('Удалить эту запись?')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         await renderPage();
-        showToast('Запись удалена', 'success');
+        showToast(data?.message || 'Запись удалена', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
     }
