@@ -134,6 +134,15 @@ BEGIN
             GROUP BY t."TrainerId", t."FullName"
             ORDER BY AVG(r2."Rating") DESC
             LIMIT 1
+        ),
+        'bestTrainerAvg', (
+            SELECT ROUND(AVG(r2."Rating")::numeric, 1)
+            FROM "Review" r2
+            JOIN "Trainer" t ON r2."TrainerId" = t."TrainerId"
+            WHERE r2."Rating" IS NOT NULL
+            GROUP BY t."TrainerId"
+            ORDER BY AVG(r2."Rating") DESC
+            LIMIT 1
         )
     ) INTO result
     FROM "Review";

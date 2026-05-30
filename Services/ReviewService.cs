@@ -181,6 +181,7 @@ namespace Fitness.Services
         {
             public int TotalReviews { get; set; }
             public string? BestTrainerName { get; set; }
+            public double? BestTrainerAvg { get; set; }
         }
 
         public class ClientView

@@ -588,7 +588,9 @@ async function revRenderTable() {
 
         const stats = result.statistics;
         revTotalSpan.textContent = stats.totalReviews;
-        revBestTrainerSpan.textContent = stats.bestTrainerName || '—';
+        revBestTrainerSpan.textContent = stats.bestTrainerName
+            ? `${stats.bestTrainerName} (${stats.bestTrainerAvg})`
+            : '—';
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }
