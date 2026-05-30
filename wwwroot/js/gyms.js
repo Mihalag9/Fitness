@@ -161,19 +161,6 @@ function validateGymForm() {
     return true;
 }
 
-// ---- Statistics ----
-async function updateStats() {
-    try {
-        const response = await fetch(`${API_URL}/statistics`);
-        if (!response.ok) throw new Error('Ошибка загрузки статистики');
-        const data = await response.json();
-        totalSpan.textContent = data.totalGyms;
-        totalEquipmentSpan.textContent = data.totalEquipmentUnits;
-    } catch (err) {
-        console.error('Ошибка статистики:', err);
-    }
-}
-
 
 // ---- Equipment dictionary ----
 function getFilteredEquipment(query) {
@@ -276,16 +263,6 @@ function onEquipmentKeydown(e) {
 function findEquipmentByName(name) {
     const trimmed = name.trim().toLowerCase();
     return allEquipment.find(eq => formatEquipmentItem(eq).toLowerCase() === trimmed);
-}
-
-async function loadEquipmentDictionary() {
-    try {
-        const response = await fetch(`${API_URL}/equipment`);
-        if (!response.ok) throw new Error('Не удалось загрузить справочник оборудования');
-        allEquipment = await response.json();
-    } catch (err) {
-        console.error('Ошибка загрузки оборудования:', err);
-    }
 }
 
 // ---- Brand autocomplete for gym filter ----

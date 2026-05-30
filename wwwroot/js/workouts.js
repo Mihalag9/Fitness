@@ -251,51 +251,12 @@ function onGymKeydown(e) {
     }
 }
 
-async function loadGymDictionary() {
-    try {
-        const response = await fetch(`${API_URL}/gyms/dictionary`);
-        if (!response.ok) throw new Error('Не удалось загрузить список залов');
-        allGyms = await response.json();
-    } catch (err) {
-        console.error('Ошибка загрузки залов:', err);
-    }
-}
-
 function updateGymLimitState() {
     const count = currentLinkedGymIds.size;
     const limitReached = count >= MAX_GYMS;
     gymInput.disabled = limitReached;
     addGymLinkBtn.disabled = limitReached;
     gymLimitHint.classList.toggle('hidden', !limitReached);
-}
-
-async function loadGymLinks(workoutId) {
-    try {
-        const response = await fetch(`${API_URL}/${workoutId}/gyms`);
-        if (!response.ok) throw new Error('Ошибка загрузки связей с залами');
-        const gyms = await response.json();
-
-        currentLinkedGymIds.clear();
-        gyms.forEach(gym => currentLinkedGymIds.add(gym.gymId));
-        hideDropdown();
-
-        gymLinksBody.innerHTML = '';
-        gyms.forEach(gym => {
-            const row = gymLinksBody.insertRow();
-            row.insertCell(0).textContent = gym.gymId;
-            row.insertCell(1).textContent = gym.gymName;
-            const actionsCell = row.insertCell(2);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Отвязать зал';
-            deleteBtn.onclick = () => removeGymLink(workoutId, gym.gymId);
-            actionsCell.appendChild(deleteBtn);
-        });
-
-        updateGymLimitState();
-    } catch (err) {
-        showToast(`Ошибка загрузки залов: ${err.message}`);
-    }
 }
 
 function enableGymSection(workoutId) {

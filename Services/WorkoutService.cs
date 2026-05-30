@@ -252,11 +252,6 @@ namespace Fitness.Services
             }
         }
 
-        private bool WorkoutExists(int id)
-        {
-            return _context.Workouts.Any(e => e.WorkoutId == id);
-        }
-
         public class WorkoutStatistics
         {
             public int TotalWorkouts { get; set; }

@@ -110,11 +110,6 @@ namespace Fitness.Services
             }
         }
 
-        private bool ClientExists(int id)
-        {
-            return _context.Clients.Any(e => e.ClientId == id);
-        }
-
         public class ClientStatistics
         {
             public int TotalClients { get; set; }

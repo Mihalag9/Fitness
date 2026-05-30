@@ -273,11 +273,6 @@ namespace Fitness.Services
             return new TrainerRoleResult { Success = true, Roles = roles, Items = items, Statistics = stats };
         }
 
-        private bool TrainerExists(int id)
-        {
-            return _context.Trainers.Any(e => e.TrainerId == id);
-        }
-
         public class TrainerView
         {
             public int TrainerId { get; set; }
