@@ -85,6 +85,15 @@ BEGIN
         RETURN 'Продажа не найдена';
     END IF;
 
+    IF p_new_status = 'активен' AND EXISTS (
+        SELECT 1 FROM "Purchase"
+        WHERE "ClientId" = p_client_id
+          AND "Status" = 'активен'
+          AND NOT ("AbonnementId" = p_abonnement_id AND "PurchaseDate" = p_purchase_date)
+    ) THEN
+        RETURN 'У клиента уже есть активный абонемент';
+    END IF;
+
     UPDATE "Purchase"
     SET "Status" = p_new_status
     WHERE "ClientId" = p_client_id AND "AbonnementId" = p_abonnement_id AND "PurchaseDate" = p_purchase_date;
