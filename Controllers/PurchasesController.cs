@@ -32,6 +32,22 @@ namespace Fitness.Controllers
             return Ok(new { Items = items, Statistics = stats });
         }
 
+        // GET: api/Purchases/page-data
+        [HttpGet("page-data")]
+        public async Task<ActionResult<object>> GetPageData(
+            [FromQuery] string? clientName,
+            [FromQuery] string? abonnementType,
+            [FromQuery] string? status,
+            [FromQuery] DateOnly? dateFrom,
+            [FromQuery] DateOnly? dateTo)
+        {
+            if (clientName?.Length > 50) return BadRequest(new { message = "Имя клиента не должно превышать 50 символов" });
+            if (abonnementType?.Length > 50) return BadRequest(new { message = "Название абонемента не должно превышать 50 символов" });
+
+            var data = await _purchaseService.GetPageDataAsync(clientName, abonnementType, status, dateFrom, dateTo);
+            return Ok(data);
+        }
+
         // POST: api/Purchases
         [HttpPost]
         public async Task<IActionResult> PostPurchase([FromBody] PurchaseCreateDto dto)

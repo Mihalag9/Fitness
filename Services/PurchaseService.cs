@@ -169,6 +169,22 @@ namespace Fitness.Services
             return items;
         }
 
+        public async Task<PurchasePageData> GetPageDataAsync(string? clientName, string? abonnementType, string? status, DateOnly? dateFrom, DateOnly? dateTo)
+        {
+            var items = await GetAllAsync(clientName, abonnementType, status, dateFrom, dateTo);
+            var stats = await GetStatisticsAsync();
+            var clients = await GetClientsDictionaryAsync();
+            var abonnements = await GetAbonnementsDictionaryAsync();
+
+            return new PurchasePageData
+            {
+                Items = items,
+                Statistics = stats,
+                Clients = clients,
+                Abonnements = abonnements
+            };
+        }
+
         public class PurchaseView
         {
             public int ClientId { get; set; }
@@ -201,6 +217,14 @@ namespace Fitness.Services
             public string AbonnementType { get; set; } = null!;
             public int DurationMonths { get; set; }
             public decimal Price { get; set; }
+        }
+
+        public class PurchasePageData
+        {
+            public IEnumerable<PurchaseView> Items { get; set; } = Enumerable.Empty<PurchaseView>();
+            public PurchaseStatistics Statistics { get; set; } = new();
+            public IEnumerable<ClientView> Clients { get; set; } = Enumerable.Empty<ClientView>();
+            public IEnumerable<AbonnementView> Abonnements { get; set; } = Enumerable.Empty<AbonnementView>();
         }
     }
 }

@@ -639,8 +639,65 @@ function calcExpiryDate(durationMonths) {
     purchExpiryInput.value = start.toISOString().split('T')[0];
 }
 
-// ---- Отрисовка таблицы продаж ----
-async function purchRenderTable() {
+// ---- CRUD продаж ----
+async function purchCreate() {
+    if (!validatePurchForm()) return false;
+    try {
+        const response = await fetch(PURCH_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: selectedClientId, abonnementId: selectedAbonnementId, purchaseDate: purchDateInput.value })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        purchCloseModal();
+        purchClearAllFilters();
+        await loadPurchPageData();
+        showToast('Продажа добавлена', 'success');
+    } catch (err) {
+        showToast(`Не удалось добавить: ${err.message}`);
+    }
+}
+
+async function purchUpdate() {
+    if (!selectedClientId || !selectedAbonnementId || !purchDateInput.value) { showToast('Заполните все поля'); return; }
+    try {
+        const response = await fetch(PURCH_API, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: purchEditClientId, abonnementId: purchEditAbonnementId, purchaseDate: purchEditPurchaseDate, status: purchStatusSelect.value })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        purchCloseModal();
+        await loadPurchPageData();
+        showToast('Продажа обновлена', 'success');
+    } catch (err) {
+        showToast(`Ошибка обновления: ${err.message}`);
+    }
+}
+
+async function purchDelete(purchase) {
+    if (!confirm('Удалить эту продажу?')) return;
+    try {
+        const response = await fetch(PURCH_API, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: purchase.clientId, abonnementId: purchase.abonnementId, purchaseDate: purchase.purchaseDate })
+        });
+        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
+        showToast('Продажа удалена', 'success');
+        await loadPurchPageData();
+    } catch (err) {
+        showToast(`Ошибка удаления: ${err.message}`);
+    }
+}
+
+function purchOnSubmit() {
+    if (purchEditClientId !== null) { purchUpdate(); }
+    else { purchCreate(); }
+}
+
+// ---- Загрузка всех данных продаж (1 запрос) ----
+async function loadPurchPageData() {
     try {
         const params = new URLSearchParams();
         if (purchAppliedFilters.clientName) params.append('clientName', purchAppliedFilters.clientName.trim());
@@ -649,11 +706,16 @@ async function purchRenderTable() {
         if (purchAppliedFilters.dateFrom) params.append('dateFrom', purchAppliedFilters.dateFrom);
         if (purchAppliedFilters.dateTo) params.append('dateTo', purchAppliedFilters.dateTo);
 
-        const url = params.toString() ? `${PURCH_API}?${params.toString()}` : PURCH_API;
+        const url = params.toString() ? `${PURCH_API}/page-data?${params.toString()}` : `${PURCH_API}/page-data`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
 
+        // Справочники для автокомплита
+        allPurchClients = result.clients;
+        allPurchAbonnements = result.abonnements;
+
+        // Отрисовка таблицы
         purchTbody.innerHTML = '';
         result.items.forEach(purchase => {
             const row = purchTbody.insertRow();
@@ -675,6 +737,7 @@ async function purchRenderTable() {
             actionsCell.appendChild(deleteBtn);
         });
 
+        // Статистика
         const stats = result.statistics;
         purchTotalSpan.textContent = stats.totalPurchases;
         purchActiveSpan.textContent = stats.activeCount;
@@ -682,77 +745,6 @@ async function purchRenderTable() {
         purchRevenueSpan.textContent = stats.totalRevenue.toLocaleString('ru-RU');
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
-    }
-}
-
-// ---- CRUD продаж ----
-async function purchCreate() {
-    if (!validatePurchForm()) return false;
-    try {
-        const response = await fetch(PURCH_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clientId: selectedClientId, abonnementId: selectedAbonnementId, purchaseDate: purchDateInput.value })
-        });
-        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
-        purchCloseModal();
-        purchClearAllFilters();
-        await purchRenderTable();
-        showToast('Продажа добавлена', 'success');
-    } catch (err) {
-        showToast(`Не удалось добавить: ${err.message}`);
-    }
-}
-
-async function purchUpdate() {
-    if (!selectedClientId || !selectedAbonnementId || !purchDateInput.value) { showToast('Заполните все поля'); return; }
-    try {
-        const response = await fetch(PURCH_API, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clientId: purchEditClientId, abonnementId: purchEditAbonnementId, purchaseDate: purchEditPurchaseDate, status: purchStatusSelect.value })
-        });
-        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
-        purchCloseModal();
-        await purchRenderTable();
-        showToast('Продажа обновлена', 'success');
-    } catch (err) {
-        showToast(`Ошибка обновления: ${err.message}`);
-    }
-}
-
-async function purchDelete(purchase) {
-    if (!confirm('Удалить эту продажу?')) return;
-    try {
-        const response = await fetch(PURCH_API, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clientId: purchase.clientId, abonnementId: purchase.abonnementId, purchaseDate: purchase.purchaseDate })
-        });
-        if (!response.ok) { const err = await response.json().catch(() => null); throw new Error(err?.message || `HTTP ${response.status}`); }
-        showToast('Продажа удалена', 'success');
-        await purchRenderTable();
-    } catch (err) {
-        showToast(`Ошибка удаления: ${err.message}`);
-    }
-}
-
-function purchOnSubmit() {
-    if (purchEditClientId !== null) { purchUpdate(); }
-    else { purchCreate(); }
-}
-
-// ---- Загрузка справочников ----
-async function loadPurchDictionaries() {
-    try {
-        const [clientsResp, abonnementsResp] = await Promise.all([
-            fetch(`${PURCH_API}/clients`),
-            fetch(`${PURCH_API}/abonnements`)
-        ]);
-        if (clientsResp.ok) allPurchClients = await clientsResp.json();
-        if (abonnementsResp.ok) allPurchAbonnements = await abonnementsResp.json();
-    } catch (err) {
-        console.error('Ошибка загрузки справочников:', err);
     }
 }
 
@@ -770,8 +762,7 @@ document.querySelectorAll('.page-tab').forEach(tab => {
         document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
 
         if (tab.dataset.tab === 'purchases') {
-            loadPurchDictionaries();
-            purchRenderTable();
+            loadPurchPageData();
         }
     });
 });
@@ -779,8 +770,8 @@ document.querySelectorAll('.page-tab').forEach(tab => {
 // ---- Инициализация продаж ----
 purchSubmitBtn.addEventListener('click', purchOnSubmit);
 purchCancelBtn.addEventListener('click', purchCloseModal);
-purchApplyFiltersBtn.addEventListener('click', () => { purchSnapshotFilters(); purchRenderTable(); });
-purchClearFiltersBtn.addEventListener('click', () => { purchClearAllFilters(); purchRenderTable(); });
+purchApplyFiltersBtn.addEventListener('click', () => { purchSnapshotFilters(); loadPurchPageData(); });
+purchClearFiltersBtn.addEventListener('click', () => { purchClearAllFilters(); loadPurchPageData(); });
 purchAddBtn.addEventListener('click', purchOpenCreateModal);
 purchModalClose.addEventListener('click', purchCloseModal);
 purchModal.addEventListener('click', (e) => { if (e.target === purchModal) purchCloseModal(); });
