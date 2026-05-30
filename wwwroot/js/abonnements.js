@@ -12,11 +12,16 @@ const accessTimeRangeInput = document.getElementById('accessTimeRange'); // Од
 const submitBtn = document.getElementById('submit-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const editIdField = document.getElementById('edit-id');
-const formTitle = document.getElementById('form-title');
 const totalSpan = document.getElementById('total-count');
 const minPriceSpan = document.getElementById('min-price');
 const maxPriceSpan = document.getElementById('max-price');
 const unlimitedPercentageSpan = document.getElementById('unlimited-percentage');
+const addAbonnementBtn = document.getElementById('add-abonnement-btn');
+
+// Модальное окно
+const modal = document.getElementById('abonnement-modal');
+const modalClose = document.getElementById('modal-close');
+const modalTitle = document.getElementById('modal-title');
 
 // Фильтры
 const filterAbonnementType = document.getElementById('filter-abonnementType');
@@ -74,12 +79,51 @@ function clearForm() {
     durationMonthsInput.value = '';
     weekdayAccessSelect.value = 'true';
     weekendAccessSelect.value = 'true';
-    accessTimeRangeInput.value = '08:00 - 23:00'; // Дефолтное значение
+    accessTimeRangeInput.value = '08:00 - 23:00';
     editIdField.value = '';
     currentEditId = null;
-    formTitle.textContent = 'Добавить абонемент';
-    submitBtn.textContent = 'Добавить';
-    cancelBtn.style.display = 'none';
+}
+
+function resetModal(isEdit) {
+    clearForm();
+    if (isEdit) {
+        modalTitle.textContent = 'Редактировать абонемент';
+        submitBtn.textContent = 'Сохранить';
+    } else {
+        modalTitle.textContent = 'Добавить абонемент';
+        submitBtn.textContent = 'Добавить';
+    }
+}
+
+function openModal() {
+    modal.classList.add('show');
+}
+
+function closeModal() {
+    modal.classList.remove('show');
+    resetModal(false);
+}
+
+function openCreateModal() {
+    resetModal(false);
+    openModal();
+}
+
+function openEditModal(abonnement) {
+    resetModal(true);
+    abonnementTypeInput.value = abonnement.abonnementType;
+    priceInput.value = abonnement.price;
+    durationMonthsInput.value = abonnement.durationMonths;
+    weekdayAccessSelect.value = abonnement.weekdayAccess ? 'true' : 'false';
+    weekendAccessSelect.value = abonnement.weekendAccess ? 'true' : 'false';
+
+    const start = abonnement.accessStartTime.substring(0, 5);
+    const end = abonnement.accessEndTime.substring(0, 5);
+    accessTimeRangeInput.value = `${start} - ${end}`;
+
+    editIdField.value = abonnement.abonnementId;
+    currentEditId = abonnement.abonnementId;
+    openModal();
 }
 
 function boolToStr(value) {
@@ -175,7 +219,7 @@ async function renderTable() {
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
-            editBtn.onclick = () => fillFormForEdit(abonnement);
+            editBtn.onclick = () => openEditModal(abonnement);
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '🗑️';
             deleteBtn.title = 'Удалить';
@@ -195,26 +239,6 @@ async function renderTable() {
     }
 }
 
-// ---- Заполнение формы для редактирования ----
-function fillFormForEdit(abonnement) {
-    abonnementTypeInput.value = abonnement.abonnementType;
-    priceInput.value = abonnement.price;
-    durationMonthsInput.value = abonnement.durationMonths;
-    weekdayAccessSelect.value = abonnement.weekdayAccess ? 'true' : 'false';
-    weekendAccessSelect.value = abonnement.weekendAccess ? 'true' : 'false';
-
-    // Склеиваем "HH:mm" старта и конца в одну строку для единого инпута
-    const start = abonnement.accessStartTime.substring(0, 5);
-    const end = abonnement.accessEndTime.substring(0, 5);
-    accessTimeRangeInput.value = `${start} - ${end}`;
-
-    editIdField.value = abonnement.abonnementId;
-    currentEditId = abonnement.abonnementId;
-    formTitle.textContent = 'Редактировать абонемент';
-    submitBtn.textContent = 'Сохранить';
-    cancelBtn.style.display = 'inline-block';
-}
-
 // ---- Добавление нового ----
 async function createAbonnement() {
     const newAbonnement = collectFormData();
@@ -230,7 +254,7 @@ async function createAbonnement() {
             const err = await response.json().catch(() => null);
             throw new Error(err?.message || `HTTP ${response.status}`);
         }
-        clearForm();
+        closeModal();
         clearAllFilters();
         await renderTable();
         showToast('Абонемент добавлен', 'success');
@@ -257,7 +281,7 @@ async function updateAbonnement(id) {
             const err = await response.json().catch(() => null);
             throw new Error(err?.message || `HTTP ${response.status}`);
         }
-        clearForm();
+        closeModal();
         restoreFiltersToDOM();
         await renderTable();
         showToast('Абонемент обновлён', 'success');
@@ -324,7 +348,7 @@ async function deleteAbonnement(id) {
 
         // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
         if (id === currentEditId) {
-            clearForm();
+            closeModal();
         }
 
         restoreFiltersToDOM();
@@ -345,11 +369,6 @@ async function onSubmit() {
     }
 }
 
-// ---- Отмена редактирования ----
-function onCancel() {
-    clearForm();
-}
-
 // ---- Фильтры ----
 function onApplyFilters() {
     snapshotFilters();
@@ -364,9 +383,13 @@ function onClearFilters() {
 
 // ---- Инициализация и обработчики событий ----
 submitBtn.addEventListener('click', onSubmit);
-cancelBtn.addEventListener('click', onCancel);
+cancelBtn.addEventListener('click', closeModal);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
+addAbonnementBtn.addEventListener('click', openCreateModal);
+
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
 // Загружаем данные при старте
 renderTable();

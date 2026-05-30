@@ -17,47 +17,6 @@
 
     <h1>Управление абонементами фитнес-клуба</h1>
 
-    <div class="form-card">
-        <h2 id="form-title">Добавить абонемент</h2>
-        <input type="hidden" id="edit-id">
-
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Название</label>
-                <input type="text" id="abonnementType" minlength="5" maxlength="30" required>
-            </div>
-            <div class="form-group">
-                <label>Цена (₽)</label>
-                <input type="number" id="price" placeholder="Цена (₽)" min="1000.01" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label>Длительность (мес)</label>
-                <input type="number" id="durationMonths" placeholder="Длительность" min="1" max="18" required>
-            </div>
-            <div class="form-group">
-                <label>В будни</label>
-                <select id="weekdayAccess">
-                    <option value="true">Да</option>
-                    <option value="false">Нет</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>В выходные</label>
-                <select id="weekendAccess">
-                    <option value="true">Да</option>
-                    <option value="false">Нет</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Время доступа</label>
-                <input type="text" id="accessTimeRange" placeholder="08:00 - 23:00 (по умолчанию)">
-            </div>
-            <div class="form-actions">
-                <button id="submit-btn">Добавить</button>
-                <button id="cancel-btn" style="display:none;">Отмена</button>
-            </div>
-        </div>
-    </div>
     <div class="filter-card">
         <h2>Фильтры</h2>
 
@@ -108,6 +67,7 @@
             <div class="filter-actions">
                 <button id="apply-filters">Применить</button>
                 <button id="clear-filters">Очистить</button>
+                <button id="add-abonnement-btn" style="margin-left:auto;">+ Добавить абонемент</button>
             </div>
         </div>
     </div>
@@ -125,6 +85,50 @@
         </thead>
         <tbody id="abonnements-body"></tbody>
     </table>
+    <div id="abonnement-modal" class="modal">
+        <div class="modal-content modal-wide">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <h2 id="modal-title">Добавить абонемент</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Название</label>
+                    <input type="text" id="abonnementType" minlength="5" maxlength="30" required>
+                </div>
+                <div class="form-group">
+                    <label>Цена (₽)</label>
+                    <input type="number" id="price" placeholder="Цена (₽)" min="1000.01" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Длительность (мес)</label>
+                    <input type="number" id="durationMonths" placeholder="Длительность" min="1" max="18" required>
+                </div>
+                <div class="form-group">
+                    <label>В будни</label>
+                    <select id="weekdayAccess">
+                        <option value="true">Да</option>
+                        <option value="false">Нет</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>В выходные</label>
+                    <select id="weekendAccess">
+                        <option value="true">Да</option>
+                        <option value="false">Нет</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Время доступа</label>
+                    <input type="text" id="accessTimeRange" placeholder="08:00 - 23:00 (по умолчанию)">
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top: 10px;">
+                <button id="submit-btn">Добавить</button>
+                <button id="cancel-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/toast.js"></script>
     <script src="js/abonnements.js"></script>
 </body>

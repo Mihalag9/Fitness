@@ -17,15 +17,6 @@
 
     <h1>Управление тренерами фитнес-клуба</h1>
 
-    <!-- Форма добавления/редактирования -->
-    <div class="form-card">
-        <h2 id="form-title">Добавить тренера</h2>
-        <input type="hidden" id="edit-id">
-        <input type="text" id="fullName" placeholder="ФИО" required maxlength="50">
-        <input type="number" id="experience" placeholder="Стаж (лет)" min="0">
-        <button id="submit-btn">Добавить</button>
-        <button id="cancel-btn" style="display:none;">Отмена</button>
-    </div>
     <!-- Блок фильтров -->
     <div class="filter-card">
         <h2>Фильтры</h2>
@@ -38,6 +29,7 @@
         </select>
         <button id="apply-filters">Применить</button>
         <button id="clear-filters">Очистить</button>
+        <button id="add-trainer-btn" style="margin-left:auto;">+ Добавить тренера</button>
     </div>
 
     <!-- Блок статистики -->
@@ -55,6 +47,25 @@
         </thead>
         <tbody id="trainers-body"></tbody>
     </table>
+    <div id="trainer-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <h2 id="modal-title">Добавить тренера</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-grid">
+                <input type="text" id="fullName" placeholder="ФИО" required maxlength="50">
+                <div class="form-group">
+                    <label>Стаж (лет)</label>
+                    <input type="number" id="experience" placeholder="0" min="0">
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top: 10px;">
+                <button id="submit-btn">Добавить</button>
+                <button id="cancel-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/toast.js"></script>
     <script src="js/trainers.js"></script>
 </body>

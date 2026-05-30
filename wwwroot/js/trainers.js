@@ -8,10 +8,15 @@ const experienceInput = document.getElementById('experience');
 const submitBtn = document.getElementById('submit-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const editIdField = document.getElementById('edit-id');
-const formTitle = document.getElementById('form-title');
 const totalSpan = document.getElementById('total-count');
 const expSpan = document.getElementById('exp-count');
 const noExpSpan = document.getElementById('no-exp-count');
+const addTrainerBtn = document.getElementById('add-trainer-btn');
+
+// Модальное окно
+const modal = document.getElementById('trainer-modal');
+const modalClose = document.getElementById('modal-close');
+const modalTitle = document.getElementById('modal-title');
 
 // Фильтры
 const filterFullName = document.getElementById('filter-fullName');
@@ -47,9 +52,40 @@ function clearForm() {
     experienceInput.value = '';
     editIdField.value = '';
     currentEditId = null;
-    formTitle.textContent = 'Добавить тренера';
-    submitBtn.textContent = 'Добавить';
-    cancelBtn.style.display = 'none';
+}
+
+function resetModal(isEdit) {
+    clearForm();
+    if (isEdit) {
+        modalTitle.textContent = 'Редактировать тренера';
+        submitBtn.textContent = 'Сохранить';
+    } else {
+        modalTitle.textContent = 'Добавить тренера';
+        submitBtn.textContent = 'Добавить';
+    }
+}
+
+function openModal() {
+    modal.classList.add('show');
+}
+
+function closeModal() {
+    modal.classList.remove('show');
+    resetModal(false);
+}
+
+function openCreateModal() {
+    resetModal(false);
+    openModal();
+}
+
+function openEditModal(trainer) {
+    resetModal(true);
+    fullNameInput.value = trainer.fullName;
+    experienceInput.value = trainer.experience != null ? trainer.experience : '';
+    editIdField.value = trainer.trainerId;
+    currentEditId = trainer.trainerId;
+    openModal();
 }
 
 // ---- Валидация формы перед отправкой ----
@@ -110,7 +146,7 @@ async function renderTable() {
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
-            editBtn.onclick = () => fillFormForEdit(trainer);
+            editBtn.onclick = () => openEditModal(trainer);
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '🗑️';
             deleteBtn.title = 'Удалить';
@@ -126,17 +162,6 @@ async function renderTable() {
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }
-}
-
-// ---- Заполнение формы для редактирования ----
-function fillFormForEdit(trainer) {
-    fullNameInput.value = trainer.fullName;
-    experienceInput.value = trainer.experience != null ? trainer.experience : '';
-    editIdField.value = trainer.trainerId;
-    currentEditId = trainer.trainerId;
-    formTitle.textContent = 'Редактировать тренера';
-    submitBtn.textContent = 'Сохранить';
-    cancelBtn.style.display = 'inline-block';
 }
 
 // ---- Добавление нового ----
@@ -158,7 +183,7 @@ async function createTrainer() {
             const errText = await response.text();
             throw new Error(`Ошибка ${response.status}: ${errText}`);
         }
-        clearForm();
+        closeModal();
         clearAllFilters();
         await renderTable();
         showToast('Тренер добавлен', 'success');
@@ -190,7 +215,7 @@ async function updateTrainer(id) {
             return false;
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        clearForm();
+        closeModal();
         restoreFiltersToDOM();
         await renderTable();
         showToast('Тренер обновлён', 'success');
@@ -215,7 +240,7 @@ async function deleteTrainer(id) {
         }
 
         if (id === currentEditId) {
-            clearForm();
+            closeModal();
         }
 
         restoreFiltersToDOM();
@@ -234,11 +259,6 @@ async function onSubmit() {
     } else {
         await createTrainer();
     }
-}
-
-// ---- Отмена редактирования ----
-function onCancel() {
-    clearForm();
 }
 
 // ---- Фильтры ----
@@ -299,9 +319,13 @@ experienceInput.addEventListener('keydown', function (e) {
 
 // ---- Инициализация и обработчики событий ----
 submitBtn.addEventListener('click', onSubmit);
-cancelBtn.addEventListener('click', onCancel);
+cancelBtn.addEventListener('click', closeModal);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
+addTrainerBtn.addEventListener('click', openCreateModal);
+
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
 // Загружаем данные при старте
 renderTable();

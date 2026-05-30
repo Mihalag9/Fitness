@@ -9,9 +9,14 @@ const phoneInput = document.getElementById('phone');
 const submitBtn = document.getElementById('submit-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const editIdField = document.getElementById('edit-id');
-const formTitle = document.getElementById('form-title');
 const totalSpan = document.getElementById('total-count');
 const activeAbonnementsSpan = document.getElementById('active-abonnements-count');
+const addClientBtn = document.getElementById('add-client-btn');
+
+// Модальное окно
+const modal = document.getElementById('client-modal');
+const modalClose = document.getElementById('modal-close');
+const modalTitle = document.getElementById('modal-title');
 
 // Фильтры
 const filterFullName = document.getElementById('filter-fullName');
@@ -76,9 +81,41 @@ function clearForm() {
     phoneInput.value = '';
     editIdField.value = '';
     currentEditId = null;
-    formTitle.textContent = 'Добавить клиента';
-    submitBtn.textContent = 'Добавить';
-    cancelBtn.style.display = 'none';
+}
+
+function resetModal(isEdit) {
+    clearForm();
+    if (isEdit) {
+        modalTitle.textContent = 'Редактировать клиента';
+        submitBtn.textContent = 'Сохранить';
+    } else {
+        modalTitle.textContent = 'Добавить клиента';
+        submitBtn.textContent = 'Добавить';
+    }
+}
+
+function openModal() {
+    modal.classList.add('show');
+}
+
+function closeModal() {
+    modal.classList.remove('show');
+    resetModal(false);
+}
+
+function openCreateModal() {
+    resetModal(false);
+    openModal();
+}
+
+function openEditModal(client) {
+    resetModal(true);
+    fullNameInput.value = client.fullName;
+    birthDateInput.value = client.birthDate ? client.birthDate.split('T')[0] : '';
+    phoneInput.value = client.phone || '';
+    editIdField.value = client.clientId;
+    currentEditId = client.clientId;
+    openModal();
 }
 
 function formatDate(dateString) {
@@ -185,7 +222,7 @@ async function renderTable() {
             const editBtn = document.createElement('button');
             editBtn.textContent = '✏️';
             editBtn.title = 'Редактировать';
-            editBtn.onclick = () => fillFormForEdit(client);
+            editBtn.onclick = () => openEditModal(client);
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '🗑️';
             deleteBtn.title = 'Удалить';
@@ -201,18 +238,6 @@ async function renderTable() {
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }
-}
-
-// ---- Заполнение формы для редактирования ----
-function fillFormForEdit(client) {
-    fullNameInput.value = client.fullName;
-    birthDateInput.value = client.birthDate ? client.birthDate.split('T')[0] : '';
-    phoneInput.value = client.phone || '';
-    editIdField.value = client.clientId;
-    currentEditId = client.clientId;
-    formTitle.textContent = 'Редактировать клиента';
-    submitBtn.textContent = 'Сохранить';
-    cancelBtn.style.display = 'inline-block';
 }
 
 // ---- Добавление нового ----
@@ -235,7 +260,7 @@ async function createClient() {
             const err = await response.json().catch(() => null);
             throw new Error(err?.message || `HTTP ${response.status}`);
         }
-        clearForm();
+        closeModal();
         clearAllFilters();
         await renderTable();
         showToast('Клиент добавлен', 'success');
@@ -267,7 +292,7 @@ async function updateClient(id) {
             const err = await response.json().catch(() => null);
             throw new Error(err?.message || `HTTP ${response.status}`);
         }
-        clearForm();
+        closeModal();
         restoreFiltersToDOM();
         await renderTable();
         showToast('Клиент обновлён', 'success');
@@ -293,7 +318,7 @@ async function deleteClient(id) {
 
         // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
         if (id === currentEditId) {
-            clearForm();
+            closeModal();
         }
 
         restoreFiltersToDOM();
@@ -312,11 +337,6 @@ async function onSubmit() {
     } else {
         await createClient();
     }
-}
-
-// ---- Отмена редактирования ----
-function onCancel() {
-    clearForm();
 }
 
 // ---- Фильтры ----
@@ -411,10 +431,14 @@ phoneInput.addEventListener('input', function () {
 
 // ---- Инициализация и обработчики событий ----
 submitBtn.addEventListener('click', onSubmit);
-cancelBtn.addEventListener('click', onCancel);
+cancelBtn.addEventListener('click', closeModal);
 applyFiltersBtn.addEventListener('click', onApplyFilters);
 clearFiltersBtn.addEventListener('click', onClearFilters);
 filterRangeToggle.addEventListener('change', onToggleRange);
+addClientBtn.addEventListener('click', openCreateModal);
+
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
 // Загружаем данные при старте
 renderTable();
