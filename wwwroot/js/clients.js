@@ -163,7 +163,7 @@ function validateClientForm() {
 
     // Телефон (если указан)
     if (phone && !/^\+7\d{10}$/.test(phone)) {
-        showToast('Телефон должен быть в формате +79001234501');
+        showToast('Телефон должен быть в формате +7XXXXXXXXXX');
         return false;
     }
     if (phone) {
