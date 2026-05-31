@@ -122,11 +122,11 @@ public class TrainersController : ControllerBase
 
     // POST: api/Trainers
     [HttpPost]
-    public async Task<ActionResult<Trainer>> PostTrainer(Trainer trainer)
+    public async Task<ActionResult> PostTrainer(Trainer trainer)
     {
-        var (createdTrainer, msg) = await _trainerService.CreateAsync(trainer);
-        if (createdTrainer == null) return BadRequest(new { message = msg ?? "Не удалось создать тренера" });
-        return CreatedAtAction(nameof(GetTrainer), new { trainerid = createdTrainer.TrainerId }, createdTrainer);
+        var (entity, message) = await _trainerService.CreateAsync(trainer);
+        if (entity == null) return BadRequest(new { message });
+        return Ok(new { message, entity });
     }
 
     // PUT: api/Trainers/5
@@ -134,13 +134,8 @@ public class TrainersController : ControllerBase
     public async Task<IActionResult> PutTrainer(int trainerid, Trainer trainer)
     {
         var (success, message) = await _trainerService.UpdateAsync(trainerid, trainer);
-
-        if (!success)
-        {
-            return BadRequest(new { message = message ?? "Не удалось обновить тренера" });
-        }
-
-        return NoContent();
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 
     // DELETE: api/Trainers/5
@@ -148,13 +143,8 @@ public class TrainersController : ControllerBase
     public async Task<IActionResult> DeleteTrainer(int trainerid)
     {
         var (success, message) = await _trainerService.DeleteAsync(trainerid);
-
-        if (!success)
-        {
-            return BadRequest(new { message = message ?? "Не удалось удалить тренера" });
-        }
-
-        return NoContent();
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 }
 

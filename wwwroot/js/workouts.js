@@ -308,10 +308,10 @@ async function removeGymLink(workoutId, gymId) {
         const response = await fetch(`${API_URL}/${workoutId}/gyms/${gymId}`, {
             method: 'DELETE'
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        applyGymLinkResult(result);
-        showToast('Зал отвязан от тренировки', 'success');
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+        applyGymLinkResult(data);
+        showToast(data?.message || 'Зал отвязан от тренировки', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
     }

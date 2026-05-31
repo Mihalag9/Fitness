@@ -567,10 +567,10 @@ async function saveInventoryQuantity(equipmentId, newQuantity) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ equipmentId, quantity: newQuantity })
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        applyInventoryResult(result);
-        showToast('Количество обновлено', 'success');
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+        applyInventoryResult(data);
+        showToast(data?.message || 'Количество обновлено', 'success');
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
     }
@@ -626,10 +626,10 @@ async function deleteInventoryItem(gymId, equipmentId) {
         const response = await fetch(`${API_URL}/${gymId}/inventory/${equipmentId}`, {
             method: 'DELETE'
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        applyInventoryResult(result);
-        showToast('Оборудование удалено из зала', 'success');
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+        applyInventoryResult(data);
+        showToast(data?.message || 'Оборудование удалено из зала', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
     }

@@ -48,28 +48,27 @@ namespace Fitness.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Gym>> PostGym(Gym gym)
+        public async Task<ActionResult> PostGym(Gym gym)
         {
-            var (created, error) = await _gymService.CreateAsync(gym);
-            if (error != null) return BadRequest(new { message = error });
-            return CreatedAtAction(nameof(GetGym), new { gymid = created!.GymId }, created);
+            var (entity, message) = await _gymService.CreateAsync(gym);
+            if (entity == null) return BadRequest(new { message });
+            return Ok(new { message, entity });
         }
 
         [HttpPut("{gymid}")]
         public async Task<IActionResult> PutGym(int gymid, Gym gym)
         {
-            var (success, error) = await _gymService.UpdateAsync(gymid, gym);
-            if (error != null) return BadRequest(new { message = error });
-            if (!success) return NotFound();
-            return NoContent();
+            var (success, message) = await _gymService.UpdateAsync(gymid, gym);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         [HttpDelete("{gymid}")]
         public async Task<IActionResult> DeleteGym(int gymid)
         {
             var (success, message) = await _gymService.DeleteAsync(gymid);
-            if (!success) return BadRequest(new { message = message ?? "Не удалось удалить зал" });
-            return NoContent();
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         [HttpGet("{gymid}/inventory")]

@@ -213,10 +213,6 @@ async function deleteTrainer(id) {
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         const data = await response.json().catch(() => null);
-        if (response.status === 404) {
-            showToast(data?.message || 'Тренер не найден (возможно, уже удалён)');
-            return;
-        }
         if (!response.ok) {
             throw new Error(data?.message || `HTTP ${response.status}`);
         }
@@ -227,11 +223,10 @@ async function deleteTrainer(id) {
 
         restoreFiltersToDOM();
         await loadPageData();
+        showToast(data?.message || 'Тренер удалён', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
-        return;
     }
-    showToast(data?.message || 'Тренер удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----

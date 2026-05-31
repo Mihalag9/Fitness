@@ -309,26 +309,20 @@ async function deleteClient(id) {
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         const data = await response.json().catch(() => null);
-        if (response.status === 404) {
-            showToast(data?.message || 'Клиент не найден (возможно, уже удалён)');
-            return;
-        }
         if (!response.ok) {
             throw new Error(data?.message || `HTTP ${response.status}`);
         }
 
-        // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
         if (id === currentEditId) {
             closeModal();
         }
 
         restoreFiltersToDOM();
         await renderTable();
+        showToast(data?.message || 'Клиент удалён', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
-        return;
     }
-    showToast(data?.message || 'Клиент удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----
