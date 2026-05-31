@@ -479,10 +479,10 @@ async function createWorkout() {
         if (!response.ok) {
             throw new Error(data?.message || `HTTP ${response.status}`);
         }
-        editIdField.value = data.workoutId;
+        editIdField.value = data.entity.workoutId;
         submitBtn.textContent = 'Готово';
         justCreated = true;
-        enableGymSection(data.workoutId);
+        enableGymSection(data.entity.workoutId);
         clearAllFilters();
         await renderTable();
         showToast(data?.message || 'Тренировка создана. Теперь можно связать залы.', 'success');

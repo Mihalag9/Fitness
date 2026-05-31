@@ -248,9 +248,11 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)role ?? DBNull.Value; command.Parameters.Add(p2);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result != null && result != DBNull.Value)
+                var msg = result?.ToString();
+
+                if (msg != null && !msg.Contains("добавлена") && !msg.Contains("успешно"))
                 {
-                    return new TrainerRoleResult { Success = false, Error = result.ToString() };
+                    return new TrainerRoleResult { Success = false, Error = msg };
                 }
             }
 
