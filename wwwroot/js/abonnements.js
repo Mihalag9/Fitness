@@ -471,6 +471,8 @@ function purchResetModal(isEdit) {
     purchEditPurchaseDate = null;
     purchClientInput.disabled = false;
     purchAbonnementInput.disabled = false;
+    purchDateInput.disabled = false;
+    purchStatusSelect.disabled = !isEdit;
     if (isEdit) {
         purchModalTitle.textContent = 'Редактировать продажу';
         purchSubmitBtn.textContent = 'Сохранить';
@@ -492,6 +494,9 @@ function purchOpenEditModal(purchase) {
     purchAbonnementInput.value = purchase.abonnementType;
     selectedAbonnementId = purchase.abonnementId;
     purchDateInput.value = purchase.purchaseDate;
+    if (purchase.status === 'завершен') {
+        purchDateInput.disabled = true;
+    }
     purchExpiryInput.value = purchase.expiryDate;
     purchStatusSelect.value = purchase.status;
     purchEditClientId = purchase.clientId;
