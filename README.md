@@ -69,7 +69,6 @@ if (!optionsBuilder.IsConfigured)
 ├── Models/           # EF Core модели и DbContext
 ├── Services/         # Бизнес-логика
 ├── wwwroot/          # Фронтенд (HTML, CSS, JS)
-│   └── pages/        #   Страницы CRM-системы
 ├── SQL/              # SQL-скрипты и rebuild-db.bat
 ├── Program.cs        # Точка входа
 └── appsettings.json  # Конфигурация (connection string)
