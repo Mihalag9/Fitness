@@ -665,7 +665,8 @@ function renderBookingsPagination() {
 function renderBookingsSlotsInfo() {
     if (!selectedScheduleItem) return;
     const booked = allBookings.filter(b => b.scheduleId === selectedScheduleId).length;
-    const max = selectedScheduleItem.maxParticipants || 0;
+    const isIndividual = selectedScheduleItem.workoutTypeName === 'индивидуальная';
+    const max = isIndividual ? 1 : (selectedScheduleItem.maxParticipants || 0);
     bookingsSlotsInfo.textContent = `Занято: ${booked} / ${max} мест`;
 }
 
