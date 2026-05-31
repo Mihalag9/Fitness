@@ -175,9 +175,11 @@ function openEditModal(item) {
     modalWorkoutInput.value = item.workoutName;
     selectedModalWorkoutId = item.workoutId;
     selectedModalDuration = item.durationMinutes;
+    modalWorkoutInput.disabled = true;
     modalGymInput.value = item.gymName;
     selectedModalGymId = item.gymId;
     modalTypeSelect.value = item.workoutTypeId;
+    modalTypeSelect.disabled = true;
     modalDate.value = item.workDate.split('T')[0];
     modalStartTime.value = item.startTime.substring(0, 5);
     calculateEndTime();
