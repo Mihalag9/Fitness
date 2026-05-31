@@ -1,4 +1,3 @@
-// API URL (порт уточните по своему проекту)
 const API_URL = '/api/Clients';
 
 // DOM-элементы

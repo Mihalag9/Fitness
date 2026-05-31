@@ -24,7 +24,6 @@ const clearFiltersBtn = document.getElementById('clear-filters');
 const totalSpan = document.getElementById('total-count');
 const totalEquipmentSpan = document.getElementById('total-equipment');
 
-// Inventory elements
 const inventoryCard = document.getElementById('inventory-card');
 const inventoryGymName = document.getElementById('inventory-gym-name');
 const equipmentInput = document.getElementById('equipment-input');
@@ -37,7 +36,6 @@ const inventoryLimitHint = document.getElementById('inventory-limit-hint');
 let selectedEquipmentId = null;
 let equipmentDropdownIndex = -1;
 
-// Inventory pagination
 const INVENTORY_PAGE_SIZE = 5;
 let allInventoryItems = [];
 let inventoryPage = 1;
@@ -46,7 +44,6 @@ const invPrevBtn = document.getElementById('inv-prev-btn');
 const invNextBtn = document.getElementById('inv-next-btn');
 const invPageInfo = document.getElementById('inv-page-info');
 
-// Inventory filters
 const invFilterName = document.getElementById('inv-filter-name');
 const invFilterBrand = document.getElementById('inv-filter-brand');
 const invFilterBrandDropdown = document.getElementById('inv-filter-brand-dropdown');
@@ -84,7 +81,6 @@ function clearAllFilters() {
 let allEquipment = [];
 let currentInventoryIds = new Set();
 
-// ---- Helpers ----
 function clearForm() {
     gymNameInput.value = '';
     editIdField.value = '';
@@ -162,7 +158,6 @@ function validateGymForm() {
 }
 
 
-// ---- Equipment dictionary ----
 function getFilteredEquipment(query) {
     if (!query) return [];
     const q = query.toLowerCase().trim();
@@ -331,7 +326,6 @@ function onGymBrandKeydown(e) {
     }
 }
 
-// ---- Inventory management ----
 const INVENTORY_LIMIT = 30;
 
 function updateInventoryLimitState() {
@@ -368,7 +362,6 @@ function getFilteredInventory() {
     return items;
 }
 
-// ---- Inventory brand autocomplete ----
 let invBrands = [];
 
 function refreshInvBrands() {
@@ -507,7 +500,7 @@ async function loadInventory(gymId) {
     }
 }
 
-// ---- Редактирование количества оборудования (inline) ----
+// ---- Редактирование количества оборудования ----
 function startEditInventory(item) {
     // Находим строку таблицы по equipmentId
     const rows = inventoryBody.querySelectorAll('tr');
@@ -666,7 +659,7 @@ function renderGymTable(items, statistics) {
     totalEquipmentSpan.textContent = statistics.totalEquipmentUnits;
 }
 
-// ---- Загрузка данных модала редактирования (1 запрос) ----
+// ---- Загрузка данных модала редактирования ----
 async function loadEditData(gymId) {
     try {
         const response = await fetch(`${API_URL}/${gymId}/edit-data`);
@@ -700,7 +693,6 @@ function applyInventoryResult(result) {
     renderGymTable(result.items, result.statistics);
 }
 
-// ---- Main table ----
 async function renderTable() {
     try {
         const params = new URLSearchParams();
@@ -716,7 +708,6 @@ async function renderTable() {
 
         renderGymTable(result.items, result.statistics);
 
-        // Бренды из ответа
         if (result.brands) {
             populateGymBrandFilter(result.brands);
         }
@@ -847,7 +838,7 @@ function onClearFilters() {
     renderTable();
 }
 
-// ---- Блокировка ввода первой цифры (keydown) ----
+// ---- Блокировка ввода первой цифры ----
 function preventLeadingDigit(e, input) {
     const isDigit = /^\d$/.test(e.key);
     const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'].includes(e.key);
@@ -860,7 +851,7 @@ function preventLeadingDigit(e, input) {
 
 gymNameInput.addEventListener('keydown', function (e) { preventLeadingDigit(e, this); });
 
-// ---- Автоформатирование при вводе (input) ----
+// ---- Автоформатирование при вводе ----
 gymNameInput.addEventListener('input', function () {
     let val = this.value;
     val = val.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\"\'\(\)]/g, '');

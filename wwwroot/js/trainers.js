@@ -410,7 +410,7 @@ function updateSpecLimitState() {
     specLimitHint.classList.toggle('hidden', !limitReached);
 }
 
-// ---- Загрузка всех данных для модала редактирования (1 запрос) ----
+// ---- Загрузка всех данных для модала редактирования ----
 async function loadEditData(trainerId) {
     try {
         const response = await fetch(`${API_URL}/${trainerId}/edit-data`);
@@ -826,7 +826,7 @@ function revOnSubmit() {
     else { revCreate(); }
 }
 
-// ---- Загрузка всех данных отзывов (1 запрос) ----
+// ---- Загрузка всех данных отзывов ----
 async function loadReviewsPageData() {
     try {
         const params = new URLSearchParams();

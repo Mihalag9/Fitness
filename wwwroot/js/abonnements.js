@@ -184,10 +184,6 @@ function validateForm(data) {
     return true;
 }
 
-// ---- Статистика ----
-// (Функция updateStats была удалена, так как статистика теперь приходит в общем ответе)
-
-
 // ---- Отрисовка таблицы ----
 async function renderTable() {
     try {

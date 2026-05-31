@@ -27,7 +27,6 @@ const maxParticipantsInput = document.getElementById('maxParticipants');
 const submitBtn = document.getElementById('submit-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 
-// Gym section
 const gymSectionHint = document.getElementById('gym-section-hint');
 const gymControls = document.getElementById('gym-controls');
 const gymInput = document.getElementById('gym-input');
@@ -88,7 +87,6 @@ let justCreated = false;
 let selectedGymId = null;
 let dropdownIndex = -1;
 
-// ---- Helpers ----
 function clearForm() {
     workoutNameInput.value = '';
     durationMinutesInput.value = '';
@@ -157,7 +155,6 @@ function validateWorkoutForm() {
     return true;
 }
 
-// ---- Gym links & autocomplete ----
 function findGymByName(name) {
     const trimmed = name.trim();
     return allGyms.find(g => g.gymName.toLowerCase() === trimmed.toLowerCase());
@@ -382,7 +379,7 @@ function applyGymLinkResult(result) {
     renderWorkoutTable(result.items, result.statistics);
 }
 
-// ---- Загрузка данных модала редактирования (1 запрос) ----
+// ---- Загрузка данных модала редактирования ----
 async function loadEditData(workoutId) {
     try {
         const response = await fetch(`${API_URL}/${workoutId}/edit-data`);
