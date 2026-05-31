@@ -13,9 +13,9 @@ namespace Fitness.Services
             _context = context;
         }
 
-        public async Task<SchedulePageData> GetPageDataAsync(string? trainerName, string? gymName, string? workoutName, int? workoutTypeId, DateTime? dateFrom, DateTime? dateTo)
+        public async Task<SchedulePageData> GetPageDataAsync(string? trainerName, string? gymName, string? workoutName, int? workoutTypeId, DateTime? dateFrom, DateTime? dateTo, string? clientName)
         {
-            var items = await GetAllAsync(trainerName, gymName, workoutName, workoutTypeId, dateFrom, dateTo);
+            var items = await GetAllAsync(trainerName, gymName, workoutName, workoutTypeId, dateFrom, dateTo, clientName);
             var stats = await GetStatisticsAsync();
             var trainers = await GetTrainersDictionaryAsync();
             var workouts = await GetWorkoutsDictionaryAsync();
@@ -33,7 +33,7 @@ namespace Fitness.Services
             };
         }
 
-        public async Task<IEnumerable<ScheduleView>> GetAllAsync(string? trainerName, string? gymName, string? workoutName, int? workoutTypeId, DateTime? dateFrom, DateTime? dateTo)
+        public async Task<IEnumerable<ScheduleView>> GetAllAsync(string? trainerName, string? gymName, string? workoutName, int? workoutTypeId, DateTime? dateFrom, DateTime? dateTo, string? clientName)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -41,13 +41,14 @@ namespace Fitness.Services
             var schedules = new List<ScheduleView>();
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT * FROM get_all_schedules(@p0, @p1, @p2, @p3, @p4, @p5)";
+                command.CommandText = "SELECT * FROM get_all_schedules(@p0, @p1, @p2, @p3, @p4, @p5, @p6)";
                 AddNullableParam(command, "@p0", trainerName);
                 AddNullableParam(command, "@p1", gymName);
                 AddNullableParam(command, "@p2", workoutName);
                 AddNullableIntParam(command, "@p3", workoutTypeId);
                 AddNullableDateOnlyParam(command, "@p4", dateFrom);
                 AddNullableDateOnlyParam(command, "@p5", dateTo);
+                AddNullableParam(command, "@p6", clientName);
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {

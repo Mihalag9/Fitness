@@ -54,6 +54,8 @@ const filterWorkoutDropdown = document.getElementById('filter-workout-dropdown')
 const filterTypeSelect = document.getElementById('filter-type');
 const filterDateFrom = document.getElementById('filter-dateFrom');
 const filterDateTo = document.getElementById('filter-dateTo');
+const filterClientInput = document.getElementById('filter-client');
+const filterClientDropdown = document.getElementById('filter-client-dropdown');
 const applyBtn = document.getElementById('apply-filters');
 const clearBtn = document.getElementById('clear-filters');
 
@@ -66,7 +68,8 @@ function snapshotFilters() {
         workoutName: filterWorkoutInput.value,
         workoutTypeId: filterTypeSelect.value,
         dateFrom: filterDateFrom.value,
-        dateTo: filterDateTo.value
+        dateTo: filterDateTo.value,
+        clientName: filterClientInput.value
     };
 }
 
@@ -77,6 +80,7 @@ function restoreFiltersToDOM() {
     filterTypeSelect.value = appliedFilters.workoutTypeId || '';
     filterDateFrom.value = appliedFilters.dateFrom || '';
     filterDateTo.value = appliedFilters.dateTo || '';
+    filterClientInput.value = appliedFilters.clientName || '';
 }
 
 function clearAllFilters() {
@@ -87,6 +91,7 @@ function clearAllFilters() {
     filterTypeSelect.value = '';
     filterDateFrom.value = '';
     filterDateTo.value = '';
+    filterClientInput.value = '';
 }
 
 function formatDate(d) {
@@ -258,6 +263,7 @@ async function renderPage() {
         if (appliedFilters.workoutTypeId) params.append('workoutTypeId', appliedFilters.workoutTypeId);
         if (appliedFilters.dateFrom) params.append('dateFrom', appliedFilters.dateFrom);
         if (appliedFilters.dateTo) params.append('dateTo', appliedFilters.dateTo);
+        if (appliedFilters.clientName) params.append('clientName', appliedFilters.clientName.trim());
 
         const url = params.toString() ? `${API_URL}/page-data?${params.toString()}` : `${API_URL}/page-data`;
         const response = await fetch(url);
@@ -475,7 +481,7 @@ function setupAutocomplete(input, dropdown, items, onSelect, getLabel) {
 }
 
 let modalTrainerAC, modalWorkoutAC, modalGymAC;
-let filterTrainerAC, filterGymAC, filterWorkoutAC;
+let filterTrainerAC, filterGymAC, filterWorkoutAC, filterClientAC;
 
 function initAutocompletes() {
     modalTrainerAC = setupAutocomplete(
@@ -509,6 +515,10 @@ function initAutocompletes() {
     filterWorkoutAC = setupAutocomplete(
         filterWorkoutInput, filterWorkoutDropdown, allWorkouts,
         () => {}, (item) => item.workoutName
+    );
+    filterClientAC = setupAutocomplete(
+        filterClientInput, filterClientDropdown, allClients,
+        () => {}, (item) => item.fullName
     );
 }
 

@@ -66,3 +66,70 @@ CREATE TRIGGER trg_check_no_duplicate_booking
     BEFORE INSERT ON "Booking"
     FOR EACH ROW
     EXECUTE FUNCTION trg_check_no_duplicate_booking();
+
+-- Trigger 3: Проверка абонемента клиента
+-- Проверяет наличие активного абонемента и соответствие правилам доступа
+CREATE OR REPLACE FUNCTION trg_check_client_abonnement()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_weekday_access BOOLEAN;
+    v_weekend_access BOOLEAN;
+    v_access_start TIME;
+    v_access_end TIME;
+    v_work_date DATE;
+    v_start_time TIME;
+    v_day_of_week INTEGER;
+    v_client_name VARCHAR;
+BEGIN
+    -- Получаем данные о расписании
+    SELECT s."WorkDate", s."StartTime"
+    INTO v_work_date, v_start_time
+    FROM "Schedule" s
+    WHERE s."ScheduleId" = NEW."ScheduleId";
+
+    -- Ищем активный абонемент клиента
+    SELECT a."WeekdayAccess", a."WeekendAccess", a."AccessStartTime", a."AccessEndTime"
+    INTO v_weekday_access, v_weekend_access, v_access_start, v_access_end
+    FROM "Purchase" p
+    JOIN "Abonnement" a ON p."AbonnementId" = a."AbonnementId"
+    WHERE p."ClientId" = NEW."ClientId"
+      AND p."Status" = 'активен'
+      AND p."ExpiryDate" >= CURRENT_DATE
+    LIMIT 1;
+
+    -- Если абонемент не найден
+    IF v_weekday_access IS NULL THEN
+        SELECT "FullName" INTO v_client_name FROM "Client" WHERE "ClientId" = NEW."ClientId";
+        RAISE EXCEPTION 'У клиента "%" нет активного абонемента', v_client_name;
+    END IF;
+
+    -- Определяем день недели (1=понедельник..7=воскресенье)
+    v_day_of_week := EXTRACT(ISODOW FROM v_work_date);
+
+    -- Проверка будни/выходные
+    IF v_day_of_week BETWEEN 1 AND 5 AND v_weekday_access = FALSE THEN
+        RAISE EXCEPTION 'Абонемент клиента не позволяет посещать занятия в будние дни';
+    END IF;
+
+    IF v_day_of_week BETWEEN 6 AND 7 AND v_weekend_access = FALSE THEN
+        RAISE EXCEPTION 'Абонемент клиента не позволяет посещать занятия в выходные дни';
+    END IF;
+
+    -- Проверка времени доступа
+    IF v_start_time < v_access_start THEN
+        RAISE EXCEPTION 'Время начала занятия (%) раньше времени доступа по абонементу (%)', v_start_time, v_access_start;
+    END IF;
+
+    IF v_start_time >= v_access_end THEN
+        RAISE EXCEPTION 'Время начала занятия (%) позже времени доступа по абонементу (%)', v_start_time, v_access_end;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_client_abonnement ON "Booking";
+CREATE TRIGGER trg_check_client_abonnement
+    BEFORE INSERT ON "Booking"
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_check_client_abonnement();

@@ -56,6 +56,13 @@
                 <label>Дата до</label>
                 <input type="date" id="filter-dateTo">
             </div>
+            <div class="form-group">
+                <label>Клиент</label>
+                <div class="autocomplete-wrap">
+                    <input type="text" id="filter-client" placeholder="ФИО клиента" autocomplete="off" maxlength="50">
+                    <div id="filter-client-dropdown" class="dropdown-list hidden"></div>
+                </div>
+            </div>
         </div>
         <div class="filter-actions" style="margin-top: 10px;">
             <button id="apply-filters">Применить</button>

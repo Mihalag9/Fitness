@@ -5,7 +5,8 @@ CREATE OR REPLACE FUNCTION get_all_schedules(
     p_workout_name VARCHAR DEFAULT NULL,
     p_workout_type_id INTEGER DEFAULT NULL,
     p_date_from DATE DEFAULT NULL,
-    p_date_to DATE DEFAULT NULL
+    p_date_to DATE DEFAULT NULL,
+    p_client_name VARCHAR DEFAULT NULL
 )
 RETURNS TABLE(
     "ScheduleId" INTEGER,
@@ -35,6 +36,12 @@ BEGIN
       AND (p_workout_type_id IS NULL OR v."WorkoutTypeId" = p_workout_type_id)
       AND (p_date_from IS NULL OR v."WorkDate" >= p_date_from)
       AND (p_date_to IS NULL OR v."WorkDate" <= p_date_to)
+      AND (p_client_name IS NULL OR EXISTS (
+          SELECT 1 FROM "Booking" b
+          JOIN "Client" c ON b."ClientId" = c."ClientId"
+          WHERE b."ScheduleId" = v."ScheduleId"
+            AND c."FullName" ILIKE '%' || p_client_name || '%'
+      ))
     ORDER BY v."WorkDate" ASC, v."StartTime" ASC;
 END;
 $$ LANGUAGE plpgsql;
