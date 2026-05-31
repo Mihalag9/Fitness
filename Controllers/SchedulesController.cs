@@ -15,8 +15,6 @@ public class SchedulesController : ControllerBase
         _bookingService = bookingService;
     }
 
-    // ==================== РАСПИСАНИЕ ====================
-
     // GET: api/Schedules/page-data
     [HttpGet("page-data")]
     public async Task<ActionResult> GetPageData(
@@ -88,7 +86,6 @@ public class SchedulesController : ControllerBase
         return Ok(new { message });
     }
 
-    // ==================== ЗАПИСИ НА ЗАНЯТИЯ ====================
 
     // GET: api/Schedules/5/bookings
     [HttpGet("{scheduleid}/bookings")]
