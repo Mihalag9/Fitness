@@ -25,13 +25,15 @@ public class SchedulesController : ControllerBase
         [FromQuery] string? workoutName,
         [FromQuery] int? workoutTypeId,
         [FromQuery] DateTime? dateFrom,
-        [FromQuery] DateTime? dateTo)
+        [FromQuery] DateTime? dateTo,
+        [FromQuery] string? clientName)
     {
         if (trainerName?.Length > 50) return BadRequest(new { message = "ФИО тренера не должно превышать 50 символов" });
         if (gymName?.Length > 50) return BadRequest(new { message = "Название зала не должно превышать 50 символов" });
         if (workoutName?.Length > 50) return BadRequest(new { message = "Название тренировки не должно превышать 50 символов" });
+        if (clientName?.Length > 50) return BadRequest(new { message = "Имя клиента не должно превышать 50 символов" });
 
-        var pageData = await _scheduleService.GetPageDataAsync(trainerName, gymName, workoutName, workoutTypeId, dateFrom, dateTo);
+        var pageData = await _scheduleService.GetPageDataAsync(trainerName, gymName, workoutName, workoutTypeId, dateFrom, dateTo, clientName);
         var clients = await _bookingService.GetClientsDictionaryAsync();
 
         return Ok(new
