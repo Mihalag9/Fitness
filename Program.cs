@@ -48,7 +48,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-if (app.Environment.IsDevelopment() && OperatingSystem.IsWindows())
+if (OperatingSystem.IsWindows())
 {
     var url = app.Urls.FirstOrDefault(u => u.StartsWith("http://")) ?? "http://localhost:5212";
     _ = Task.Run(async () =>
