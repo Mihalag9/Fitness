@@ -276,27 +276,10 @@ async function renderPage() {
         renderTypeOptions(allTypes, filterTypeSelect, true);
         renderTypeOptions(allTypes, modalTypeSelect, false);
 
-        allBookings = [];
-        for (const item of data.items) {
-            const resp = await fetch(`${API_URL}/${item.scheduleId}/bookings`);
-            if (resp.ok) {
-                const bData = await resp.json();
-                (bData.items || []).forEach(b => {
-                    allBookings.push({
-                        ...b,
-                        scheduleId: item.scheduleId,
-                        maxParticipants: item.maxParticipants || 0
-                    });
-                });
-            }
-        }
-
         if (selectedScheduleId) {
             if (!data.items.find(i => i.scheduleId === selectedScheduleId)) {
                 selectedScheduleId = null;
                 bookingsModal.classList.remove('show');
-            } else {
-                loadBookingsFromCache();
             }
         }
     } catch (err) {
@@ -584,7 +567,7 @@ function selectSchedule(item) {
         `${item.workoutName} | ${item.trainerName || '—'} | ${dateStr} | ${item.startTime.substring(0, 5)}–${item.endTime.substring(0, 5)}`;
 
     bookingsModal.classList.add('show');
-    loadBookingsFromCache();
+    loadBookingsForSchedule(selectedScheduleId);
 }
 
 function loadBookingsFromCache() {
@@ -675,10 +658,13 @@ async function loadBookingsForSchedule(scheduleId) {
         const response = await fetch(`${API_URL}/${scheduleId}/bookings`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        return data.items || [];
+        allBookings = allBookings.filter(b => b.scheduleId !== scheduleId);
+        (data.items || []).forEach(b => {
+            allBookings.push({ ...b, scheduleId });
+        });
+        loadBookingsFromCache();
     } catch (err) {
         showToast(`Ошибка загрузки записей: ${err.message}`);
-        return [];
     }
 }
 
@@ -697,6 +683,7 @@ async function createBooking() {
 
         closeBookingModal();
         await renderPage();
+        if (selectedScheduleId) await loadBookingsForSchedule(selectedScheduleId);
         showToast(data?.message || 'Клиент добавлен', 'success');
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -711,6 +698,7 @@ async function deleteBooking(clientId) {
         if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
 
         await renderPage();
+        if (selectedScheduleId) await loadBookingsForSchedule(selectedScheduleId);
         showToast(data?.message || 'Запись удалена', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
