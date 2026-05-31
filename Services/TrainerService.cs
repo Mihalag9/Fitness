@@ -254,12 +254,12 @@ namespace Fitness.Services
                 {
                     return new TrainerRoleResult { Success = false, Error = msg };
                 }
-            }
 
-            var roles = await GetRolesByTrainerAsync(trainerId);
-            var items = await GetAllAsync(null, null, null, null, null);
-            var stats = await GetStatisticsAsync();
-            return new TrainerRoleResult { Success = true, Roles = roles, Items = items, Statistics = stats };
+                var roles = await GetRolesByTrainerAsync(trainerId);
+                var items = await GetAllAsync(null, null, null, null, null);
+                var stats = await GetStatisticsAsync();
+                return new TrainerRoleResult { Success = true, Message = msg ?? "Специализация добавлена", Roles = roles, Items = items, Statistics = stats };
+            }
         }
 
         public async Task<TrainerRoleResult> DeleteTrainerRoleAsync(int trainerId, int workoutId)
@@ -278,12 +278,12 @@ namespace Fitness.Services
                 {
                     return new TrainerRoleResult { Success = false, Error = result.ToString() };
                 }
-            }
 
-            var roles = await GetRolesByTrainerAsync(trainerId);
-            var items = await GetAllAsync(null, null, null, null, null);
-            var stats = await GetStatisticsAsync();
-            return new TrainerRoleResult { Success = true, Roles = roles, Items = items, Statistics = stats };
+                var roles = await GetRolesByTrainerAsync(trainerId);
+                var items = await GetAllAsync(null, null, null, null, null);
+                var stats = await GetStatisticsAsync();
+                return new TrainerRoleResult { Success = true, Message = "Специализация удалена", Roles = roles, Items = items, Statistics = stats };
+            }
         }
 
         public class TrainerView
@@ -332,6 +332,7 @@ namespace Fitness.Services
         {
             public bool Success { get; set; }
             public string? Error { get; set; }
+            public string? Message { get; set; }
             public IEnumerable<TrainerRoleView> Roles { get; set; } = Enumerable.Empty<TrainerRoleView>();
             public IEnumerable<TrainerView> Items { get; set; } = Enumerable.Empty<TrainerView>();
             public TrainerStatistics Statistics { get; set; } = new();

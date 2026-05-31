@@ -516,6 +516,7 @@ async function addSpec() {
     selectedSpecWorkoutId = null;
     renderSpecLinks(result.roles);
     renderTrainerTable(result.items, result.statistics);
+    showToast(result.message || 'Специализация добавлена', 'success');
 }
 
 // ---- Удаление специализации ----
@@ -530,6 +531,7 @@ async function removeSpec(trainerId, workoutId) {
     const result = await response.json();
     renderSpecLinks(result.roles);
     renderTrainerTable(result.items, result.statistics);
+    showToast(result.message || 'Специализация удалена', 'success');
 }
 
 // ---- Обработчики специализаций ----
