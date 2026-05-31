@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Fitness.Models;
 using Fitness.Services;
 using Microsoft.EntityFrameworkCore;
@@ -46,5 +47,15 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+if (app.Environment.IsDevelopment() && OperatingSystem.IsWindows())
+{
+    var url = app.Urls.FirstOrDefault(u => u.StartsWith("http://")) ?? "http://localhost:5212";
+    _ = Task.Run(async () =>
+    {
+        await Task.Delay(2000);
+        Process.Start(new ProcessStartInfo($"{url}/clients.html") { UseShellExecute = true });
+    });
+}
 
 app.Run();
