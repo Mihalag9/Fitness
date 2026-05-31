@@ -116,6 +116,11 @@ namespace Fitness.Services
 
         public async Task<(Schedule? Entity, string? Message)> CreateAsync(ScheduleDto dto)
         {
+            if (dto.WorkoutId <= 0) return (null, "Не указана тренировка");
+            if (dto.GymId <= 0) return (null, "Не указан зал");
+            if (dto.WorkoutTypeId <= 0) return (null, "Не указан тип тренировки");
+            if (string.IsNullOrWhiteSpace(dto.StartTime)) return (null, "Не указано время начала");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
@@ -154,6 +159,11 @@ namespace Fitness.Services
 
         public async Task<(bool Success, string? Message)> UpdateAsync(int id, ScheduleDto dto)
         {
+            if (dto.WorkoutId <= 0) return (false, "Не указана тренировка");
+            if (dto.GymId <= 0) return (false, "Не указан зал");
+            if (dto.WorkoutTypeId <= 0) return (false, "Не указан тип тренировки");
+            if (string.IsNullOrWhiteSpace(dto.StartTime)) return (false, "Не указано время начала");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
