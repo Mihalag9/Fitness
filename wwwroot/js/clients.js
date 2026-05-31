@@ -127,7 +127,6 @@ function formatDate(dateString) {
 
 // Проверка даты рождения: от 1939 до 2019 включительно
 function isValidBirthDate(dateString) {
-    if (!dateString) return true;
     return dateString >= '1939-01-01' && dateString <= '2019-12-31';
 }
 
@@ -161,22 +160,28 @@ function validateClientForm() {
         return false;
     }
 
-    // Телефон (если указан)
-    if (phone && !/^\+7\d{10}$/.test(phone)) {
+    // Телефон
+    if (!phone) {
+        showToast('Телефон обязателен');
+        return false;
+    }
+    if (!/^\+7\d{10}$/.test(phone)) {
         showToast('Телефон должен быть в формате +79001234501');
         return false;
     }
-    if (phone) {
-        const duplicate = allClients.some(c =>
-            c.phone === phone && c.clientId !== currentEditId
-        );
-        if (duplicate) {
-            showToast('Клиент с таким номером телефона уже существует');
-            return false;
-        }
+    const duplicate = allClients.some(c =>
+        c.phone === phone && c.clientId !== currentEditId
+    );
+    if (duplicate) {
+        showToast('Клиент с таким номером телефона уже существует');
+        return false;
     }
 
     // Дата рождения
+    if (!birthDate) {
+        showToast('Дата рождения обязательна');
+        return false;
+    }
     if (!isValidBirthDate(birthDate)) {
         showToast('Дата рождения должна быть в диапазоне с 1939 по 2019 год');
         return false;
