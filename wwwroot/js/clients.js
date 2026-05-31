@@ -256,14 +256,14 @@ async function createClient() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newClient)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         closeModal();
         clearAllFilters();
         await renderTable();
-        showToast('Клиент добавлен', 'success');
+        showToast(data?.message || 'Клиент добавлен', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -288,14 +288,14 @@ async function updateClient(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         closeModal();
         restoreFiltersToDOM();
         await renderTable();
-        showToast('Клиент обновлён', 'success');
+        showToast(data?.message || 'Клиент обновлён', 'success');
         return true;
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
@@ -308,12 +308,13 @@ async function deleteClient(id) {
     if (!confirm('Удалить этого клиента?')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        const data = await response.json().catch(() => null);
         if (response.status === 404) {
-            showToast('Клиент не найден (возможно, уже удалён)');
+            showToast(data?.message || 'Клиент не найден (возможно, уже удалён)');
             return;
         }
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
 
         // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
@@ -327,7 +328,7 @@ async function deleteClient(id) {
         showToast(`Ошибка удаления: ${err.message}`);
         return;
     }
-    showToast('Клиент удалён', 'success');
+    showToast(data?.message || 'Клиент удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----

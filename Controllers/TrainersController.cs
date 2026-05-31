@@ -124,7 +124,8 @@ public class TrainersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Trainer>> PostTrainer(Trainer trainer)
     {
-        var createdTrainer = await _trainerService.CreateAsync(trainer);
+        var (createdTrainer, msg) = await _trainerService.CreateAsync(trainer);
+        if (createdTrainer == null) return BadRequest(new { message = msg ?? "Не удалось создать тренера" });
         return CreatedAtAction(nameof(GetTrainer), new { trainerid = createdTrainer.TrainerId }, createdTrainer);
     }
 
@@ -132,11 +133,11 @@ public class TrainersController : ControllerBase
     [HttpPut("{trainerid}")]
     public async Task<IActionResult> PutTrainer(int trainerid, Trainer trainer)
     {
-        var success = await _trainerService.UpdateAsync(trainerid, trainer);
+        var (success, message) = await _trainerService.UpdateAsync(trainerid, trainer);
 
         if (!success)
         {
-            return NotFound();
+            return BadRequest(new { message = message ?? "Не удалось обновить тренера" });
         }
 
         return NoContent();
@@ -146,11 +147,11 @@ public class TrainersController : ControllerBase
     [HttpDelete("{trainerid}")]
     public async Task<IActionResult> DeleteTrainer(int trainerid)
     {
-        var success = await _trainerService.DeleteAsync(trainerid);
+        var (success, message) = await _trainerService.DeleteAsync(trainerid);
 
         if (!success)
         {
-            return NotFound();
+            return BadRequest(new { message = message ?? "Не удалось удалить тренера" });
         }
 
         return NoContent();

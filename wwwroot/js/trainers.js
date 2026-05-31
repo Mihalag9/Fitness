@@ -155,19 +155,18 @@ async function createTrainer() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newTrainer)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Ошибка ${response.status}: ${errText}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
-        const created = await response.json();
-        editIdField.value = created.trainerId;
-        currentEditId = created.trainerId;
+        editIdField.value = data.trainerId;
+        currentEditId = data.trainerId;
         justCreated = true;
         modalTitle.textContent = 'Редактировать тренера';
         submitBtn.textContent = 'Сохранить';
-        enableSpecSection(created.trainerId);
+        enableSpecSection(data.trainerId);
         await loadPageData();
-        showToast('Тренер добавлен. Теперь можно назначить специализации.', 'success');
+        showToast(data?.message || 'Тренер добавлен. Теперь можно назначить специализации.', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -191,15 +190,16 @@ async function updateTrainer(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
+        const data = await response.json().catch(() => null);
         if (response.status === 400) {
-            showToast('Неверный запрос (несоответствие ID)');
+            showToast(data?.message || 'Неверный запрос (несоответствие ID)');
             return false;
         }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
         closeModal();
         restoreFiltersToDOM();
         await loadPageData();
-        showToast('Тренер обновлён', 'success');
+        showToast(data?.message || 'Тренер обновлён', 'success');
         return true;
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
@@ -212,12 +212,13 @@ async function deleteTrainer(id) {
     if (!confirm('Удалить этого тренера?')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        const data = await response.json().catch(() => null);
         if (response.status === 404) {
-            showToast('Тренер не найден (возможно, уже удалён)');
+            showToast(data?.message || 'Тренер не найден (возможно, уже удалён)');
             return;
         }
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
 
         if (id === currentEditId) {
@@ -230,7 +231,7 @@ async function deleteTrainer(id) {
         showToast(`Ошибка удаления: ${err.message}`);
         return;
     }
-    showToast('Тренер удалён', 'success');
+    showToast(data?.message || 'Тренер удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----

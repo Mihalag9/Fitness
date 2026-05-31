@@ -79,11 +79,11 @@ public class ClientsController : ControllerBase
     [HttpDelete("{clientid}")]
     public async Task<IActionResult> DeleteClient(int clientid)
     {
-        var success = await _clientService.DeleteAsync(clientid);
+        var (success, message) = await _clientService.DeleteAsync(clientid);
 
         if (!success)
         {
-            return NotFound();
+            return BadRequest(new { message = message ?? "Не удалось удалить клиента" });
         }
 
         return NoContent();

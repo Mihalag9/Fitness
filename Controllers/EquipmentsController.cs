@@ -71,8 +71,8 @@ namespace Fitness.Controllers
         [HttpDelete("{equipmentid}")]
         public async Task<IActionResult> DeleteEquipment(int equipmentid)
         {
-            var success = await _equipmentService.DeleteAsync(equipmentid);
-            if (!success) return NotFound();
+            var (success, message) = await _equipmentService.DeleteAsync(equipmentid);
+            if (!success) return BadRequest(new { message = message ?? "Не удалось удалить оборудование" });
             return NoContent();
         }
     }

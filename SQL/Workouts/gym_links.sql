@@ -31,12 +31,23 @@ CREATE TRIGGER trg_gym_limit
 
 -- Procedure: add_gym_allowed_workout
 CREATE OR REPLACE FUNCTION add_gym_allowed_workout(p_gymid INTEGER, p_workoutid INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM "Gym" WHERE "GymId" = p_gymid) THEN
+        RETURN 'Зал не найден';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutId" = p_workoutid) THEN
+        RETURN 'Тренировка не найдена';
+    END IF;
+
     INSERT INTO "GymAllowedWorkout" ("GymId", "WorkoutId")
     VALUES (p_gymid, p_workoutid)
     ON CONFLICT DO NOTHING;
-    RETURN TRUE;
+
+    RETURN 'Связь зала и тренировки добавлена';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -53,12 +64,14 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: remove_gym_allowed_workout
 CREATE OR REPLACE FUNCTION remove_gym_allowed_workout(p_gymid INTEGER, p_workoutid INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM "GymAllowedWorkout" WHERE "GymId" = p_gymid AND "WorkoutId" = p_workoutid) THEN
-        RETURN FALSE;
+        RETURN 'Связь не найдена';
     END IF;
     DELETE FROM "GymAllowedWorkout" WHERE "GymId" = p_gymid AND "WorkoutId" = p_workoutid;
-    RETURN TRUE;
+    RETURN 'Связь зала и тренировки удалена';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;

@@ -67,8 +67,8 @@ namespace Fitness.Controllers
         [HttpDelete("{gymid}")]
         public async Task<IActionResult> DeleteGym(int gymid)
         {
-            var success = await _gymService.DeleteAsync(gymid);
-            if (!success) return NotFound();
+            var (success, message) = await _gymService.DeleteAsync(gymid);
+            if (!success) return BadRequest(new { message = message ?? "Не удалось удалить зал" });
             return NoContent();
         }
 

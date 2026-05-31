@@ -88,11 +88,11 @@ public class WorkoutsController : ControllerBase
     [HttpDelete("{workoutid}")]
     public async Task<IActionResult> DeleteWorkout(int workoutid)
     {
-        var success = await _workoutService.DeleteAsync(workoutid);
+        var (success, message) = await _workoutService.DeleteAsync(workoutid);
 
         if (!success)
         {
-            return NotFound();
+            return BadRequest(new { message = message ?? "Не удалось удалить тренировку" });
         }
 
         return NoContent();

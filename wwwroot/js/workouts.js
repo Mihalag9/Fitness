@@ -475,18 +475,17 @@ async function createWorkout() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newWorkout)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
-        const created = await response.json();
-        editIdField.value = created.workoutId;
+        editIdField.value = data.workoutId;
         submitBtn.textContent = 'Готово';
         justCreated = true;
-        enableGymSection(created.workoutId);
+        enableGymSection(data.workoutId);
         clearAllFilters();
         await renderTable();
-        showToast('Тренировка создана. Теперь можно связать залы.', 'success');
+        showToast(data?.message || 'Тренировка создана. Теперь можно связать залы.', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -511,14 +510,14 @@ async function updateWorkout(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         closeModal();
         restoreFiltersToDOM();
         await renderTable();
-        showToast('Тренировка обновлена', 'success');
+        showToast(data?.message || 'Тренировка обновлена', 'success');
         return true;
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
@@ -531,9 +530,10 @@ async function deleteWorkout(id) {
     if (!confirm('Удалить эту тренировку?')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (response.status === 404) { showToast('Тренировка не найдена (возможно, уже удалена)'); return; }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        showToast('Тренировка удалена', 'success');
+        const data = await response.json().catch(() => null);
+        if (response.status === 404) { showToast(data?.message || 'Тренировка не найдена (возможно, уже удалена)'); return; }
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+        showToast(data?.message || 'Тренировка удалена', 'success');
         if (id === currentEditId) closeModal();
         restoreFiltersToDOM();
         await renderTable();
