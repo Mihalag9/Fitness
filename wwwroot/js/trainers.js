@@ -159,12 +159,13 @@ async function createTrainer() {
         if (!response.ok) {
             throw new Error(data?.message || `HTTP ${response.status}`);
         }
-        editIdField.value = data.trainerId;
-        currentEditId = data.trainerId;
+        var newId = data.entity.trainerId;
+        editIdField.value = newId;
+        currentEditId = newId;
         justCreated = true;
         modalTitle.textContent = 'Редактировать тренера';
         submitBtn.textContent = 'Сохранить';
-        enableSpecSection(data.trainerId);
+        enableSpecSection(newId);
         await loadPageData();
         showToast(data?.message || 'Тренер добавлен. Теперь можно назначить специализации.', 'success');
         return true;
