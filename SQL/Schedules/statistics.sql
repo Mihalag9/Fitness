@@ -1,4 +1,3 @@
--- Function: get_schedule_statistics
 CREATE OR REPLACE FUNCTION get_schedule_statistics()
 RETURNS JSON AS $$
 DECLARE

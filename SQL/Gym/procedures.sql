@@ -1,4 +1,4 @@
--- Procedure: get_all_gyms
+
 CREATE OR REPLACE FUNCTION get_all_gyms(
     p_gymname VARCHAR DEFAULT NULL,
     p_has_equipment BOOLEAN DEFAULT NULL,
@@ -34,7 +34,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_gym_by_id
+
 CREATE OR REPLACE FUNCTION get_gym_by_id(p_id INTEGER)
 RETURNS SETOF "Gym" AS $$
 BEGIN
@@ -42,7 +42,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_gym
+
 CREATE OR REPLACE FUNCTION add_gym(p_gymname VARCHAR)
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
@@ -54,7 +54,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_gym
+
 CREATE OR REPLACE FUNCTION update_gym(p_id INTEGER, p_gymname VARCHAR)
 RETURNS TEXT AS $$
 BEGIN
@@ -66,7 +66,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_gym
+
 CREATE OR REPLACE FUNCTION delete_gym(p_id INTEGER)
 RETURNS TEXT AS $$
 DECLARE v_name VARCHAR;
@@ -80,7 +80,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_inventory_by_gym
+
 CREATE OR REPLACE FUNCTION get_inventory_by_gym(p_gymid INTEGER)
 RETURNS TABLE(
     "EquipmentId" INTEGER,
@@ -98,7 +98,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: upsert_inventory
+
 CREATE OR REPLACE FUNCTION upsert_inventory(p_gymid INTEGER, p_equipmentid INTEGER, p_quantity INTEGER)
 RETURNS TEXT AS $$
 BEGIN
@@ -124,7 +124,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_inventory_item
 CREATE OR REPLACE FUNCTION delete_inventory_item(p_gymid INTEGER, p_equipmentid INTEGER)
 RETURNS TEXT AS $$
 BEGIN
@@ -138,7 +137,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_gym_statistics
 CREATE OR REPLACE FUNCTION get_gym_statistics()
 RETURNS JSON AS $$
 DECLARE result JSON;
@@ -151,7 +149,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_equipment_dictionary
 CREATE OR REPLACE FUNCTION get_equipment_dictionary()
 RETURNS TABLE(
     "EquipmentId" INTEGER,

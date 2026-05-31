@@ -1,4 +1,3 @@
--- Procedure: get_abonnement_statistics
 DROP FUNCTION IF EXISTS get_abonnement_statistics();
 CREATE OR REPLACE FUNCTION get_abonnement_statistics()
 RETURNS JSON AS $$

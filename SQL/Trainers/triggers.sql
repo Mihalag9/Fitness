@@ -1,4 +1,3 @@
--- Trigger: trg_max_specializations
 -- Ограничивает количество специализаций тренера (максимум 3)
 CREATE OR REPLACE FUNCTION trg_check_max_specializations()
 RETURNS TRIGGER AS $$

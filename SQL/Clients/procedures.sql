@@ -1,4 +1,4 @@
--- Procedure: get_all_clients
+
 CREATE OR REPLACE FUNCTION get_all_clients(
     p_fullname VARCHAR DEFAULT NULL,
     p_phone VARCHAR DEFAULT NULL,
@@ -18,7 +18,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_client_by_id
 CREATE OR REPLACE FUNCTION get_client_by_id(p_id INTEGER)
 RETURNS SETOF "Client" AS $$
 BEGIN
@@ -26,7 +25,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_client
 CREATE OR REPLACE FUNCTION add_client(p_fullname VARCHAR, p_birthdate DATE, p_phone VARCHAR)
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
@@ -38,7 +36,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_client
 CREATE OR REPLACE FUNCTION update_client(p_id INTEGER, p_fullname VARCHAR, p_birthdate DATE, p_phone VARCHAR)
 RETURNS TEXT AS $$
 BEGIN
@@ -50,7 +47,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_client
 CREATE OR REPLACE FUNCTION delete_client(p_id INTEGER)
 RETURNS TEXT AS $$
 DECLARE v_name VARCHAR;

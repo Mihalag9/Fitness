@@ -1,4 +1,4 @@
--- Procedure: get_all_workouts
+
 CREATE OR REPLACE FUNCTION get_all_workouts(
     p_workoutname VARCHAR DEFAULT NULL,
     p_duration_from INTEGER DEFAULT NULL,
@@ -23,7 +23,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_workout_by_id
 CREATE OR REPLACE FUNCTION get_workout_by_id(p_id INTEGER)
 RETURNS SETOF "Workout" AS $$
 BEGIN
@@ -31,7 +30,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_workout
 CREATE OR REPLACE FUNCTION add_workout(p_workoutname VARCHAR, p_durationminutes INTEGER, p_maxparticipants INTEGER)
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
@@ -45,7 +43,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_workout
 CREATE OR REPLACE FUNCTION update_workout(p_id INTEGER, p_workoutname VARCHAR, p_durationminutes INTEGER, p_maxparticipants INTEGER)
 RETURNS TEXT AS $$
 BEGIN
@@ -61,7 +58,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_workout
 CREATE OR REPLACE FUNCTION delete_workout(p_id INTEGER)
 RETURNS TEXT AS $$
 DECLARE v_name VARCHAR;

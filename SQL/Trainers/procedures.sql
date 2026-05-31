@@ -1,4 +1,3 @@
--- Procedure: get_all_trainers
 CREATE OR REPLACE FUNCTION get_all_trainers(
     p_fullname VARCHAR DEFAULT NULL,
     p_no_experience BOOLEAN DEFAULT FALSE,
@@ -31,7 +30,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_trainer_by_id
 CREATE OR REPLACE FUNCTION get_trainer_by_id(p_id INTEGER)
 RETURNS SETOF "Trainer" AS $$
 BEGIN
@@ -39,7 +37,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_trainer
 CREATE OR REPLACE FUNCTION add_trainer(p_fullname VARCHAR, p_experience INTEGER)
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
@@ -51,7 +48,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_trainer
 CREATE OR REPLACE FUNCTION update_trainer(p_id INTEGER, p_fullname VARCHAR, p_experience INTEGER)
 RETURNS TEXT AS $$
 BEGIN
@@ -63,7 +59,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_trainer
 CREATE OR REPLACE FUNCTION delete_trainer(p_id INTEGER)
 RETURNS TEXT AS $$
 DECLARE v_name VARCHAR;
@@ -77,7 +72,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_trainer_roles
 CREATE OR REPLACE FUNCTION get_trainer_roles()
 RETURNS TABLE("TRole" VARCHAR) AS $$
 BEGIN
@@ -88,7 +82,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_roles_by_trainer
 CREATE OR REPLACE FUNCTION get_roles_by_trainer(p_trainer_id INTEGER)
 RETURNS TABLE("WorkoutId" INTEGER, "WorkoutName" VARCHAR, "TRole" VARCHAR) AS $$
 BEGIN
@@ -101,7 +94,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_trainer_role
 CREATE OR REPLACE FUNCTION add_trainer_role(
     p_trainer_id INTEGER,
     p_workout_id INTEGER,
@@ -137,7 +129,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_trainer_role
 CREATE OR REPLACE FUNCTION delete_trainer_role(
     p_trainer_id INTEGER,
     p_workout_id INTEGER
@@ -160,7 +151,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_workouts_for_trainer_dictionary
 CREATE OR REPLACE FUNCTION get_workouts_for_trainer_dictionary()
 RETURNS TABLE("WorkoutId" INTEGER, "WorkoutName" VARCHAR) AS $$
 BEGIN

@@ -1,4 +1,4 @@
--- Procedure: get_client_statistics
+
 DROP FUNCTION IF EXISTS get_client_statistics();
 CREATE OR REPLACE FUNCTION get_client_statistics()
 RETURNS JSON AS $$

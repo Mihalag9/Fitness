@@ -1,4 +1,3 @@
--- Trigger function: trg_check_inventory_limit
 -- Ограничивает количество видов оборудования в зале до 30
 CREATE OR REPLACE FUNCTION trg_check_inventory_limit() 
 RETURNS TRIGGER AS $$

@@ -3,8 +3,6 @@
 -- ==========================================
 
 -- Trigger 1: Проверка лимита записей
--- Групповая: количество записей < MaxParticipants
--- Индивидуальная: количество записей = 0 (только 1 клиент)
 CREATE OR REPLACE FUNCTION trg_check_booking_limit()
 RETURNS TRIGGER AS $$
 DECLARE

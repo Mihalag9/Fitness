@@ -1,4 +1,3 @@
--- Procedure: get_trainer_statistics
 DROP FUNCTION IF EXISTS get_trainer_statistics();
 CREATE OR REPLACE FUNCTION get_trainer_statistics()
 RETURNS JSON AS $$

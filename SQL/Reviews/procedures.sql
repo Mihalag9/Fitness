@@ -1,4 +1,3 @@
--- Procedure: get_all_reviews
 CREATE OR REPLACE FUNCTION get_all_reviews(
     p_client_name VARCHAR DEFAULT NULL,
     p_trainer_name VARCHAR DEFAULT NULL,
@@ -31,7 +30,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_review
 CREATE OR REPLACE FUNCTION add_review(
     p_client_id INTEGER,
     p_trainer_id INTEGER,
@@ -40,12 +38,10 @@ CREATE OR REPLACE FUNCTION add_review(
 )
 RETURNS TEXT AS $$
 BEGIN
-    -- Проверка рейтинга
     IF p_rating IS NULL OR p_rating < 1 OR p_rating > 5 THEN
         RETURN 'Рейтинг должен быть от 1 до 5';
     END IF;
 
-    -- Проверка длины текста
     IF p_review_text IS NOT NULL AND length(p_review_text) > 300 THEN
         RETURN 'Текст отзыва не должен превышать 300 символов';
     END IF;
@@ -59,7 +55,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_review
 CREATE OR REPLACE FUNCTION update_review(
     p_client_id INTEGER,
     p_trainer_id INTEGER,
@@ -68,12 +63,10 @@ CREATE OR REPLACE FUNCTION update_review(
 )
 RETURNS TEXT AS $$
 BEGIN
-    -- Проверка рейтинга
     IF p_rating IS NULL OR p_rating < 1 OR p_rating > 5 THEN
         RETURN 'Рейтинг должен быть от 1 до 5';
     END IF;
 
-    -- Проверка длины текста
     IF p_review_text IS NOT NULL AND length(p_review_text) > 300 THEN
         RETURN 'Текст отзыва не должен превышать 300 символов';
     END IF;
@@ -96,7 +89,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_review
 CREATE OR REPLACE FUNCTION delete_review(
     p_client_id INTEGER,
     p_trainer_id INTEGER
@@ -119,7 +111,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_review_statistics
 CREATE OR REPLACE FUNCTION get_review_statistics()
 RETURNS JSON AS $$
 DECLARE result JSON;
@@ -150,7 +141,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_clients_for_reviews_dictionary
 CREATE OR REPLACE FUNCTION get_clients_for_reviews_dictionary()
 RETURNS TABLE("ClientId" INTEGER, "FullName" VARCHAR) AS $$
 BEGIN
@@ -161,7 +151,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_trainers_for_reviews_dictionary
 CREATE OR REPLACE FUNCTION get_trainers_for_reviews_dictionary()
 RETURNS TABLE("TrainerId" INTEGER, "FullName" VARCHAR) AS $$
 BEGIN

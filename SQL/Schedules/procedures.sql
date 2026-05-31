@@ -1,4 +1,3 @@
--- Procedure: get_all_schedules
 CREATE OR REPLACE FUNCTION get_all_schedules(
     p_trainer_name VARCHAR DEFAULT NULL,
     p_gym_name VARCHAR DEFAULT NULL,
@@ -46,7 +45,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_schedule_by_id
 CREATE OR REPLACE FUNCTION get_schedule_by_id(p_id INTEGER)
 RETURNS TABLE(
     "ScheduleId" INTEGER,
@@ -74,7 +72,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_schedule
 CREATE OR REPLACE FUNCTION add_schedule(
     p_trainer_id INTEGER,
     p_workout_id INTEGER,
@@ -102,7 +99,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_schedule
 CREATE OR REPLACE FUNCTION update_schedule(
     p_id INTEGER,
     p_trainer_id INTEGER,
@@ -140,7 +136,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_schedule
 CREATE OR REPLACE FUNCTION delete_schedule(p_id INTEGER)
 RETURNS TEXT AS $$
 BEGIN
@@ -154,7 +149,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_trainers_dictionary_for_schedule
 CREATE OR REPLACE FUNCTION get_trainers_dictionary_for_schedule()
 RETURNS TABLE("TrainerId" INTEGER, "FullName" VARCHAR) AS $$
 BEGIN
@@ -165,7 +159,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_workouts_dictionary_for_schedule
 CREATE OR REPLACE FUNCTION get_workouts_dictionary_for_schedule()
 RETURNS TABLE("WorkoutId" INTEGER, "WorkoutName" VARCHAR, "DurationMinutes" INTEGER) AS $$
 BEGIN
@@ -176,7 +169,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_gyms_dictionary_for_schedule
 CREATE OR REPLACE FUNCTION get_gyms_dictionary_for_schedule()
 RETURNS TABLE("GymId" INTEGER, "GymName" VARCHAR) AS $$
 BEGIN
@@ -187,7 +179,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_workout_types_dictionary
 CREATE OR REPLACE FUNCTION get_workout_types_dictionary()
 RETURNS TABLE("WorkoutTypeId" INTEGER, "TypeName" VARCHAR) AS $$
 BEGIN

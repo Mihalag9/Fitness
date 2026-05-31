@@ -1,4 +1,3 @@
--- Procedure: get_gyms_by_workout
 CREATE OR REPLACE FUNCTION get_gyms_by_workout(p_workoutid INTEGER)
 RETURNS TABLE("GymId" INTEGER, "GymName" VARCHAR) AS $$
 BEGIN
@@ -11,7 +10,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger function: запрещает более 5 залов на тренировку
+-- Запрещает более 5 залов на тренировку
 CREATE OR REPLACE FUNCTION trg_check_gym_limit() RETURNS TRIGGER AS $$
 DECLARE v_count INTEGER;
 BEGIN
@@ -29,7 +28,6 @@ CREATE TRIGGER trg_gym_limit
     FOR EACH ROW
     EXECUTE FUNCTION trg_check_gym_limit();
 
--- Procedure: add_gym_allowed_workout
 CREATE OR REPLACE FUNCTION add_gym_allowed_workout(p_gymid INTEGER, p_workoutid INTEGER)
 RETURNS TEXT AS $$
 BEGIN
@@ -51,7 +49,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_gyms_dictionary
 CREATE OR REPLACE FUNCTION get_gyms_dictionary()
 RETURNS TABLE("GymId" INTEGER, "GymName" VARCHAR) AS $$
 BEGIN
@@ -62,7 +59,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: remove_gym_allowed_workout
 CREATE OR REPLACE FUNCTION remove_gym_allowed_workout(p_gymid INTEGER, p_workoutid INTEGER)
 RETURNS TEXT AS $$
 BEGIN

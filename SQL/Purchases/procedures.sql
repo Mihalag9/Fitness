@@ -1,4 +1,3 @@
--- Procedure: get_all_purchases
 CREATE OR REPLACE FUNCTION get_all_purchases(
     p_client_name VARCHAR DEFAULT NULL,
     p_abonnement_type VARCHAR DEFAULT NULL,
@@ -30,7 +29,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_purchase
 CREATE OR REPLACE FUNCTION add_purchase(
     p_client_id INTEGER,
     p_abonnement_id INTEGER,
@@ -41,7 +39,6 @@ DECLARE
     v_duration INTEGER;
     v_expiry DATE;
 BEGIN
-    -- Проверка даты: от сегодня до +3 мес
     IF p_purchase_date < CURRENT_DATE THEN
         RETURN 'Дата начала не может быть раньше сегодняшнего дня';
     END IF;
@@ -49,7 +46,6 @@ BEGIN
         RETURN 'Дата начала не может быть позже 3 месяцев от сегодня';
     END IF;
 
-    -- Получаем длительность абонемента
     SELECT "DurationMonths" INTO v_duration
     FROM "Abonnement" WHERE "AbonnementId" = p_abonnement_id;
 
@@ -57,7 +53,6 @@ BEGIN
         RETURN 'Абонемент не найден';
     END IF;
 
-    -- Рассчитываем дату окончания
     v_expiry := p_purchase_date + (v_duration || ' months')::INTERVAL;
 
     INSERT INTO "Purchase" ("ClientId", "AbonnementId", "PurchaseDate", "ExpiryDate", "Status")
@@ -69,7 +64,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_purchase
 CREATE OR REPLACE FUNCTION update_purchase(
     p_client_id INTEGER,
     p_abonnement_id INTEGER,
@@ -104,7 +98,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_purchase
 CREATE OR REPLACE FUNCTION delete_purchase(
     p_client_id INTEGER,
     p_abonnement_id INTEGER,
@@ -128,7 +121,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_purchase_statistics
 CREATE OR REPLACE FUNCTION get_purchase_statistics()
 RETURNS JSON AS $$
 DECLARE result JSON;
@@ -145,7 +137,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_clients_dictionary
 CREATE OR REPLACE FUNCTION get_clients_dictionary()
 RETURNS TABLE("ClientId" INTEGER, "FullName" VARCHAR) AS $$
 BEGIN
@@ -156,7 +147,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_abonnements_dictionary
 CREATE OR REPLACE FUNCTION get_abonnements_dictionary()
 RETURNS TABLE("AbonnementId" INTEGER, "AbonnementType" VARCHAR, "DurationMonths" INTEGER, "Price" NUMERIC) AS $$
 BEGIN

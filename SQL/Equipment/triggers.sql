@@ -1,4 +1,3 @@
--- Trigger function: trg_check_equipment_unique
 -- Запрещает дублирование оборудования с одинаковым названием, брендом и моделью
 CREATE OR REPLACE FUNCTION trg_check_equipment_unique()
 RETURNS TRIGGER AS $$
@@ -16,7 +15,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Привязка триггера
 DROP TRIGGER IF EXISTS trg_equipment_unique ON "Equipment";
 CREATE TRIGGER trg_equipment_unique
     BEFORE INSERT OR UPDATE ON "Equipment"

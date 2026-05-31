@@ -1,4 +1,3 @@
--- Procedure: get_all_abonnements
 CREATE OR REPLACE FUNCTION get_all_abonnements(
     p_abonnement_type VARCHAR DEFAULT NULL,
     p_weekday_access BOOLEAN DEFAULT NULL,
@@ -32,7 +31,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_abonnement_by_id
+
 CREATE OR REPLACE FUNCTION get_abonnement_by_id(p_id INTEGER)
 RETURNS SETOF "Abonnement" AS $$
 BEGIN
@@ -40,7 +39,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_abonnement
+
 CREATE OR REPLACE FUNCTION add_abonnement(p_type VARCHAR, p_price NUMERIC, p_months INTEGER, p_weekday BOOLEAN, p_weekend BOOLEAN, p_start TIME, p_end TIME)
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
@@ -58,7 +57,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_abonnement
 CREATE OR REPLACE FUNCTION update_abonnement(p_id INTEGER, p_type VARCHAR, p_price NUMERIC, p_months INTEGER, p_weekday BOOLEAN, p_weekend BOOLEAN, p_start TIME, p_end TIME)
 RETURNS TEXT AS $$
 BEGIN
@@ -80,7 +78,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_abonnement
 CREATE OR REPLACE FUNCTION delete_abonnement(p_id INTEGER)
 RETURNS TEXT AS $$
 DECLARE v_type VARCHAR;

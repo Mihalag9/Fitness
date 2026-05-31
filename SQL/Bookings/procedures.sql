@@ -1,4 +1,4 @@
--- Procedure: get_bookings_by_schedule
+
 CREATE OR REPLACE FUNCTION get_bookings_by_schedule(
     p_schedule_id INTEGER,
     p_client_name VARCHAR DEFAULT NULL,
@@ -22,7 +22,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_booking
+
 CREATE OR REPLACE FUNCTION add_booking(
     p_client_id INTEGER,
     p_schedule_id INTEGER
@@ -40,7 +40,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_booking
+
 CREATE OR REPLACE FUNCTION delete_booking(
     p_client_id INTEGER,
     p_schedule_id INTEGER
@@ -65,7 +65,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: toggle_attended
+
 CREATE OR REPLACE FUNCTION toggle_attended(
     p_client_id INTEGER,
     p_schedule_id INTEGER
@@ -96,7 +96,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_clients_dictionary_for_booking
+
 CREATE OR REPLACE FUNCTION get_clients_dictionary_for_booking()
 RETURNS TABLE("ClientId" INTEGER, "FullName" VARCHAR) AS $$
 BEGIN
@@ -107,7 +107,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_booking_stats
+
 CREATE OR REPLACE FUNCTION get_booking_stats(p_schedule_id INTEGER)
 RETURNS JSON AS $$
 DECLARE

@@ -1,4 +1,3 @@
--- Procedure: get_workout_statistics
 DROP FUNCTION IF EXISTS get_workout_statistics();
 CREATE OR REPLACE FUNCTION get_workout_statistics()
 RETURNS JSON AS $$

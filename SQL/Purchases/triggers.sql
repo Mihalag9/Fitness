@@ -1,4 +1,3 @@
--- Trigger function: trg_check_active_subscription
 -- Запрещает добавление продажи, если у клиента уже есть активный абонемент
 CREATE OR REPLACE FUNCTION trg_check_active_subscription()
 RETURNS TRIGGER AS $$

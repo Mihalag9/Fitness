@@ -1,7 +1,3 @@
--- ==========================================
--- ТРИГГЕРЫ ДЛЯ ТАБЛИЦЫ Schedule
--- ==========================================
-
 -- Trigger 1: Проверка роли тренера для тренировки
 CREATE OR REPLACE FUNCTION trg_check_trainer_for_workout()
 RETURNS TRIGGER AS $$
@@ -71,10 +67,7 @@ CREATE TRIGGER trg_check_endtime_before_23
     FOR EACH ROW
     EXECUTE FUNCTION trg_check_endtime_before_23();
 
--- Trigger 4: Проверка занятости зала (групповая vs индивидуальная)
--- Групповая не может быть добавлена, если есть любая существующая
--- Индивидуальная не может быть добавлена, если существующая — групповая
--- Индивидуальная + индивидуальная = ОК
+-- Trigger 4: Проверка занятости зала
 CREATE OR REPLACE FUNCTION trg_check_no_gym_conflict()
 RETURNS TRIGGER AS $$
 BEGIN

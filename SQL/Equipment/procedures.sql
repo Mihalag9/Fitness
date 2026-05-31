@@ -1,4 +1,4 @@
--- Procedure: get_all_equipments
+
 CREATE OR REPLACE FUNCTION get_all_equipments(
     p_equipmentname VARCHAR DEFAULT NULL,
     p_brand VARCHAR DEFAULT NULL
@@ -14,7 +14,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_equipment_by_id
 CREATE OR REPLACE FUNCTION get_equipment_by_id(p_id INTEGER)
 RETURNS SETOF "Equipment" AS $$
 BEGIN
@@ -22,7 +21,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: add_equipment
 CREATE OR REPLACE FUNCTION add_equipment(p_equipmentname VARCHAR, p_brand VARCHAR, p_model VARCHAR)
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
@@ -36,7 +34,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: update_equipment
 CREATE OR REPLACE FUNCTION update_equipment(p_id INTEGER, p_equipmentname VARCHAR, p_brand VARCHAR, p_model VARCHAR)
 RETURNS TEXT AS $$
 BEGIN
@@ -52,7 +49,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: delete_equipment
 CREATE OR REPLACE FUNCTION delete_equipment(p_id INTEGER)
 RETURNS TEXT AS $$
 DECLARE v_name VARCHAR;
@@ -66,7 +62,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_equipment_statistics
 CREATE OR REPLACE FUNCTION get_equipment_statistics()
 RETURNS JSON AS $$
 DECLARE result JSON;
@@ -80,7 +75,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Procedure: get_equipment_brands
 CREATE OR REPLACE FUNCTION get_equipment_brands()
 RETURNS TABLE("Brand" VARCHAR) AS $$
 BEGIN

@@ -1,5 +1,4 @@
--- View: vw_trainer_display
--- Представление тренеров со специализациями
+-- Представление тренеров со специализациями (ролями)
 CREATE OR REPLACE VIEW vw_trainer_display AS
 SELECT
     t."TrainerId",

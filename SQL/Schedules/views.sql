@@ -1,4 +1,3 @@
--- View: vw_schedule_display
 -- Представление расписания с именами вместо ID
 CREATE OR REPLACE VIEW vw_schedule_display AS
 SELECT

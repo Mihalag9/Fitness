@@ -1,4 +1,3 @@
--- View: vw_review_display
 -- Представление отзывов с именами клиентов и тренеров
 CREATE OR REPLACE VIEW vw_review_display AS
 SELECT 

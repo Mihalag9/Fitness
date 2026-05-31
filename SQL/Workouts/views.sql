@@ -1,5 +1,3 @@
--- View: vw_workout_display
--- Повторяет отображение на странице тренировок (workouts.html)
 CREATE OR REPLACE VIEW vw_workout_display AS
 SELECT 
     w."WorkoutId",

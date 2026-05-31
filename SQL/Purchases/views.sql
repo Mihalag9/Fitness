@@ -1,4 +1,3 @@
--- View: vw_purchase_display
 -- Представление продаж с именами клиентов и названиями абонементов
 CREATE OR REPLACE VIEW vw_purchase_display AS
 SELECT 
