@@ -62,40 +62,29 @@ public class WorkoutsController : ControllerBase
 
     // POST: api/Workouts
     [HttpPost]
-    public async Task<ActionResult<Workout>> PostWorkout(Workout workout)
+    public async Task<ActionResult> PostWorkout(Workout workout)
     {
-        var (createdWorkout, error) = await _workoutService.CreateAsync(workout);
-        if (error != null) return BadRequest(new { message = error });
-        return CreatedAtAction(nameof(GetWorkout), new { workoutid = createdWorkout!.WorkoutId }, createdWorkout);
+        var (entity, message) = await _workoutService.CreateAsync(workout);
+        if (entity == null) return BadRequest(new { message });
+        return Ok(new { message, entity });
     }
 
     // PUT: api/Workouts/5
     [HttpPut("{workoutid}")]
     public async Task<IActionResult> PutWorkout(int workoutid, Workout workout)
     {
-        var (success, error) = await _workoutService.UpdateAsync(workoutid, workout);
-        if (error != null) return BadRequest(new { message = error });
-
-        if (!success)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
+        var (success, message) = await _workoutService.UpdateAsync(workoutid, workout);
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 
     // DELETE: api/Workouts/5
     [HttpDelete("{workoutid}")]
     public async Task<IActionResult> DeleteWorkout(int workoutid)
     {
-        var success = await _workoutService.DeleteAsync(workoutid);
-
-        if (!success)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
+        var (success, message) = await _workoutService.DeleteAsync(workoutid);
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 
     // GET: api/Workouts/5/gyms

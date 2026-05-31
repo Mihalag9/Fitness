@@ -54,11 +54,15 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: delete_equipment
 CREATE OR REPLACE FUNCTION delete_equipment(p_id INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
+DECLARE v_name VARCHAR;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Equipment" WHERE "EquipmentId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Equipment" WHERE "EquipmentId" = p_id) THEN RETURN 'Оборудование не найдено'; END IF;
+    SELECT "EquipmentName" INTO v_name FROM "Equipment" WHERE "EquipmentId" = p_id;
     DELETE FROM "Equipment" WHERE "EquipmentId" = p_id;
-    RETURN TRUE;
+    RETURN 'Оборудование "' || v_name || '" успешно удалено';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 

@@ -62,10 +62,6 @@ public class SchedulesController : ControllerBase
     public async Task<ActionResult> PostSchedule([FromBody] ScheduleDto dto)
     {
         if (dto == null) return BadRequest(new { message = "Тело запроса обязательно" });
-        if (dto.WorkoutId <= 0) return BadRequest(new { message = "Не указана тренировка" });
-        if (dto.GymId <= 0) return BadRequest(new { message = "Не указан зал" });
-        if (dto.WorkoutTypeId <= 0) return BadRequest(new { message = "Не указан тип тренировки" });
-        if (string.IsNullOrWhiteSpace(dto.StartTime)) return BadRequest(new { message = "Не указано время начала" });
 
         var (entity, message) = await _scheduleService.CreateAsync(dto);
         if (entity == null) return BadRequest(new { message });
@@ -77,10 +73,6 @@ public class SchedulesController : ControllerBase
     public async Task<IActionResult> PutSchedule(int scheduleid, [FromBody] ScheduleDto dto)
     {
         if (dto == null) return BadRequest(new { message = "Тело запроса обязательно" });
-        if (dto.WorkoutId <= 0) return BadRequest(new { message = "Не указана тренировка" });
-        if (dto.GymId <= 0) return BadRequest(new { message = "Не указан зал" });
-        if (dto.WorkoutTypeId <= 0) return BadRequest(new { message = "Не указан тип тренировки" });
-        if (string.IsNullOrWhiteSpace(dto.StartTime)) return BadRequest(new { message = "Не указано время начала" });
 
         var (success, message) = await _scheduleService.UpdateAsync(scheduleid, dto);
         if (!success) return BadRequest(new { message });
@@ -116,8 +108,7 @@ public class SchedulesController : ControllerBase
     [HttpPost("{scheduleid}/bookings")]
     public async Task<IActionResult> PostBooking(int scheduleid, [FromBody] BookingDto dto)
     {
-        if (dto == null || dto.ClientId <= 0)
-            return BadRequest(new { message = "Не указан клиент" });
+        if (dto == null) return BadRequest(new { message = "Тело запроса обязательно" });
 
         var (success, message) = await _bookingService.CreateAsync(dto.ClientId, scheduleid);
         if (!success) return BadRequest(new { message });

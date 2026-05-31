@@ -52,29 +52,27 @@ namespace Fitness.Controllers
         [HttpPost]
         public async Task<IActionResult> PostReview([FromBody] ReviewCreateDto dto)
         {
-            var (success, error) = await _reviewService.CreateAsync(dto.ClientId, dto.TrainerId, dto.ReviewText, dto.Rating);
-            if (error != null) return BadRequest(new { message = error });
-            return Ok();
+            var (success, message) = await _reviewService.CreateAsync(dto.ClientId, dto.TrainerId, dto.ReviewText, dto.Rating);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         // PUT: api/Reviews
         [HttpPut]
         public async Task<IActionResult> PutReview([FromBody] ReviewUpdateDto dto)
         {
-            var (success, error) = await _reviewService.UpdateAsync(dto.ClientId, dto.TrainerId, dto.ReviewText, dto.Rating);
-            if (error != null) return BadRequest(new { message = error });
-            if (!success) return NotFound();
-            return NoContent();
+            var (success, message) = await _reviewService.UpdateAsync(dto.ClientId, dto.TrainerId, dto.ReviewText, dto.Rating);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         // DELETE: api/Reviews
         [HttpDelete]
         public async Task<IActionResult> DeleteReview([FromBody] ReviewDeleteDto dto)
         {
-            var (success, error) = await _reviewService.DeleteAsync(dto.ClientId, dto.TrainerId);
-            if (error != null) return BadRequest(new { message = error });
-            if (!success) return NotFound();
-            return NoContent();
+            var (success, message) = await _reviewService.DeleteAsync(dto.ClientId, dto.TrainerId);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         // GET: api/Reviews/clients

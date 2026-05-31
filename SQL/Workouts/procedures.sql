@@ -33,36 +33,44 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: add_workout
 CREATE OR REPLACE FUNCTION add_workout(p_workoutname VARCHAR, p_durationminutes INTEGER, p_maxparticipants INTEGER)
-RETURNS INTEGER AS $$
+RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
     INSERT INTO "Workout" ("WorkoutName", "DurationMinutes", "MaxParticipants")
     VALUES (trim(p_workoutname), p_durationminutes, p_maxparticipants)
     RETURNING "WorkoutId" INTO new_id;
-    RETURN new_id;
+    RETURN 'Тренировка "' || trim(p_workoutname) || '" успешно добавлена (ID: ' || new_id || ')';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: update_workout
 CREATE OR REPLACE FUNCTION update_workout(p_id INTEGER, p_workoutname VARCHAR, p_durationminutes INTEGER, p_maxparticipants INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutId" = p_id) THEN RETURN 'Тренировка не найдена'; END IF;
     UPDATE "Workout"
     SET "WorkoutName" = trim(p_workoutname),
         "DurationMinutes" = p_durationminutes,
         "MaxParticipants" = p_maxparticipants
     WHERE "WorkoutId" = p_id;
-    RETURN TRUE;
+    RETURN 'Тренировка "' || trim(p_workoutname) || '" успешно обновлена';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: delete_workout
 CREATE OR REPLACE FUNCTION delete_workout(p_id INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
+DECLARE v_name VARCHAR;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutId" = p_id) THEN RETURN 'Тренировка не найдена'; END IF;
+    SELECT "WorkoutName" INTO v_name FROM "Workout" WHERE "WorkoutId" = p_id;
     DELETE FROM "Workout" WHERE "WorkoutId" = p_id;
-    RETURN TRUE;
+    RETURN 'Тренировка "' || v_name || '" успешно удалена';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;

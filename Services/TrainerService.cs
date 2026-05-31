@@ -52,7 +52,7 @@ namespace Fitness.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Trainer> CreateAsync(Trainer trainer)
+        public async Task<(Trainer? Entity, string? Message)> CreateAsync(Trainer trainer)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -64,15 +64,20 @@ namespace Fitness.Services
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)trainer.Experience ?? DBNull.Value; command.Parameters.Add(p1);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result != null && result != DBNull.Value)
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
                 {
-                    trainer.TrainerId = Convert.ToInt32(result);
+                    var idStr = msg.Split('(').Last().Replace(")", "").Replace("ID: ", "").Trim();
+                    int.TryParse(idStr, out int newId);
+                    trainer.TrainerId = newId;
+                    return (trainer, msg);
                 }
-                return trainer;
+                return (null, msg ?? "Не удалось создать тренера");
             }
         }
 
-        public async Task<bool> UpdateAsync(int id, Trainer trainer)
+        public async Task<(bool Success, string? Message)> UpdateAsync(int id, Trainer trainer)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -85,12 +90,15 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)trainer.Experience ?? DBNull.Value; command.Parameters.Add(p2);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось обновить тренера");
             }
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<(bool Success, string? Message)> DeleteAsync(int id)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -101,8 +109,11 @@ namespace Fitness.Services
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось удалить тренера");
             }
         }
 
@@ -237,16 +248,18 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)role ?? DBNull.Value; command.Parameters.Add(p2);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result != null && result != DBNull.Value)
-                {
-                    return new TrainerRoleResult { Success = false, Error = result.ToString() };
-                }
-            }
+                var msg = result?.ToString();
 
-            var roles = await GetRolesByTrainerAsync(trainerId);
-            var items = await GetAllAsync(null, null, null, null, null);
-            var stats = await GetStatisticsAsync();
-            return new TrainerRoleResult { Success = true, Roles = roles, Items = items, Statistics = stats };
+                if (msg != null && !msg.Contains("добавлена") && !msg.Contains("успешно"))
+                {
+                    return new TrainerRoleResult { Success = false, Error = msg };
+                }
+
+                var roles = await GetRolesByTrainerAsync(trainerId);
+                var items = await GetAllAsync(null, null, null, null, null);
+                var stats = await GetStatisticsAsync();
+                return new TrainerRoleResult { Success = true, Message = msg ?? "Специализация добавлена", Roles = roles, Items = items, Statistics = stats };
+            }
         }
 
         public async Task<TrainerRoleResult> DeleteTrainerRoleAsync(int trainerId, int workoutId)
@@ -265,12 +278,12 @@ namespace Fitness.Services
                 {
                     return new TrainerRoleResult { Success = false, Error = result.ToString() };
                 }
-            }
 
-            var roles = await GetRolesByTrainerAsync(trainerId);
-            var items = await GetAllAsync(null, null, null, null, null);
-            var stats = await GetStatisticsAsync();
-            return new TrainerRoleResult { Success = true, Roles = roles, Items = items, Statistics = stats };
+                var roles = await GetRolesByTrainerAsync(trainerId);
+                var items = await GetAllAsync(null, null, null, null, null);
+                var stats = await GetStatisticsAsync();
+                return new TrainerRoleResult { Success = true, Message = "Специализация удалена", Roles = roles, Items = items, Statistics = stats };
+            }
         }
 
         public class TrainerView
@@ -319,6 +332,7 @@ namespace Fitness.Services
         {
             public bool Success { get; set; }
             public string? Error { get; set; }
+            public string? Message { get; set; }
             public IEnumerable<TrainerRoleView> Roles { get; set; } = Enumerable.Empty<TrainerRoleView>();
             public IEnumerable<TrainerView> Items { get; set; } = Enumerable.Empty<TrainerView>();
             public TrainerStatistics Statistics { get; set; } = new();

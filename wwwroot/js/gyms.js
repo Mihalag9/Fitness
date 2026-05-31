@@ -567,10 +567,10 @@ async function saveInventoryQuantity(equipmentId, newQuantity) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ equipmentId, quantity: newQuantity })
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        applyInventoryResult(result);
-        showToast('Количество обновлено', 'success');
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+        applyInventoryResult(data);
+        showToast(data?.message || 'Количество обновлено', 'success');
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
     }
@@ -626,10 +626,10 @@ async function deleteInventoryItem(gymId, equipmentId) {
         const response = await fetch(`${API_URL}/${gymId}/inventory/${equipmentId}`, {
             method: 'DELETE'
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        applyInventoryResult(result);
-        showToast('Оборудование удалено из зала', 'success');
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
+        applyInventoryResult(data);
+        showToast(data?.message || 'Оборудование удалено из зала', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
     }
@@ -756,22 +756,21 @@ async function createGym() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newGym)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
-        const created = await response.json();
-        editIdField.value = created.gymId;
-        currentEditId = created.gymId;
+        editIdField.value = data.gymId;
+        currentEditId = data.gymId;
         modalTitle.textContent = 'Редактировать зал';
         submitBtn.textContent = 'Сохранить';
         inventoryCard.classList.remove('hidden');
         inventoryGymName.textContent = gymNameInput.value.trim();
         addEquipmentBtn.textContent = 'Добавить';
-        loadEditData(created.gymId);
+        loadEditData(data.gymId);
         clearAllFilters();
         await renderTable();
-        showToast('Зал добавлен. Теперь можно добавить оборудование.', 'success');
+        showToast(data?.message || 'Зал добавлен. Теперь можно добавить оборудование.', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -789,14 +788,14 @@ async function updateGym(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         closeModal();
         restoreFiltersToDOM();
         await renderTable();
-        showToast('Зал обновлён', 'success');
+        showToast(data?.message || 'Зал обновлён', 'success');
         return true;
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
@@ -808,14 +807,15 @@ async function deleteGym(id) {
     if (!confirm('Удалить этот зал? Всё оборудование будет отвязано.')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        const data = await response.json().catch(() => null);
         if (response.status === 404) {
-            showToast('Зал не найден (возможно, уже удалён)');
+            showToast(data?.message || 'Зал не найден (возможно, уже удалён)');
             return;
         }
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
-        showToast('Зал удалён', 'success');
+        showToast(data?.message || 'Зал удалён', 'success');
         if (id === currentEditId) closeModal();
         restoreFiltersToDOM();
         await renderTable();

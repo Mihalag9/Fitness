@@ -28,30 +28,38 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: add_client
 CREATE OR REPLACE FUNCTION add_client(p_fullname VARCHAR, p_birthdate DATE, p_phone VARCHAR)
-RETURNS INTEGER AS $$
+RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
     INSERT INTO "Client" ("FullName", "BirthDate", "Phone") VALUES (trim(p_fullname), p_birthdate, p_phone) RETURNING "ClientId" INTO new_id;
-    RETURN new_id;
+    RETURN 'Клиент "' || trim(p_fullname) || '" успешно добавлен (ID: ' || new_id || ')';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: update_client
 CREATE OR REPLACE FUNCTION update_client(p_id INTEGER, p_fullname VARCHAR, p_birthdate DATE, p_phone VARCHAR)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Client" WHERE "ClientId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Client" WHERE "ClientId" = p_id) THEN RETURN 'Клиент не найден'; END IF;
     UPDATE "Client" SET "FullName" = trim(p_fullname), "BirthDate" = p_birthdate, "Phone" = p_phone WHERE "ClientId" = p_id;
-    RETURN TRUE;
+    RETURN 'Клиент "' || trim(p_fullname) || '" успешно обновлён';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: delete_client
 CREATE OR REPLACE FUNCTION delete_client(p_id INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
+DECLARE v_name VARCHAR;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Client" WHERE "ClientId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Client" WHERE "ClientId" = p_id) THEN RETURN 'Клиент не найден'; END IF;
+    SELECT "FullName" INTO v_name FROM "Client" WHERE "ClientId" = p_id;
     DELETE FROM "Client" WHERE "ClientId" = p_id;
-    RETURN TRUE;
+    RETURN 'Клиент "' || v_name || '" успешно удалён';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;

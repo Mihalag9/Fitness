@@ -47,11 +47,16 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = (object)client.Phone ?? DBNull.Value; command.Parameters.Add(p2);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result != null && result != DBNull.Value)
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
                 {
-                    client.ClientId = Convert.ToInt32(result);
+                    var idStr = msg.Split('(').Last().Replace(")", "").Replace("ID: ", "").Trim();
+                    int.TryParse(idStr, out int newId);
+                    client.ClientId = newId;
+                    return (client, msg);
                 }
-                return (client, null);
+                return (null, msg ?? "Не удалось создать клиента");
             }
         }
 
@@ -72,12 +77,15 @@ namespace Fitness.Services
                 var p3 = command.CreateParameter(); p3.ParameterName = "@p3"; p3.Value = (object)client.Phone ?? DBNull.Value; command.Parameters.Add(p3);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return (false, null);
-                return ((bool)result, null);
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось обновить клиента");
             }
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<(bool Success, string? Message)> DeleteAsync(int id)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -88,8 +96,11 @@ namespace Fitness.Services
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось удалить клиента");
             }
         }
 

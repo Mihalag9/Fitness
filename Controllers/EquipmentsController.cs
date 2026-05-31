@@ -52,28 +52,27 @@ namespace Fitness.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Equipment>> PostEquipment(Equipment equipment)
+        public async Task<ActionResult> PostEquipment(Equipment equipment)
         {
-            var (created, error) = await _equipmentService.CreateAsync(equipment);
-            if (error != null) return BadRequest(new { message = error });
-            return CreatedAtAction(nameof(GetEquipment), new { equipmentid = created!.EquipmentId }, created);
+            var (entity, message) = await _equipmentService.CreateAsync(equipment);
+            if (entity == null) return BadRequest(new { message });
+            return Ok(new { message, entity });
         }
 
         [HttpPut("{equipmentid}")]
         public async Task<IActionResult> PutEquipment(int equipmentid, Equipment equipment)
         {
-            var (success, error) = await _equipmentService.UpdateAsync(equipmentid, equipment);
-            if (error != null) return BadRequest(new { message = error });
-            if (!success) return NotFound();
-            return NoContent();
+            var (success, message) = await _equipmentService.UpdateAsync(equipmentid, equipment);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         [HttpDelete("{equipmentid}")]
         public async Task<IActionResult> DeleteEquipment(int equipmentid)
         {
-            var success = await _equipmentService.DeleteAsync(equipmentid);
-            if (!success) return NotFound();
-            return NoContent();
+            var (success, message) = await _equipmentService.DeleteAsync(equipmentid);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
     }
 }

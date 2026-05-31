@@ -44,31 +44,39 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: add_gym
 CREATE OR REPLACE FUNCTION add_gym(p_gymname VARCHAR)
-RETURNS INTEGER AS $$
+RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
     INSERT INTO "Gym" ("GymName") VALUES (trim(p_gymname)) RETURNING "GymId" INTO new_id;
-    RETURN new_id;
+    RETURN 'Зал "' || trim(p_gymname) || '" успешно добавлен (ID: ' || new_id || ')';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: update_gym
 CREATE OR REPLACE FUNCTION update_gym(p_id INTEGER, p_gymname VARCHAR)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Gym" WHERE "GymId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Gym" WHERE "GymId" = p_id) THEN RETURN 'Зал не найден'; END IF;
     UPDATE "Gym" SET "GymName" = trim(p_gymname) WHERE "GymId" = p_id;
-    RETURN TRUE;
+    RETURN 'Зал "' || trim(p_gymname) || '" успешно обновлён';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: delete_gym
 CREATE OR REPLACE FUNCTION delete_gym(p_id INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
+DECLARE v_name VARCHAR;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Gym" WHERE "GymId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Gym" WHERE "GymId" = p_id) THEN RETURN 'Зал не найден'; END IF;
+    SELECT "GymName" INTO v_name FROM "Gym" WHERE "GymId" = p_id;
     DELETE FROM "Gym" WHERE "GymId" = p_id;
-    RETURN TRUE;
+    RETURN 'Зал "' || v_name || '" успешно удалён';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -118,12 +126,15 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: delete_inventory_item
 CREATE OR REPLACE FUNCTION delete_inventory_item(p_gymid INTEGER, p_equipmentid INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Inventory" WHERE "GymId" = p_gymid AND "EquipmentId" = p_equipmentid) 
-    THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Inventory" WHERE "GymId" = p_gymid AND "EquipmentId" = p_equipmentid) THEN
+        RETURN 'Запись инвентаря не найдена';
+    END IF;
     DELETE FROM "Inventory" WHERE "GymId" = p_gymid AND "EquipmentId" = p_equipmentid;
-    RETURN TRUE;
+    RETURN 'Оборудование удалено из зала';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 

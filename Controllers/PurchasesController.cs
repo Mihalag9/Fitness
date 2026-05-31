@@ -52,29 +52,27 @@ namespace Fitness.Controllers
         [HttpPost]
         public async Task<IActionResult> PostPurchase([FromBody] PurchaseCreateDto dto)
         {
-            var (success, error) = await _purchaseService.CreateAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate);
-            if (error != null) return BadRequest(new { message = error });
-            return Ok();
+            var (success, message) = await _purchaseService.CreateAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         // PUT: api/Purchases
         [HttpPut]
         public async Task<IActionResult> PutPurchase([FromBody] PurchaseUpdateDto dto)
         {
-            var (success, error) = await _purchaseService.UpdateAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate, dto.Status);
-            if (error != null) return BadRequest(new { message = error });
-            if (!success) return NotFound();
-            return NoContent();
+            var (success, message) = await _purchaseService.UpdateAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate, dto.Status);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         // DELETE: api/Purchases
         [HttpDelete]
         public async Task<IActionResult> DeletePurchase([FromBody] PurchaseDeleteDto dto)
         {
-            var (success, error) = await _purchaseService.DeleteAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate);
-            if (error != null) return BadRequest(new { message = error });
-            if (!success) return NotFound();
-            return NoContent();
+            var (success, message) = await _purchaseService.DeleteAsync(dto.ClientId, dto.AbonnementId, dto.PurchaseDate);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         // GET: api/Purchases/clients

@@ -41,31 +41,39 @@ $$ LANGUAGE plpgsql;
 
 -- Procedure: add_trainer
 CREATE OR REPLACE FUNCTION add_trainer(p_fullname VARCHAR, p_experience INTEGER)
-RETURNS INTEGER AS $$
+RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
     INSERT INTO "Trainer" ("FullName", "Experience") VALUES (trim(p_fullname), p_experience) RETURNING "TrainerId" INTO new_id;
-    RETURN new_id;
+    RETURN 'Тренер "' || trim(p_fullname) || '" успешно добавлен (ID: ' || new_id || ')';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: update_trainer
 CREATE OR REPLACE FUNCTION update_trainer(p_id INTEGER, p_fullname VARCHAR, p_experience INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Trainer" WHERE "TrainerId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Trainer" WHERE "TrainerId" = p_id) THEN RETURN 'Тренер не найден'; END IF;
     UPDATE "Trainer" SET "FullName" = trim(p_fullname), "Experience" = p_experience WHERE "TrainerId" = p_id;
-    RETURN TRUE;
+    RETURN 'Тренер "' || trim(p_fullname) || '" успешно обновлён';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Procedure: delete_trainer
 CREATE OR REPLACE FUNCTION delete_trainer(p_id INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS TEXT AS $$
+DECLARE v_name VARCHAR;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM "Trainer" WHERE "TrainerId" = p_id) THEN RETURN FALSE; END IF;
+    IF NOT EXISTS (SELECT 1 FROM "Trainer" WHERE "TrainerId" = p_id) THEN RETURN 'Тренер не найден'; END IF;
+    SELECT "FullName" INTO v_name FROM "Trainer" WHERE "TrainerId" = p_id;
     DELETE FROM "Trainer" WHERE "TrainerId" = p_id;
-    RETURN TRUE;
+    RETURN 'Тренер "' || v_name || '" успешно удалён';
+EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -101,6 +109,14 @@ CREATE OR REPLACE FUNCTION add_trainer_role(
 )
 RETURNS TEXT AS $$
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM "Trainer" WHERE "TrainerId" = p_trainer_id) THEN
+        RETURN 'Тренер не найден';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutId" = p_workout_id) THEN
+        RETURN 'Тренировка не найдена';
+    END IF;
+
     IF p_role IS NULL OR trim(p_role) = '' THEN
         RETURN 'Укажите роль';
     END IF;
@@ -115,7 +131,7 @@ BEGIN
     INSERT INTO "TrainerRole" ("TrainerId", "WorkoutId", "TRole")
     VALUES (p_trainer_id, p_workout_id, trim(p_role));
 
-    RETURN NULL;
+    RETURN 'Специализация успешно добавлена';
 EXCEPTION WHEN OTHERS THEN
     RETURN SQLERRM;
 END;

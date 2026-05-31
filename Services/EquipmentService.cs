@@ -88,7 +88,7 @@ namespace Fitness.Services
             }
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<(bool Success, string? Message)> DeleteAsync(int id)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -99,8 +99,11 @@ namespace Fitness.Services
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось удалить оборудование");
             }
         }
 

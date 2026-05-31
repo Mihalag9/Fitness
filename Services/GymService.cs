@@ -50,7 +50,7 @@ namespace Fitness.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<(Gym? Entity, string? Error)> CreateAsync(Gym gym)
+        public async Task<(Gym? Entity, string? Message)> CreateAsync(Gym gym)
         {
             if (await _context.Gyms.AnyAsync(g => g.GymName == gym.GymName))
                 return (null, "Зал с таким названием уже существует");
@@ -64,15 +64,20 @@ namespace Fitness.Services
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = (object)gym.GymName ?? DBNull.Value; command.Parameters.Add(p0);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result != null && result != DBNull.Value)
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
                 {
-                    gym.GymId = Convert.ToInt32(result);
+                    var idStr = msg.Split('(').Last().Replace(")", "").Replace("ID: ", "").Trim();
+                    int.TryParse(idStr, out int newId);
+                    gym.GymId = newId;
+                    return (gym, msg);
                 }
-                return (gym, null);
+                return (null, msg ?? "Не удалось создать зал");
             }
         }
 
-        public async Task<(bool Success, string? Error)> UpdateAsync(int id, Gym gym)
+        public async Task<(bool Success, string? Message)> UpdateAsync(int id, Gym gym)
         {
             if (await _context.Gyms.AnyAsync(g => g.GymName == gym.GymName && g.GymId != id))
                 return (false, "Зал с таким названием уже существует");
@@ -87,12 +92,15 @@ namespace Fitness.Services
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = (object)gym.GymName ?? DBNull.Value; command.Parameters.Add(p1);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return (false, null);
-                return ((bool)result, null);
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось обновить зал");
             }
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<(bool Success, string? Message)> DeleteAsync(int id)
         {
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
@@ -103,8 +111,11 @@ namespace Fitness.Services
                 var p0 = command.CreateParameter(); p0.ParameterName = "@p0"; p0.Value = id; command.Parameters.Add(p0);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value) return false;
-                return (bool)result;
+                var msg = result?.ToString();
+
+                if (msg != null && msg.Contains("успешно"))
+                    return (true, msg);
+                return (false, msg ?? "Не удалось удалить зал");
             }
         }
 
@@ -150,9 +161,11 @@ namespace Fitness.Services
                 var p2 = command.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = quantity; command.Parameters.Add(p2);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result != null && result != DBNull.Value)
+                var msg = result?.ToString();
+
+                if (msg != null && (msg.Contains("не найдена") || msg.Contains("не может") || msg.Contains("не более")))
                 {
-                    return new GymInventoryResult { Success = false, Error = result.ToString() };
+                    return new GymInventoryResult { Success = false, Error = msg };
                 }
             }
 
@@ -174,9 +187,11 @@ namespace Fitness.Services
                 var p1 = command.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = equipmentId; command.Parameters.Add(p1);
 
                 var result = await command.ExecuteScalarAsync();
-                if (result == null || result == DBNull.Value || !(bool)result)
+                var msg = result?.ToString();
+
+                if (msg == null || !msg.Contains("успешно"))
                 {
-                    return new GymInventoryResult { Success = false, Error = "Оборудование не найдено в зале" };
+                    return new GymInventoryResult { Success = false, Error = msg ?? "Оборудование не найдено в зале" };
                 }
             }
 

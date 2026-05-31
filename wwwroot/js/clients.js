@@ -127,7 +127,6 @@ function formatDate(dateString) {
 
 // Проверка даты рождения: от 1939 до 2019 включительно
 function isValidBirthDate(dateString) {
-    if (!dateString) return true;
     return dateString >= '1939-01-01' && dateString <= '2019-12-31';
 }
 
@@ -161,22 +160,28 @@ function validateClientForm() {
         return false;
     }
 
-    // Телефон (если указан)
-    if (phone && !/^\+7\d{10}$/.test(phone)) {
-        showToast('Телефон должен быть в формате +7XXXXXXXXXX');
+    // Телефон
+    if (!phone) {
+        showToast('Телефон обязателен');
         return false;
     }
-    if (phone) {
-        const duplicate = allClients.some(c =>
-            c.phone === phone && c.clientId !== currentEditId
-        );
-        if (duplicate) {
-            showToast('Клиент с таким номером телефона уже существует');
-            return false;
-        }
+    if (!/^\+7\d{10}$/.test(phone)) {
+        showToast('Телефон должен быть в формате +79001234501');
+        return false;
+    }
+    const duplicate = allClients.some(c =>
+        c.phone === phone && c.clientId !== currentEditId
+    );
+    if (duplicate) {
+        showToast('Клиент с таким номером телефона уже существует');
+        return false;
     }
 
     // Дата рождения
+    if (!birthDate) {
+        showToast('Дата рождения обязательна');
+        return false;
+    }
     if (!isValidBirthDate(birthDate)) {
         showToast('Дата рождения должна быть в диапазоне с 1939 по 2019 год');
         return false;
@@ -256,14 +261,14 @@ async function createClient() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newClient)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         closeModal();
         clearAllFilters();
         await renderTable();
-        showToast('Клиент добавлен', 'success');
+        showToast(data?.message || 'Клиент добавлен', 'success');
         return true;
     } catch (err) {
         showToast(`Не удалось добавить: ${err.message}`);
@@ -288,14 +293,14 @@ async function updateClient(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
         });
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            const err = await response.json().catch(() => null);
-            throw new Error(err?.message || `HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
         closeModal();
         restoreFiltersToDOM();
         await renderTable();
-        showToast('Клиент обновлён', 'success');
+        showToast(data?.message || 'Клиент обновлён', 'success');
         return true;
     } catch (err) {
         showToast(`Ошибка обновления: ${err.message}`);
@@ -308,26 +313,21 @@ async function deleteClient(id) {
     if (!confirm('Удалить этого клиента?')) return;
     try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (response.status === 404) {
-            showToast('Клиент не найден (возможно, уже удалён)');
-            return;
-        }
+        const data = await response.json().catch(() => null);
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(data?.message || `HTTP ${response.status}`);
         }
 
-        // ФИКС: если удалили запись, которая сейчас редактируется — сбрасываем форму
         if (id === currentEditId) {
             closeModal();
         }
 
         restoreFiltersToDOM();
         await renderTable();
+        showToast(data?.message || 'Клиент удалён', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
-        return;
     }
-    showToast('Клиент удалён', 'success');
 }
 
 // ---- Обработчик кнопки "Добавить/Сохранить" ----

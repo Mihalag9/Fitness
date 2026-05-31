@@ -45,6 +45,8 @@ namespace Fitness.Services
 
         public async Task<(bool Success, string? Message)> CreateAsync(int clientId, int scheduleId)
         {
+            if (clientId <= 0) return (false, "Не указан клиент");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 

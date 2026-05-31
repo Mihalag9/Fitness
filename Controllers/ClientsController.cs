@@ -53,39 +53,28 @@ public class ClientsController : ControllerBase
 
     // POST: api/Clients
     [HttpPost]
-    public async Task<ActionResult<Client>> PostClient(Client client)
+    public async Task<ActionResult> PostClient(Client client)
     {
-        var (createdClient, error) = await _clientService.CreateAsync(client);
-        if (error != null) return BadRequest(new { message = error });
-        return CreatedAtAction(nameof(GetClient), new { clientid = createdClient!.ClientId }, createdClient);
+        var (entity, message) = await _clientService.CreateAsync(client);
+        if (entity == null) return BadRequest(new { message });
+        return Ok(new { message, entity });
     }
 
     // PUT: api/Clients/5
     [HttpPut("{clientid}")]
     public async Task<IActionResult> PutClient(int clientid, Client client)
     {
-        var (success, error) = await _clientService.UpdateAsync(clientid, client);
-        if (error != null) return BadRequest(new { message = error });
-
-        if (!success)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
+        var (success, message) = await _clientService.UpdateAsync(clientid, client);
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 
     // DELETE: api/Clients/5
     [HttpDelete("{clientid}")]
     public async Task<IActionResult> DeleteClient(int clientid)
     {
-        var success = await _clientService.DeleteAsync(clientid);
-
-        if (!success)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
+        var (success, message) = await _clientService.DeleteAsync(clientid);
+        if (!success) return BadRequest(new { message });
+        return Ok(new { message });
     }
 }
