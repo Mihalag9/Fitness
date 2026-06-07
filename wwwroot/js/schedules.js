@@ -156,8 +156,8 @@ function resetModal() {
     currentEditId = null;
     setModalDateLimits();
     modalTrainerInput.disabled = false;
-    modalWorkoutInput.disabled = false;
-    modalGymInput.disabled = false;
+    modalWorkoutInput.disabled = true;
+    modalGymInput.disabled = true;
     modalTypeSelect.disabled = false;
     modalDate.disabled = false;
     modalStartTime.disabled = false;
@@ -182,6 +182,7 @@ function openEditModal(item) {
     selectedModalWorkoutId = item.workoutId;
     selectedModalDuration = item.durationMinutes;
     modalWorkoutInput.disabled = true;
+    modalGymInput.disabled = false;
     modalGymInput.value = item.gymName;
     selectedModalGymId = item.gymId;
     modalTypeSelect.value = item.workoutTypeId;
@@ -423,7 +424,7 @@ function setupAutocomplete(input, dropdown, items, onSelect, getLabel) {
     let dropdownIndex = -1;
 
     function getFiltered(query) {
-        if (!query) return [];
+        if (!query) return items.slice();
         const q = query.toLowerCase().trim();
         return items.filter(i => getLabel(i).toLowerCase().includes(q));
     }
@@ -451,6 +452,12 @@ function setupAutocomplete(input, dropdown, items, onSelect, getLabel) {
             dropdown.appendChild(div);
         });
     }
+
+    input.addEventListener('focus', () => {
+        const filtered = getFiltered(input.value.trim());
+        render(filtered);
+        if (filtered.length > 0) dropdown.classList.add('show');
+    });
 
     input.addEventListener('input', () => {
         dropdownIndex = -1;
@@ -546,7 +553,12 @@ function initAutocompletes() {
             if (modalWorkoutAC) modalWorkoutAC.refresh();
             if (modalGymAC) modalGymAC.refresh();
             if (item) {
+                modalWorkoutInput.disabled = false;
+                modalGymInput.disabled = true;
                 fetchWorkoutsByTrainer(item.trainerId);
+            } else {
+                modalWorkoutInput.disabled = true;
+                modalGymInput.disabled = true;
             }
         },
         (item) => item.fullName
@@ -562,7 +574,10 @@ function initAutocompletes() {
             modalGymList.length = 0;
             if (modalGymAC) modalGymAC.refresh();
             if (item) {
+                modalGymInput.disabled = false;
                 fetchGymsByWorkout(item.workoutId);
+            } else {
+                modalGymInput.disabled = true;
             }
         },
         (item) => item.workoutName
