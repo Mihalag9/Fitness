@@ -9,6 +9,8 @@ let selectedModalTrainerId = null;
 let selectedModalWorkoutId = null;
 let selectedModalGymId = null;
 let selectedModalDuration = 0;
+let modalWorkoutList = [];
+let modalGymList = [];
 
 let modalTrainerDropdownIndex = -1;
 let modalWorkoutDropdownIndex = -1;
@@ -148,6 +150,8 @@ function resetModal() {
     selectedModalWorkoutId = null;
     selectedModalGymId = null;
     selectedModalDuration = 0;
+    modalWorkoutList.length = 0;
+    modalGymList.length = 0;
     editIdField.value = '';
     currentEditId = null;
     setModalDateLimits();
@@ -185,6 +189,7 @@ function openEditModal(item) {
     modalDate.value = item.workDate.split('T')[0];
     modalStartTime.value = item.startTime.substring(0, 5);
     calculateEndTime();
+    fetchGymsByWorkout(item.workoutId);
     openModal();
 }
 
@@ -486,23 +491,84 @@ function setupAutocomplete(input, dropdown, items, onSelect, getLabel) {
 let modalTrainerAC, modalWorkoutAC, modalGymAC;
 let filterTrainerAC, filterGymAC, filterWorkoutAC, filterClientAC;
 
+async function fetchWorkoutsByTrainer(trainerId) {
+    try {
+        const response = await fetch(`/api/Trainers/${trainerId}/roles`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const roles = await response.json();
+        modalWorkoutList.length = 0;
+        roles.forEach(r => {
+            const full = allWorkouts.find(w => w.workoutId === r.workoutId);
+            modalWorkoutList.push({
+                workoutId: r.workoutId,
+                workoutName: r.workoutName,
+                durationMinutes: full ? full.durationMinutes : 0,
+                maxParticipants: full ? full.maxParticipants : 0
+            });
+        });
+        if (modalWorkoutAC) modalWorkoutAC.refresh();
+    } catch (err) {
+        showToast(`Ошибка загрузки тренировок: ${err.message}`);
+    }
+}
+
+async function fetchGymsByWorkout(workoutId) {
+    try {
+        const response = await fetch(`/api/Workouts/${workoutId}/gyms`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const gyms = await response.json();
+        modalGymList.length = 0;
+        gyms.forEach(g => {
+            modalGymList.push({
+                gymId: g.gymId,
+                gymName: g.gymName
+            });
+        });
+        if (modalGymAC) modalGymAC.refresh();
+    } catch (err) {
+        showToast(`Ошибка загрузки залов: ${err.message}`);
+    }
+}
+
 function initAutocompletes() {
     modalTrainerAC = setupAutocomplete(
         modalTrainerInput, modalTrainerDropdown, allTrainers,
-        (item) => { selectedModalTrainerId = item ? item.trainerId : null; },
+        (item) => {
+            selectedModalTrainerId = item ? item.trainerId : null;
+            selectedModalWorkoutId = null;
+            selectedModalGymId = null;
+            selectedModalDuration = 0;
+            modalWorkoutInput.value = '';
+            modalGymInput.value = '';
+            modalEndTime.value = '';
+            modalWorkoutList.length = 0;
+            modalGymList.length = 0;
+            if (modalWorkoutAC) modalWorkoutAC.refresh();
+            if (modalGymAC) modalGymAC.refresh();
+            if (item) {
+                fetchWorkoutsByTrainer(item.trainerId);
+            }
+        },
         (item) => item.fullName
     );
     modalWorkoutAC = setupAutocomplete(
-        modalWorkoutInput, modalWorkoutDropdown, allWorkouts,
+        modalWorkoutInput, modalWorkoutDropdown, modalWorkoutList,
         (item) => {
             selectedModalWorkoutId = item ? item.workoutId : null;
             selectedModalDuration = item ? item.durationMinutes : 0;
             calculateEndTime();
+            selectedModalGymId = null;
+            modalGymInput.value = '';
+            modalGymList.length = 0;
+            if (modalGymAC) modalGymAC.refresh();
+            if (item) {
+                fetchGymsByWorkout(item.workoutId);
+            }
         },
         (item) => item.workoutName
     );
     modalGymAC = setupAutocomplete(
-        modalGymInput, modalGymDropdown, allGyms,
+        modalGymInput, modalGymDropdown, modalGymList,
         (item) => { selectedModalGymId = item ? item.gymId : null; },
         (item) => item.gymName
     );
