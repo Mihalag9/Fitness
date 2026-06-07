@@ -35,8 +35,15 @@ const filterSortDirection = document.getElementById('filter-sortDirection');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
-let currentEditId = null;
+const PAGE_SIZE = 15;
+const PURCH_PAGE_SIZE = 15;
+
+let currentPage = 1;
+let purchCurrentPage = 1;
 let allItems = [];
+let allPurchItems = [];
+
+let currentEditId = null;
 
 let appliedFilters = {};
 
@@ -184,6 +191,43 @@ function validateForm(data) {
     return true;
 }
 
+// ---- Отрисовка страницы абонементов ----
+function renderAbonnementsPage() {
+    tbody.innerHTML = '';
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = allItems.slice(start, start + PAGE_SIZE);
+    pageItems.forEach(abonnement => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = abonnement.abonnementId;
+        row.insertCell(1).textContent = abonnement.abonnementType;
+        row.insertCell(2).textContent = formatCurrency(abonnement.price);
+        row.insertCell(3).textContent = abonnement.durationMonths;
+        row.insertCell(4).textContent = boolToStr(abonnement.weekdayAccess);
+        row.insertCell(5).textContent = boolToStr(abonnement.weekendAccess);
+        const timeStr = `${abonnement.accessStartTime.substring(0, 5)} - ${abonnement.accessEndTime.substring(0, 5)}`;
+        row.insertCell(6).textContent = timeStr;
+        const actionsCell = row.insertCell(7);
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать';
+        editBtn.onclick = () => openEditModal(abonnement);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => deleteAbonnement(abonnement.abonnementId);
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+}
+
+function renderAbonnementsPagination() {
+    const totalPages = Math.max(1, Math.ceil(allItems.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    document.getElementById('abonnements-page-info').textContent = `${currentPage} / ${totalPages} (${allItems.length})`;
+    document.getElementById('abonnements-prev-btn').disabled = currentPage <= 1;
+    document.getElementById('abonnements-next-btn').disabled = currentPage >= totalPages;
+}
+
 // ---- Отрисовка таблицы ----
 async function renderTable() {
     try {
@@ -204,32 +248,10 @@ async function renderTable() {
         const result = await response.json();
         allItems = result.items;
         
-        // Обновляем таблицу
-        tbody.innerHTML = '';
-        result.items.forEach(abonnement => {
-            const row = tbody.insertRow();
-            row.insertCell(0).textContent = abonnement.abonnementId;
-            row.insertCell(1).textContent = abonnement.abonnementType;
-            row.insertCell(2).textContent = formatCurrency(abonnement.price);
-            row.insertCell(3).textContent = abonnement.durationMonths;
-            row.insertCell(4).textContent = boolToStr(abonnement.weekdayAccess);
-            row.insertCell(5).textContent = boolToStr(abonnement.weekendAccess);
-            const timeStr = `${abonnement.accessStartTime.substring(0, 5)} - ${abonnement.accessEndTime.substring(0, 5)}`;
-            row.insertCell(6).textContent = timeStr;
-            const actionsCell = row.insertCell(7);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => openEditModal(abonnement);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => deleteAbonnement(abonnement.abonnementId);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
-        
-        // Обновляем статистику
+        currentPage = 1;
+        renderAbonnementsPage();
+        renderAbonnementsPagination();
+
         const data = result.statistics;
         totalSpan.textContent = data.totalAbonnements;
         minPriceSpan.textContent = data.minPrice.toLocaleString('ru-RU');
@@ -362,14 +384,25 @@ async function onSubmit() {
 // ---- Фильтры ----
 function onApplyFilters() {
     snapshotFilters();
+    currentPage = 1;
     renderTable();
 }
 
 // ---- Очистка фильтров ----
 function onClearFilters() {
     clearAllFilters();
+    currentPage = 1;
     renderTable();
 }
+
+// ---- Пагинация абонементов ----
+document.getElementById('abonnements-prev-btn').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderAbonnementsPage(); renderAbonnementsPagination(); }
+});
+document.getElementById('abonnements-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(allItems.length / PAGE_SIZE);
+    if (currentPage < totalPages) { currentPage++; renderAbonnementsPage(); renderAbonnementsPagination(); }
+});
 
 // ---- Инициализация и обработчики событий (Абонементы) ----
 submitBtn.addEventListener('click', onSubmit);
@@ -690,6 +723,40 @@ function purchOnSubmit() {
     else { purchCreate(); }
 }
 
+// ---- Отрисовка страницы продаж ----
+function renderPurchasesPage() {
+    purchTbody.innerHTML = '';
+    const start = (purchCurrentPage - 1) * PURCH_PAGE_SIZE;
+    const pageItems = allPurchItems.slice(start, start + PURCH_PAGE_SIZE);
+    pageItems.forEach(purchase => {
+        const row = purchTbody.insertRow();
+        row.insertCell(0).textContent = purchase.clientName;
+        row.insertCell(1).textContent = purchase.abonnementType;
+        row.insertCell(2).textContent = purchase.purchaseDate;
+        row.insertCell(3).textContent = purchase.expiryDate;
+        row.insertCell(4).textContent = purchase.status;
+        const actionsCell = row.insertCell(5);
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать';
+        editBtn.onclick = () => purchOpenEditModal(purchase);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => purchDelete(purchase);
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+}
+
+function renderPurchasesPagination() {
+    const totalPages = Math.max(1, Math.ceil(allPurchItems.length / PURCH_PAGE_SIZE));
+    if (purchCurrentPage > totalPages) purchCurrentPage = totalPages;
+    document.getElementById('purchases-page-info').textContent = `${purchCurrentPage} / ${totalPages} (${allPurchItems.length})`;
+    document.getElementById('purchases-prev-btn').disabled = purchCurrentPage <= 1;
+    document.getElementById('purchases-next-btn').disabled = purchCurrentPage >= totalPages;
+}
+
 // ---- Загрузка всех данных продаж (1 запрос) ----
 async function loadPurchPageData() {
     try {
@@ -709,27 +776,10 @@ async function loadPurchPageData() {
         allPurchClients = result.clients;
         allPurchAbonnements = result.abonnements;
 
-        // Отрисовка таблицы
-        purchTbody.innerHTML = '';
-        result.items.forEach(purchase => {
-            const row = purchTbody.insertRow();
-            row.insertCell(0).textContent = purchase.clientName;
-            row.insertCell(1).textContent = purchase.abonnementType;
-            row.insertCell(2).textContent = purchase.purchaseDate;
-            row.insertCell(3).textContent = purchase.expiryDate;
-            row.insertCell(4).textContent = purchase.status;
-            const actionsCell = row.insertCell(5);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => purchOpenEditModal(purchase);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => purchDelete(purchase);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
+        allPurchItems = result.items;
+        purchCurrentPage = 1;
+        renderPurchasesPage();
+        renderPurchasesPagination();
 
         // Статистика
         const stats = result.statistics;
@@ -761,11 +811,20 @@ document.querySelectorAll('.page-tab').forEach(tab => {
     });
 });
 
+// ---- Пагинация продаж ----
+document.getElementById('purchases-prev-btn').addEventListener('click', () => {
+    if (purchCurrentPage > 1) { purchCurrentPage--; renderPurchasesPage(); renderPurchasesPagination(); }
+});
+document.getElementById('purchases-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(allPurchItems.length / PURCH_PAGE_SIZE);
+    if (purchCurrentPage < totalPages) { purchCurrentPage++; renderPurchasesPage(); renderPurchasesPagination(); }
+});
+
 // ---- Инициализация продаж ----
 purchSubmitBtn.addEventListener('click', purchOnSubmit);
 purchCancelBtn.addEventListener('click', purchCloseModal);
-purchApplyFiltersBtn.addEventListener('click', () => { purchSnapshotFilters(); loadPurchPageData(); });
-purchClearFiltersBtn.addEventListener('click', () => { purchClearAllFilters(); loadPurchPageData(); });
+purchApplyFiltersBtn.addEventListener('click', () => { purchCurrentPage = 1; purchSnapshotFilters(); loadPurchPageData(); });
+purchClearFiltersBtn.addEventListener('click', () => { purchCurrentPage = 1; purchClearAllFilters(); loadPurchPageData(); });
 purchAddBtn.addEventListener('click', purchOpenCreateModal);
 purchModalClose.addEventListener('click', purchCloseModal);
 purchModal.addEventListener('click', (e) => { if (e.target === purchModal) purchCloseModal(); });

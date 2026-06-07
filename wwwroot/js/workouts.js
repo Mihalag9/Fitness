@@ -36,6 +36,8 @@ const gymLinksBody = document.getElementById('gym-links-body');
 const gymLimitHint = document.getElementById('gym-limit-hint');
 const MAX_GYMS = 5;
 
+const PAGE_SIZE = 15;
+let currentPage = 1;
 let currentEditId = null;
 let allWorkouts = [];
 
@@ -314,10 +316,12 @@ async function removeGymLink(workoutId, gymId) {
     }
 }
 
-// ---- Отрисовка таблицы тренировок (общая) ----
-function renderWorkoutTable(items, statistics) {
+// ---- Отрисовка страницы тренировок ----
+function renderWorkoutPage() {
     tbody.innerHTML = '';
-    items.forEach(workout => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = allWorkouts.slice(start, start + PAGE_SIZE);
+    pageItems.forEach(workout => {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = workout.workoutId;
         row.insertCell(1).textContent = workout.workoutName;
@@ -353,7 +357,22 @@ function renderWorkoutTable(items, statistics) {
         actionsCell.appendChild(editBtn);
         actionsCell.appendChild(deleteBtn);
     });
+}
+
+function renderWorkoutsPagination() {
+    const totalPages = Math.max(1, Math.ceil(allWorkouts.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    document.getElementById('workouts-page-info').textContent = `${currentPage} / ${totalPages} (${allWorkouts.length})`;
+    document.getElementById('workouts-prev-btn').disabled = currentPage <= 1;
+    document.getElementById('workouts-next-btn').disabled = currentPage >= totalPages;
+}
+
+// ---- Отрисовка таблицы тренировок (общая) ----
+function renderWorkoutTable(items, statistics) {
     allWorkouts = items;
+    currentPage = 1;
+    renderWorkoutPage();
+    renderWorkoutsPagination();
     totalSpan.textContent = statistics.totalWorkouts;
     avgDurationSpan.textContent = statistics.avgDuration;
     trainersCountSpan.textContent = statistics.totalTrainersAssigned;
@@ -555,11 +574,13 @@ async function onSubmit() {
 // ---- Фильтры ----
 function onApplyFilters() {
     snapshotFilters();
+    currentPage = 1;
     renderTable();
 }
 
 function onClearFilters() {
     clearAllFilters();
+    currentPage = 1;
     renderTable();
 }
 
@@ -624,6 +645,15 @@ maxParticipantsInput.addEventListener('keydown', function (e) {
     const isCtrlCmd = e.ctrlKey || e.metaKey;
     if (isCtrlCmd || isNav) return;
     if (!isDigit) e.preventDefault();
+});
+
+// ---- Пагинация ----
+document.getElementById('workouts-prev-btn').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderWorkoutPage(); renderWorkoutsPagination(); }
+});
+document.getElementById('workouts-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(allWorkouts.length / PAGE_SIZE);
+    if (currentPage < totalPages) { currentPage++; renderWorkoutPage(); renderWorkoutsPagination(); }
 });
 
 // ---- Инициализация ----

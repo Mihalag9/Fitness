@@ -27,6 +27,14 @@ const filterRole = document.getElementById('filter-role');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
+const PAGE_SIZE = 15;
+const REV_PAGE_SIZE = 15;
+
+let currentPage = 1;
+let revCurrentPage = 1;
+let allTrainerItems = [];
+let allReviewItems = [];
+
 let currentEditId = null;
 
 let appliedFilters = {};
@@ -299,20 +307,31 @@ experienceInput.addEventListener('keydown', function (e) {
     }
 });
 
+// ---- Пагинация тренеров ----
+document.getElementById('trainers-prev-btn').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderTrainerPage(); renderTrainersPagination(); }
+});
+document.getElementById('trainers-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(allTrainerItems.length / PAGE_SIZE);
+    if (currentPage < totalPages) { currentPage++; renderTrainerPage(); renderTrainersPagination(); }
+});
+
 // ---- Инициализация и обработчики событий (Тренеры) ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', closeModal);
-applyFiltersBtn.addEventListener('click', onApplyFilters);
-clearFiltersBtn.addEventListener('click', onClearFilters);
+applyFiltersBtn.addEventListener('click', () => { currentPage = 1; onApplyFilters(); });
+clearFiltersBtn.addEventListener('click', () => { currentPage = 1; onClearFilters(); });
 addTrainerBtn.addEventListener('click', openCreateModal);
 
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-// ---- Отрисовка таблицы тренеров (общая) ----
-function renderTrainerTable(items, statistics) {
+// ---- Отрисовка страницы тренеров ----
+function renderTrainerPage() {
     tbody.innerHTML = '';
-    items.forEach(trainer => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = allTrainerItems.slice(start, start + PAGE_SIZE);
+    pageItems.forEach(trainer => {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = trainer.trainerId;
         row.insertCell(1).textContent = trainer.fullName;
@@ -333,6 +352,22 @@ function renderTrainerTable(items, statistics) {
         actionsCell.appendChild(editBtn);
         actionsCell.appendChild(deleteBtn);
     });
+}
+
+function renderTrainersPagination() {
+    const totalPages = Math.max(1, Math.ceil(allTrainerItems.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    document.getElementById('trainers-page-info').textContent = `${currentPage} / ${totalPages} (${allTrainerItems.length})`;
+    document.getElementById('trainers-prev-btn').disabled = currentPage <= 1;
+    document.getElementById('trainers-next-btn').disabled = currentPage >= totalPages;
+}
+
+// ---- Отрисовка таблицы тренеров (общая) ----
+function renderTrainerTable(items, statistics) {
+    allTrainerItems = items;
+    currentPage = 1;
+    renderTrainerPage();
+    renderTrainersPagination();
     totalSpan.textContent = statistics.totalTrainers;
     expSpan.textContent = statistics.trainersWithExperience;
     noExpSpan.textContent = statistics.trainersWithoutExperience;
@@ -826,6 +861,42 @@ function revOnSubmit() {
     else { revCreate(); }
 }
 
+// ---- Отрисовка страницы отзывов ----
+function renderReviewsPage() {
+    revTbody.innerHTML = '';
+    const start = (revCurrentPage - 1) * REV_PAGE_SIZE;
+    const pageItems = allReviewItems.slice(start, start + REV_PAGE_SIZE);
+    pageItems.forEach(review => {
+        const row = revTbody.insertRow();
+        row.insertCell(0).textContent = review.clientName;
+        row.insertCell(1).textContent = review.trainerName;
+        row.insertCell(2).textContent = new Date(review.createdAt).toLocaleDateString('ru-RU');
+        const textCell = row.insertCell(3);
+        textCell.textContent = review.reviewText || '—';
+        textCell.title = review.reviewText || '';
+        row.insertCell(4).textContent = review.rating || '—';
+        const actionsCell = row.insertCell(5);
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать';
+        editBtn.onclick = () => revOpenEditModal(review);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => revDelete(review);
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+}
+
+function renderReviewsPagination() {
+    const totalPages = Math.max(1, Math.ceil(allReviewItems.length / REV_PAGE_SIZE));
+    if (revCurrentPage > totalPages) revCurrentPage = totalPages;
+    document.getElementById('reviews-page-info').textContent = `${revCurrentPage} / ${totalPages} (${allReviewItems.length})`;
+    document.getElementById('reviews-prev-btn').disabled = revCurrentPage <= 1;
+    document.getElementById('reviews-next-btn').disabled = revCurrentPage >= totalPages;
+}
+
 // ---- Загрузка всех данных отзывов ----
 async function loadReviewsPageData() {
     try {
@@ -845,29 +916,10 @@ async function loadReviewsPageData() {
         allRevClients = result.clients;
         allRevTrainers = result.trainers;
 
-        // Отрисовка таблицы
-        revTbody.innerHTML = '';
-        result.items.forEach(review => {
-            const row = revTbody.insertRow();
-            row.insertCell(0).textContent = review.clientName;
-            row.insertCell(1).textContent = review.trainerName;
-            row.insertCell(2).textContent = new Date(review.createdAt).toLocaleDateString('ru-RU');
-            const textCell = row.insertCell(3);
-            textCell.textContent = review.reviewText || '—';
-            textCell.title = review.reviewText || '';
-            row.insertCell(4).textContent = review.rating || '—';
-            const actionsCell = row.insertCell(5);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => revOpenEditModal(review);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => revDelete(review);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
+        allReviewItems = result.items;
+        revCurrentPage = 1;
+        renderReviewsPage();
+        renderReviewsPagination();
 
         // Статистика
         const stats = result.statistics;
@@ -900,11 +952,20 @@ document.querySelectorAll('.page-tab').forEach(tab => {
     });
 });
 
+// ---- Пагинация отзывов ----
+document.getElementById('reviews-prev-btn').addEventListener('click', () => {
+    if (revCurrentPage > 1) { revCurrentPage--; renderReviewsPage(); renderReviewsPagination(); }
+});
+document.getElementById('reviews-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(allReviewItems.length / REV_PAGE_SIZE);
+    if (revCurrentPage < totalPages) { revCurrentPage++; renderReviewsPage(); renderReviewsPagination(); }
+});
+
 // ---- Инициализация отзывов ----
 revSubmitBtn.addEventListener('click', revOnSubmit);
 revCancelBtn.addEventListener('click', revCloseModal);
-revApplyFiltersBtn.addEventListener('click', () => { revSnapshotFilters(); loadReviewsPageData(); });
-revClearFiltersBtn.addEventListener('click', () => { revClearAllFilters(); loadReviewsPageData(); });
+revApplyFiltersBtn.addEventListener('click', () => { revSnapshotFilters(); revCurrentPage = 1; loadReviewsPageData(); });
+revClearFiltersBtn.addEventListener('click', () => { revClearAllFilters(); revCurrentPage = 1; loadReviewsPageData(); });
 revAddBtn.addEventListener('click', revOpenCreateModal);
 revModalClose.addEventListener('click', revCloseModal);
 revModal.addEventListener('click', (e) => { if (e.target === revModal) revCloseModal(); });

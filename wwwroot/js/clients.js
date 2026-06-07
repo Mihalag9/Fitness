@@ -26,6 +26,8 @@ const filterRangeToggle = document.getElementById('filter-range-toggle');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
+const PAGE_SIZE = 15;
+let currentPage = 1;
 let currentEditId = null;
 let allClients = [];
 
@@ -69,6 +71,7 @@ function clearAllFilters() {
     document.getElementById('filter-birthDateTo-group').classList.add('hidden');
     const labelFrom = document.getElementById('filter-birthDateFrom-label');
     if (labelFrom) labelFrom.textContent = 'Дата рождения';
+    currentPage = 1;
 }
 
 const PHONE_MAX_LEN = 12; // +7 + 10 цифр
@@ -192,7 +195,42 @@ function validateClientForm() {
 // ---- Статистика ----
 // (Функция updateStats была удалена)
 
-// ---- Отрисовка таблицы ----
+// ---- Отрисовка страницы клиентов ----
+function renderClientPage() {
+    tbody.innerHTML = '';
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = allClients.slice(start, start + PAGE_SIZE);
+
+    pageItems.forEach(client => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = client.clientId;
+        row.insertCell(1).textContent = client.fullName;
+        row.insertCell(2).textContent = client.birthDate ? formatDate(client.birthDate) : '';
+        row.insertCell(3).textContent = client.phone || 'не указан';
+        const actionsCell = row.insertCell(4);
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать';
+        editBtn.onclick = () => openEditModal(client);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => deleteClient(client.clientId);
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+}
+
+// ---- Пагинация клиентов ----
+function renderClientsPagination() {
+    const totalPages = Math.max(1, Math.ceil(allClients.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    document.getElementById('clients-page-info').textContent = `${currentPage} / ${totalPages} (${allClients.length})`;
+    document.getElementById('clients-prev-btn').disabled = currentPage <= 1;
+    document.getElementById('clients-next-btn').disabled = currentPage >= totalPages;
+}
+
+// ---- Загрузка и отрисовка ----
 async function renderTable() {
     try {
         const params = new URLSearchParams();
@@ -214,28 +252,10 @@ async function renderTable() {
         const result = await response.json();
         allClients = result.items;
         
-        // Обновляем таблицу
-        tbody.innerHTML = '';
-        result.items.forEach(client => {
-            const row = tbody.insertRow();
-            row.insertCell(0).textContent = client.clientId;
-            row.insertCell(1).textContent = client.fullName;
-            row.insertCell(2).textContent = client.birthDate ? formatDate(client.birthDate) : '';
-            row.insertCell(3).textContent = client.phone || 'не указан';
-            const actionsCell = row.insertCell(4);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => openEditModal(client);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => deleteClient(client.clientId);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
-        
-        // Обновляем статистику
+        currentPage = 1;
+        renderClientPage();
+        renderClientsPagination();
+
         const data = result.statistics;
         totalSpan.textContent = data.totalClients;
         activeAbonnementsSpan.textContent = data.activeAbonnements;
@@ -428,11 +448,20 @@ phoneInput.addEventListener('input', function () {
     this.value = val;
 });
 
+// ---- Пагинация ----
+document.getElementById('clients-prev-btn').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderClientPage(); renderClientsPagination(); }
+});
+document.getElementById('clients-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(allClients.length / PAGE_SIZE);
+    if (currentPage < totalPages) { currentPage++; renderClientPage(); renderClientsPagination(); }
+});
+
 // ---- Инициализация и обработчики событий ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', closeModal);
-applyFiltersBtn.addEventListener('click', onApplyFilters);
-clearFiltersBtn.addEventListener('click', onClearFilters);
+applyFiltersBtn.addEventListener('click', () => { currentPage = 1; onApplyFilters(); });
+clearFiltersBtn.addEventListener('click', () => { currentPage = 1; onClearFilters(); });
 filterRangeToggle.addEventListener('change', onToggleRange);
 addClientBtn.addEventListener('click', openCreateModal);
 

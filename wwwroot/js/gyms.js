@@ -49,6 +49,12 @@ const invFilterBrand = document.getElementById('inv-filter-brand');
 const invFilterBrandDropdown = document.getElementById('inv-filter-brand-dropdown');
 const invFilterSort = document.getElementById('inv-filter-sort');
 
+const PAGE_SIZE = 15;
+const EQ_PAGE_SIZE = 15;
+
+let currentPage = 1;
+let eqCurrentPage = 1;
+
 let currentEditId = null;
 let allGyms = [];
 
@@ -628,10 +634,12 @@ async function deleteInventoryItem(gymId, equipmentId) {
     }
 }
 
-// ---- Отрисовка таблицы залов (общая) ----
-function renderGymTable(items, statistics) {
+// ---- Отрисовка страницы залов ----
+function renderGymPage() {
     tbody.innerHTML = '';
-    items.forEach(gym => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = allGyms.slice(start, start + PAGE_SIZE);
+    pageItems.forEach(gym => {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = gym.gymId;
         row.insertCell(1).textContent = gym.gymName;
@@ -654,7 +662,22 @@ function renderGymTable(items, statistics) {
         actionsCell.appendChild(editBtn);
         actionsCell.appendChild(deleteBtn);
     });
+}
+
+function renderGymsPagination() {
+    const totalPages = Math.max(1, Math.ceil(allGyms.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    document.getElementById('gyms-page-info').textContent = `${currentPage} / ${totalPages} (${allGyms.length})`;
+    document.getElementById('gyms-prev-btn').disabled = currentPage <= 1;
+    document.getElementById('gyms-next-btn').disabled = currentPage >= totalPages;
+}
+
+// ---- Отрисовка таблицы залов (общая) ----
+function renderGymTable(items, statistics) {
     allGyms = items;
+    currentPage = 1;
+    renderGymPage();
+    renderGymsPagination();
     totalSpan.textContent = statistics.totalGyms;
     totalEquipmentSpan.textContent = statistics.totalEquipmentUnits;
 }
@@ -830,13 +853,24 @@ function onCancel() {
 
 function onApplyFilters() {
     snapshotFilters();
+    currentPage = 1;
     renderTable();
 }
 
 function onClearFilters() {
     clearAllFilters();
+    currentPage = 1;
     renderTable();
 }
+
+// ---- Пагинация залов ----
+document.getElementById('gyms-prev-btn').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderGymPage(); renderGymsPagination(); }
+});
+document.getElementById('gyms-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(allGyms.length / PAGE_SIZE);
+    if (currentPage < totalPages) { currentPage++; renderGymPage(); renderGymsPagination(); }
+});
 
 // ---- Блокировка ввода первой цифры ----
 function preventLeadingDigit(e, input) {
@@ -1098,6 +1132,40 @@ function onEqBrandKeydown(e) {
     }
 }
 
+let allEqItems = [];
+
+function renderEqPage() {
+    eqTbody.innerHTML = '';
+    const start = (eqCurrentPage - 1) * EQ_PAGE_SIZE;
+    const pageItems = allEqItems.slice(start, start + EQ_PAGE_SIZE);
+    pageItems.forEach(item => {
+        const row = eqTbody.insertRow();
+        row.insertCell(0).textContent = item.equipmentId;
+        row.insertCell(1).textContent = item.equipmentName;
+        row.insertCell(2).textContent = item.brand;
+        row.insertCell(3).textContent = item.model || '—';
+        const actionsCell = row.insertCell(4);
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Редактировать';
+        editBtn.onclick = () => eqOpenEditModal(item);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить';
+        deleteBtn.onclick = () => eqDeleteEquipment(item.equipmentId);
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+    });
+}
+
+function renderEqPagination() {
+    const totalPages = Math.max(1, Math.ceil(allEqItems.length / EQ_PAGE_SIZE));
+    if (eqCurrentPage > totalPages) eqCurrentPage = totalPages;
+    document.getElementById('eq-page-info').textContent = `${eqCurrentPage} / ${totalPages} (${allEqItems.length})`;
+    document.getElementById('eq-prev-btn').disabled = eqCurrentPage <= 1;
+    document.getElementById('eq-next-btn').disabled = eqCurrentPage >= totalPages;
+}
+
 async function eqRenderTable() {
     try {
         const params = new URLSearchParams();
@@ -1109,31 +1177,15 @@ async function eqRenderTable() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
 
-        eqTbody.innerHTML = '';
-        result.items.forEach(item => {
-            const row = eqTbody.insertRow();
-            row.insertCell(0).textContent = item.equipmentId;
-            row.insertCell(1).textContent = item.equipmentName;
-            row.insertCell(2).textContent = item.brand;
-            row.insertCell(3).textContent = item.model || '—';
-            const actionsCell = row.insertCell(4);
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.title = 'Редактировать';
-            editBtn.onclick = () => eqOpenEditModal(item);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.title = 'Удалить';
-            deleteBtn.onclick = () => eqDeleteEquipment(item.equipmentId);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        });
+        allEqItems = result.items;
+        eqCurrentPage = 1;
+        renderEqPage();
+        renderEqPagination();
 
         const data = result.statistics;
         eqTotalSpan.textContent = data.totalEquipment;
         eqModelSpan.textContent = data.withModel;
 
-        // Бренды из ответа
         if (result.brands) {
             populateEquipmentBrandFilter(result.brands);
         }
@@ -1204,9 +1256,6 @@ async function eqOnSubmit() {
     else { await eqCreateEquipment(); }
 }
 
-function eqOnApplyFilters() { eqSnapshotFilters(); eqRenderTable(); }
-function eqOnClearFilters() { eqClearAllFilters(); eqRenderTable(); }
-
 function eqPreventLeadingDigit(e, input) {
     const isDigit = /^\d$/.test(e.key);
     const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'].includes(e.key);
@@ -1237,6 +1286,18 @@ function eqAutoFormatModel(input) {
     val = val.replace(/\s{2,}/g, ' ');
     input.value = val;
 }
+
+// ---- Пагинация оборудования ----
+document.getElementById('eq-prev-btn').addEventListener('click', () => {
+    if (eqCurrentPage > 1) { eqCurrentPage--; renderEqPage(); renderEqPagination(); }
+});
+document.getElementById('eq-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(allEqItems.length / EQ_PAGE_SIZE);
+    if (eqCurrentPage < totalPages) { eqCurrentPage++; renderEqPage(); renderEqPagination(); }
+});
+
+function eqOnApplyFilters() { eqCurrentPage = 1; eqSnapshotFilters(); eqRenderTable(); }
+function eqOnClearFilters() { eqCurrentPage = 1; eqClearAllFilters(); eqRenderTable(); }
 
 // ---- Инициализация: Оборудование ----
 eqSubmitBtn.addEventListener('click', eqOnSubmit);

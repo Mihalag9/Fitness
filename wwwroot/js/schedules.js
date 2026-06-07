@@ -18,6 +18,8 @@ let filterTrainerDropdownIndex = -1;
 let filterGymDropdownIndex = -1;
 let filterWorkoutDropdownIndex = -1;
 
+const PAGE_SIZE = 15;
+let currentPage = 1;
 let currentEditId = null;
 
 const tbody = document.getElementById('schedules-body');
@@ -186,10 +188,11 @@ function openEditModal(item) {
     openModal();
 }
 
-function renderTable(items) {
+function renderSchedulesPage() {
     tbody.innerHTML = '';
-    currentScheduleItems = items;
-    items.forEach(item => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = currentScheduleItems.slice(start, start + PAGE_SIZE);
+    pageItems.forEach(item => {
         const row = tbody.insertRow();
         row.style.cursor = 'pointer';
         row.onclick = (e) => {
@@ -223,6 +226,21 @@ function renderTable(items) {
         actionsCell.appendChild(editBtn);
         actionsCell.appendChild(deleteBtn);
     });
+}
+
+function renderSchedulesPagination() {
+    const totalPages = Math.max(1, Math.ceil(currentScheduleItems.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    document.getElementById('schedules-page-info').textContent = `${currentPage} / ${totalPages} (${currentScheduleItems.length})`;
+    document.getElementById('schedules-prev-btn').disabled = currentPage <= 1;
+    document.getElementById('schedules-next-btn').disabled = currentPage >= totalPages;
+}
+
+function renderTable(items) {
+    currentScheduleItems = items;
+    currentPage = 1;
+    renderSchedulesPage();
+    renderSchedulesPagination();
 }
 
 function renderStats(stats) {
@@ -509,14 +527,23 @@ function initAutocompletes() {
 
 modalStartTime.addEventListener('change', calculateEndTime);
 
+// ---- Пагинация расписания ----
+document.getElementById('schedules-prev-btn').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderSchedulesPage(); renderSchedulesPagination(); }
+});
+document.getElementById('schedules-next-btn').addEventListener('click', () => {
+    const totalPages = Math.ceil(currentScheduleItems.length / PAGE_SIZE);
+    if (currentPage < totalPages) { currentPage++; renderSchedulesPage(); renderSchedulesPagination(); }
+});
+
 submitBtn.addEventListener('click', onFormSubmit);
 cancelBtn.addEventListener('click', closeModal);
 addBtn.addEventListener('click', openCreateModal);
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-applyBtn.addEventListener('click', () => { snapshotFilters(); renderPage(); });
-clearBtn.addEventListener('click', () => { clearAllFilters(); renderPage(); });
+applyBtn.addEventListener('click', () => { snapshotFilters(); currentPage = 1; renderPage(); });
+clearBtn.addEventListener('click', () => { clearAllFilters(); currentPage = 1; renderPage(); });
 
 // ==========================================
 // ЗАПИСИ НА ЗАНЯТИЯ (BOOKINGS)
