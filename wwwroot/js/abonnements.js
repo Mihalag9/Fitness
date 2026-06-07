@@ -35,8 +35,8 @@ const filterSortDirection = document.getElementById('filter-sortDirection');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
-const PAGE_SIZE = 15;
-const PURCH_PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
+const PURCH_PAGE_SIZE = 10;
 
 let currentPage = 1;
 let purchCurrentPage = 1;

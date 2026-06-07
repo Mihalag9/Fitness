@@ -18,7 +18,7 @@ let filterTrainerDropdownIndex = -1;
 let filterGymDropdownIndex = -1;
 let filterWorkoutDropdownIndex = -1;
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 let currentPage = 1;
 let currentEditId = null;
 

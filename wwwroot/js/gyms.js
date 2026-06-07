@@ -49,8 +49,8 @@ const invFilterBrand = document.getElementById('inv-filter-brand');
 const invFilterBrandDropdown = document.getElementById('inv-filter-brand-dropdown');
 const invFilterSort = document.getElementById('inv-filter-sort');
 
-const PAGE_SIZE = 15;
-const EQ_PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
+const EQ_PAGE_SIZE = 10;
 
 let currentPage = 1;
 let eqCurrentPage = 1;

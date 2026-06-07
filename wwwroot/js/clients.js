@@ -26,7 +26,7 @@ const filterRangeToggle = document.getElementById('filter-range-toggle');
 const applyFiltersBtn = document.getElementById('apply-filters');
 const clearFiltersBtn = document.getElementById('clear-filters');
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 let currentPage = 1;
 let currentEditId = null;
 let allClients = [];

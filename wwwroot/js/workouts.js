@@ -36,7 +36,7 @@ const gymLinksBody = document.getElementById('gym-links-body');
 const gymLimitHint = document.getElementById('gym-limit-hint');
 const MAX_GYMS = 5;
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 let currentPage = 1;
 let currentEditId = null;
 let allWorkouts = [];
