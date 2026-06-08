@@ -121,7 +121,13 @@ namespace Fitness.Services
                         list.Add(new ClientDict
                         {
                             ClientId = reader.GetInt32(0),
-                            FullName = reader.GetString(1)
+                            FullName = reader.GetString(1),
+                            AbonnementType = reader.IsDBNull(2) ? null : reader.GetString(2),
+                            ExpiryDate = reader.IsDBNull(3) ? null : DateOnly.FromDateTime(reader.GetDateTime(3)),
+                            AccessStartTime = reader.IsDBNull(4) ? null : ReadTimeOnly(reader.GetValue(4)),
+                            AccessEndTime = reader.IsDBNull(5) ? null : ReadTimeOnly(reader.GetValue(5)),
+                            WeekdayAccess = reader.IsDBNull(6) ? null : reader.GetBoolean(6),
+                            WeekendAccess = reader.IsDBNull(7) ? null : reader.GetBoolean(7)
                         });
                     }
                 }
@@ -160,12 +166,25 @@ namespace Fitness.Services
         {
             public int ClientId { get; set; }
             public string FullName { get; set; } = null!;
+            public string? AbonnementType { get; set; }
+            public DateOnly? ExpiryDate { get; set; }
+            public TimeOnly? AccessStartTime { get; set; }
+            public TimeOnly? AccessEndTime { get; set; }
+            public bool? WeekdayAccess { get; set; }
+            public bool? WeekendAccess { get; set; }
         }
 
         public class BookingStats
         {
             public int BookedCount { get; set; }
             public int MaxParticipants { get; set; }
+        }
+
+        private static TimeOnly ReadTimeOnly(object value)
+        {
+            if (value is TimeOnly to) return to;
+            if (value is TimeSpan ts) return TimeOnly.FromTimeSpan(ts);
+            return TimeOnly.Parse(value?.ToString() ?? "00:00");
         }
     }
 }

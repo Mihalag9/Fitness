@@ -897,7 +897,15 @@ bookingFilterClientInput.addEventListener('input', () => {
 
     bookingClientAC = setupAutocomplete(
         bookingClientInput, bookingClientDropdown, allClients,
-        (item) => { selectedBookingClientId = item ? item.clientId : null; },
-        (item) => item.fullName
+        (item) => {
+            selectedBookingClientId = item ? item.clientId : null;
+            if (item) bookingClientInput.value = item.fullName;
+        },
+        (item) => {
+            if (item.abonnementType) {
+                return item.fullName + ' — ' + item.abonnementType + ' (до ' + item.expiryDate + ')';
+            }
+            return item.fullName + ' — ❌ нет абонемента';
+        }
     );
 })();

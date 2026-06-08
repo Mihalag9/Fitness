@@ -98,11 +98,27 @@ $$ LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION get_clients_dictionary_for_booking()
-RETURNS TABLE("ClientId" INTEGER, "FullName" VARCHAR) AS $$
+RETURNS TABLE(
+    "ClientId" INTEGER,
+    "FullName" VARCHAR,
+    "AbonnementType" VARCHAR,
+    "ExpiryDate" DATE,
+    "AccessStartTime" TIME,
+    "AccessEndTime" TIME,
+    "WeekdayAccess" BOOLEAN,
+    "WeekendAccess" BOOLEAN
+) AS $$
 BEGIN
     RETURN QUERY
-    SELECT c."ClientId", c."FullName"
+    SELECT c."ClientId", c."FullName",
+           a."AbonnementType", p."ExpiryDate",
+           a."AccessStartTime", a."AccessEndTime",
+           a."WeekdayAccess", a."WeekendAccess"
     FROM "Client" c
+    LEFT JOIN "Purchase" p ON c."ClientId" = p."ClientId"
+        AND p."Status" = 'активен'
+        AND p."ExpiryDate" >= CURRENT_DATE
+    LEFT JOIN "Abonnement" a ON p."AbonnementId" = a."AbonnementId"
     ORDER BY c."FullName" ASC;
 END;
 $$ LANGUAGE plpgsql;
