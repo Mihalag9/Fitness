@@ -853,15 +853,6 @@ async function toggleAttended(clientId) {
 let currentScheduleItems = [];
 
 function openBookingModal() {
-    if (selectedScheduleItem) {
-        const schDate = new Date(selectedScheduleItem.workDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (schDate < today) {
-            showToast('Нельзя добавить клиента на прошедшее занятие');
-            return;
-        }
-    }
     bookingClientInput.value = '';
     selectedBookingClientId = null;
     bookingModal.classList.add('show');
