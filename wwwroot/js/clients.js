@@ -617,10 +617,10 @@ function validatePurchForm() {
     today.setHours(0, 0, 0, 0);
     const selected = new Date(purchDateInput.value);
     const maxDate = new Date();
-    maxDate.setMonth(maxDate.getMonth() + 3);
+    maxDate.setMonth(maxDate.getMonth() + 1);
 
     if (selected < today) { showToast('Дата начала не может быть раньше сегодняшнего дня'); return false; }
-    if (selected > maxDate) { showToast('Дата начала не может быть позже 3 месяцев от сегодня'); return false; }
+    if (selected > maxDate) { showToast('Дата начала не может быть позже 1 месяца от сегодня'); return false; }
 
     if (!purchEditClientId) {
         const hasActive = false;

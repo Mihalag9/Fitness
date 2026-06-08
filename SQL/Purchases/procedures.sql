@@ -42,8 +42,8 @@ BEGIN
     IF p_purchase_date < CURRENT_DATE THEN
         RETURN 'Дата начала не может быть раньше сегодняшнего дня';
     END IF;
-    IF p_purchase_date > CURRENT_DATE + INTERVAL '3 months' THEN
-        RETURN 'Дата начала не может быть позже 3 месяцев от сегодня';
+    IF p_purchase_date > CURRENT_DATE + INTERVAL '1 month' THEN
+        RETURN 'Дата начала не может быть позже 1 месяца от сегодня';
     END IF;
 
     SELECT "DurationMonths" INTO v_duration
