@@ -950,5 +950,26 @@ purchDateInput.addEventListener('change', () => {
     }
 });
 
+// ---- Валидация фильтра телефона ----
+filterPhone.addEventListener('input', function () {
+    let digits = this.value.replace(/\D/g, '');
+    if (digits === '7' || digits === '8') {
+        this.value = '';
+        return;
+    }
+    if (digits.startsWith('7') || digits.startsWith('8')) {
+        digits = digits.substring(1);
+    }
+    digits = digits.substring(0, 10);
+    this.value = digits ? '+7' + digits : '';
+});
+filterPhone.addEventListener('keydown', function (e) {
+    const isDigit = /^\d$/.test(e.key);
+    const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
+    const isCtrlCmd = e.ctrlKey || e.metaKey;
+    if (isCtrlCmd || isNav || isDigit) return;
+    e.preventDefault();
+});
+
 // Загружаем данные клиентов при старте
 renderTable();
