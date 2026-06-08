@@ -92,7 +92,7 @@ BEGIN
     JOIN "Abonnement" a ON p."AbonnementId" = a."AbonnementId"
     WHERE p."ClientId" = NEW."ClientId"
       AND p."Status" = 'активен'
-      AND p."ExpiryDate" >= CURRENT_DATE
+      AND p."ExpiryDate" >= v_work_date
     LIMIT 1;
 
     -- Если абонемент не найден

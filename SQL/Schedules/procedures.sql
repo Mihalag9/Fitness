@@ -41,7 +41,7 @@ BEGIN
           WHERE b."ScheduleId" = v."ScheduleId"
             AND c."FullName" ILIKE '%' || p_client_name || '%'
       ))
-    ORDER BY v."WorkDate" ASC, v."StartTime" ASC;
+    ORDER BY v."WorkDate" DESC, v."StartTime" ASC;
 END;
 $$ LANGUAGE plpgsql;
 
