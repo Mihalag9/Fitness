@@ -678,6 +678,18 @@ function selectSchedule(item) {
 
     bookingsModal.classList.add('show');
     loadBookingsForSchedule(selectedScheduleId);
+
+    const scheduleDate = new Date(item.workDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const addBookingBtn = document.getElementById('add-booking-btn');
+    if (scheduleDate < today) {
+        addBookingBtn.disabled = true;
+        addBookingBtn.title = 'Занятие уже прошло';
+    } else {
+        addBookingBtn.disabled = false;
+        addBookingBtn.title = '';
+    }
 }
 
 function loadBookingsFromCache() {
@@ -722,6 +734,15 @@ function renderBookingsTable() {
         checkbox.style.width = '18px';
         checkbox.style.height = '18px';
         checkbox.onchange = () => toggleAttended(b.clientId);
+        if (selectedScheduleItem) {
+            const schDate = new Date(selectedScheduleItem.workDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (schDate < today) {
+                checkbox.disabled = true;
+                checkbox.title = 'Занятие уже прошло';
+            }
+        }
         attendedCell.appendChild(checkbox);
 
         const actionsCell = row.insertCell(3);
@@ -832,6 +853,15 @@ async function toggleAttended(clientId) {
 let currentScheduleItems = [];
 
 function openBookingModal() {
+    if (selectedScheduleItem) {
+        const schDate = new Date(selectedScheduleItem.workDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (schDate < today) {
+            showToast('Нельзя добавить клиента на прошедшее занятие');
+            return;
+        }
+    }
     bookingClientInput.value = '';
     selectedBookingClientId = null;
     bookingModal.classList.add('show');

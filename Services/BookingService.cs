@@ -47,6 +47,11 @@ namespace Fitness.Services
         {
             if (clientId <= 0) return (false, "Не указан клиент");
 
+            var schedule = await _context.Schedules.FindAsync(scheduleId);
+            if (schedule == null) return (false, "Занятие не найдено");
+            if (schedule.WorkDate < DateOnly.FromDateTime(DateTime.Today))
+                return (false, "Нельзя записаться на прошедшее занятие");
+
             var connection = _context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
 
