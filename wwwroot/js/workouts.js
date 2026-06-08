@@ -590,11 +590,14 @@ function onToggleRange() {
     const group = document.getElementById('filter-durationTo-group');
     const labelFrom = document.getElementById('filter-durationFrom-label');
     if (filterRangeToggle.checked) {
+        filterDurationFrom.value = '';
+        filterDurationTo.value = '';
         group.classList.remove('hidden');
         if (labelFrom) labelFrom.textContent = 'Длительность (от)';
     } else {
-        group.classList.add('hidden');
+        filterDurationFrom.value = '';
         filterDurationTo.value = '';
+        group.classList.add('hidden');
         if (labelFrom) labelFrom.textContent = 'Длительность (мин)';
     }
 }
