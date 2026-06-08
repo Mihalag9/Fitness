@@ -906,7 +906,12 @@ bookingFilterClientInput.addEventListener('input', () => {
 
     filterBookingClientAC = setupAutocomplete(
         bookingFilterClientInput, bookingFilterClientDropdown, bookedClientsForFilter,
-        () => {}, (item) => item.fullName
+        (item) => {
+            bookingFilterClientName = bookingFilterClientInput.value.trim();
+            bookingPage = 1;
+            loadBookingsFromCache();
+        },
+        (item) => item.fullName
     );
 
     bookingClientAC = setupAutocomplete(
