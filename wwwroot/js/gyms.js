@@ -774,14 +774,14 @@ async function createGym() {
         if (!response.ok) {
             throw new Error(data?.message || `HTTP ${response.status}`);
         }
-        editIdField.value = data.gymId;
-        currentEditId = data.gymId;
+        editIdField.value = data.entity.gymId;
+        currentEditId = data.entity.gymId;
         modalTitle.textContent = 'Редактировать зал';
         submitBtn.textContent = 'Сохранить';
         inventoryCard.classList.remove('hidden');
         inventoryGymName.textContent = gymNameInput.value.trim();
         addEquipmentBtn.textContent = 'Добавить';
-        loadEditData(data.gymId);
+        loadEditData(data.entity.gymId);
         clearAllFilters();
         await renderTable();
         showToast(data?.message || 'Зал добавлен. Теперь можно добавить оборудование.', 'success');
