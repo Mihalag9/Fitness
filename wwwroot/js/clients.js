@@ -470,7 +470,6 @@ modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }
 const PURCH_API = '/api/Purchases';
 const PURCH_PAGE_SIZE = 10;
 
-let purchTabLoaded = false;
 let salesChartInstance = null;
 
 document.querySelectorAll('.page-tab').forEach(tab => {
@@ -480,8 +479,7 @@ document.querySelectorAll('.page-tab').forEach(tab => {
         tab.classList.add('active');
         document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
 
-        if (tab.dataset.tab === 'purchases' && !purchTabLoaded) {
-            purchTabLoaded = true;
+        if (tab.dataset.tab === 'purchases') {
             loadPurchPageData();
         }
     });
