@@ -165,7 +165,7 @@ namespace Fitness.Services
             if (type.All(char.IsDigit))
                 return "Название не может состоять только из цифр";
 
-            if (!Regex.IsMatch(type, @"^[a-zA-Zа-яА-ЯёЁ\s-]+$"))
+            if (!Regex.IsMatch(type, @"^[a-zA-Zа-яА-ЯёЁ0-9\s-]+$"))
                 return "Название содержит недопустимые символы";
 
             if (abonnement.Price <= 1000)

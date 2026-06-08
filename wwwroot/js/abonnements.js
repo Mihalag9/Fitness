@@ -159,7 +159,7 @@ function validateForm(data) {
         showToast('Название не может состоять только из цифр');
         return false;
     }
-    if (/[^a-zA-Zа-яА-ЯёЁ\s-]/.test(data.abonnementType)) {
+    if (/[^a-zA-Zа-яА-ЯёЁ0-9\s-]/.test(data.abonnementType)) {
         showToast('Название содержит недопустимые символы');
         return false;
     }
