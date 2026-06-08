@@ -77,6 +77,7 @@ psql -h %PGHOST% -p %PGPORT% -U %PGUSER% -d %PGDATABASE% -v ON_ERROR_STOP=1 ^
   -f "%DIR%Reviews\triggers.sql" ^
   -f "%DIR%Schedules\triggers.sql" ^
   -f "%DIR%Trainers\triggers.sql" ^
+  -f "%DIR%Purchases\statistics.sql" ^
   -f "%DIR%Abonnements\statistics.sql" ^
   -f "%DIR%Clients\statistics.sql" ^
   -f "%DIR%Schedules\statistics.sql" ^

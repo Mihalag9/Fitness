@@ -96,6 +96,11 @@
 
     <div id="tab-purchases" class="tab-content">
 
+    <div class="chart-card" id="purchases-chart-card">
+        <h2>Продажи абонементов по месяцам</h2>
+        <canvas id="salesChart" height="200"></canvas>
+    </div>
+
     <div class="filter-card">
         <h2>Фильтры</h2>
         <div class="filter-grid filter-grid-compact">
@@ -194,6 +199,7 @@
     </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="js/toast.js"></script>
     <script src="js/clients.js"></script>
 </body>

@@ -471,6 +471,7 @@ const PURCH_API = '/api/Purchases';
 const PURCH_PAGE_SIZE = 10;
 
 let purchTabLoaded = false;
+let salesChartInstance = null;
 
 document.querySelectorAll('.page-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -859,9 +860,63 @@ async function loadPurchPageData() {
         purchActiveSpan.textContent = stats.activeCount;
         purchCompletedSpan.textContent = stats.completedCount;
         purchRevenueSpan.textContent = stats.totalRevenue.toLocaleString('ru-RU');
+
+        renderSalesChart(result.monthlySales);
     } catch (err) {
         showToast(`Ошибка загрузки: ${err.message}`);
     }
+}
+
+function renderSalesChart(data) {
+    if (!data || data.length === 0) {
+        document.getElementById('purchases-chart-card').style.display = 'none';
+        return;
+    }
+
+    if (salesChartInstance) {
+        salesChartInstance.destroy();
+        salesChartInstance = null;
+    }
+
+    const labels = data.map(d => `${d.month}.${d.year}`);
+    const counts = data.map(d => d.count);
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    salesChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Продано абонементов',
+                data: counts,
+                backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                borderColor: 'rgba(0, 123, 255, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0
+                    }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    document.getElementById('purchases-chart-card').style.display = 'block';
 }
 
 // ---- Пагинация продаж ----

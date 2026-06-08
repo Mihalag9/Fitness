@@ -1,5 +1,6 @@
 using Fitness.Models;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Text.Json;
 
 namespace Fitness.Services
@@ -169,19 +170,44 @@ namespace Fitness.Services
             return items;
         }
 
+        public async Task<List<MonthlySalesItem>> GetMonthlySalesAsync(int months = 6)
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open) await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT get_monthly_abonnement_sales(@months)";
+                var p = command.CreateParameter();
+                p.ParameterName = "@months";
+                p.Value = months;
+                command.Parameters.Add(p);
+
+                var result = await command.ExecuteScalarAsync();
+                var json = result?.ToString();
+                if (string.IsNullOrEmpty(json)) return new List<MonthlySalesItem>();
+
+                return JsonSerializer.Deserialize<List<MonthlySalesItem>>(json,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                    ?? new List<MonthlySalesItem>();
+            }
+        }
+
         public async Task<PurchasePageData> GetPageDataAsync(string? clientName, string? abonnementType, string? status, DateOnly? dateFrom, DateOnly? dateTo)
         {
             var items = await GetAllAsync(clientName, abonnementType, status, dateFrom, dateTo);
             var stats = await GetStatisticsAsync();
             var clients = await GetClientsDictionaryAsync();
             var abonnements = await GetAbonnementsDictionaryAsync();
+            var monthlySales = await GetMonthlySalesAsync(6);
 
             return new PurchasePageData
             {
                 Items = items,
                 Statistics = stats,
                 Clients = clients,
-                Abonnements = abonnements
+                Abonnements = abonnements,
+                MonthlySales = monthlySales
             };
         }
 
@@ -225,6 +251,7 @@ namespace Fitness.Services
             public PurchaseStatistics Statistics { get; set; } = new();
             public IEnumerable<ClientView> Clients { get; set; } = Enumerable.Empty<ClientView>();
             public IEnumerable<AbonnementView> Abonnements { get; set; } = Enumerable.Empty<AbonnementView>();
+            public List<MonthlySalesItem> MonthlySales { get; set; } = new();
         }
     }
 }
