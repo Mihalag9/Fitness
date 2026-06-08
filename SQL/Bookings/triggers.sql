@@ -78,6 +78,7 @@ DECLARE
     v_start_time TIME;
     v_day_of_week INTEGER;
     v_client_name VARCHAR;
+    v_max_expiry DATE;
 BEGIN
     -- Получаем данные о расписании
     SELECT s."WorkDate", s."StartTime"
@@ -85,21 +86,38 @@ BEGIN
     FROM "Schedule" s
     WHERE s."ScheduleId" = NEW."ScheduleId";
 
-    -- Ищем активный абонемент клиента
+    SELECT "FullName" INTO v_client_name FROM "Client" WHERE "ClientId" = NEW."ClientId";
+
+    -- Этап 1: проверка наличия любого активного абонемента
+    IF NOT EXISTS(
+        SELECT 1 FROM "Purchase"
+        WHERE "ClientId" = NEW."ClientId" AND "Status" = 'активен'
+    ) THEN
+        RAISE EXCEPTION 'У клиента "%" нет активного абонемента', v_client_name;
+    END IF;
+
+    -- Этап 2: проверка покрытия даты занятия (хотя бы один активный абонемент действует на эту дату)
+    IF NOT EXISTS(
+        SELECT 1 FROM "Purchase"
+        WHERE "ClientId" = NEW."ClientId"
+          AND "Status" = 'активен'
+          AND "ExpiryDate" >= v_work_date
+    ) THEN
+        SELECT MAX("ExpiryDate") INTO v_max_expiry
+        FROM "Purchase"
+        WHERE "ClientId" = NEW."ClientId" AND "Status" = 'активен';
+        RAISE EXCEPTION 'Абонемент клиента "%" истекает %, что раньше даты занятия %',
+            v_client_name, v_max_expiry, v_work_date;
+    END IF;
+
+    -- Этап 3: получаем параметры доступа из подходящего абонемента
     SELECT a."WeekdayAccess", a."WeekendAccess", a."AccessStartTime", a."AccessEndTime"
     INTO v_weekday_access, v_weekend_access, v_access_start, v_access_end
     FROM "Purchase" p
     JOIN "Abonnement" a ON p."AbonnementId" = a."AbonnementId"
     WHERE p."ClientId" = NEW."ClientId"
       AND p."Status" = 'активен'
-      AND p."ExpiryDate" >= v_work_date
-    LIMIT 1;
-
-    -- Если абонемент не найден
-    IF v_weekday_access IS NULL THEN
-        SELECT "FullName" INTO v_client_name FROM "Client" WHERE "ClientId" = NEW."ClientId";
-        RAISE EXCEPTION 'У клиента "%" нет активного абонемента', v_client_name;
-    END IF;
+      AND p."ExpiryDate" >= v_work_date;
 
     -- Определяем день недели (1=понедельник..7=воскресенье)
     v_day_of_week := EXTRACT(ISODOW FROM v_work_date);
