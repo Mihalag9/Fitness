@@ -355,11 +355,13 @@ async function onSubmit() {
 function onApplyFilters() {
     snapshotFilters();
     renderTable();
+    showToast('Фильтры применены', 'info');
 }
 
 function onClearFilters() {
     clearAllFilters();
     renderTable();
+    showToast('Фильтры сброшены', 'info');
 }
 
 // ---- Переключение диапазона ----
@@ -874,8 +876,8 @@ document.getElementById('purchases-next-btn').addEventListener('click', () => {
 // ---- Инициализация продаж ----
 purchSubmitBtn.addEventListener('click', purchOnSubmit);
 purchCancelBtn.addEventListener('click', purchCloseModal);
-purchApplyFiltersBtn.addEventListener('click', () => { purchCurrentPage = 1; purchSnapshotFilters(); loadPurchPageData(); });
-purchClearFiltersBtn.addEventListener('click', () => { purchCurrentPage = 1; purchClearAllFilters(); loadPurchPageData(); });
+purchApplyFiltersBtn.addEventListener('click', () => { purchCurrentPage = 1; purchSnapshotFilters(); loadPurchPageData(); showToast('Фильтры применены', 'info'); });
+purchClearFiltersBtn.addEventListener('click', () => { purchCurrentPage = 1; purchClearAllFilters(); loadPurchPageData(); showToast('Фильтры сброшены', 'info'); });
 purchAddBtn.addEventListener('click', purchOpenCreateModal);
 purchModalClose.addEventListener('click', purchCloseModal);
 purchModal.addEventListener('click', (e) => { if (e.target === purchModal) purchCloseModal(); });

@@ -254,11 +254,13 @@ async function onSubmit() {
 function onApplyFilters() {
     snapshotFilters();
     loadPageData();
+    showToast('Фильтры применены', 'info');
 }
 
 function onClearFilters() {
     clearAllFilters();
     loadPageData();
+    showToast('Фильтры сброшены', 'info');
 }
 
 // ---- Автоформатирование ФИО при вводе ----
@@ -964,8 +966,8 @@ document.getElementById('reviews-next-btn').addEventListener('click', () => {
 // ---- Инициализация отзывов ----
 revSubmitBtn.addEventListener('click', revOnSubmit);
 revCancelBtn.addEventListener('click', revCloseModal);
-revApplyFiltersBtn.addEventListener('click', () => { revSnapshotFilters(); revCurrentPage = 1; loadReviewsPageData(); });
-revClearFiltersBtn.addEventListener('click', () => { revClearAllFilters(); revCurrentPage = 1; loadReviewsPageData(); });
+revApplyFiltersBtn.addEventListener('click', () => { revSnapshotFilters(); revCurrentPage = 1; loadReviewsPageData(); showToast('Фильтры применены', 'info'); });
+revClearFiltersBtn.addEventListener('click', () => { revClearAllFilters(); revCurrentPage = 1; loadReviewsPageData(); showToast('Фильтры сброшены', 'info'); });
 revAddBtn.addEventListener('click', revOpenCreateModal);
 revModalClose.addEventListener('click', revCloseModal);
 revModal.addEventListener('click', (e) => { if (e.target === revModal) revCloseModal(); });

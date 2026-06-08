@@ -855,12 +855,14 @@ function onApplyFilters() {
     snapshotFilters();
     currentPage = 1;
     renderTable();
+    showToast('Фильтры применены', 'info');
 }
 
 function onClearFilters() {
     clearAllFilters();
     currentPage = 1;
     renderTable();
+    showToast('Фильтры сброшены', 'info');
 }
 
 // ---- Пагинация залов ----
@@ -1296,8 +1298,8 @@ document.getElementById('eq-next-btn').addEventListener('click', () => {
     if (eqCurrentPage < totalPages) { eqCurrentPage++; renderEqPage(); renderEqPagination(); }
 });
 
-function eqOnApplyFilters() { eqCurrentPage = 1; eqSnapshotFilters(); eqRenderTable(); }
-function eqOnClearFilters() { eqCurrentPage = 1; eqClearAllFilters(); eqRenderTable(); }
+function eqOnApplyFilters() { eqCurrentPage = 1; eqSnapshotFilters(); eqRenderTable(); showToast('Фильтры применены', 'info'); }
+function eqOnClearFilters() { eqCurrentPage = 1; eqClearAllFilters(); eqRenderTable(); showToast('Фильтры сброшены', 'info'); }
 
 // ---- Инициализация: Оборудование ----
 eqSubmitBtn.addEventListener('click', eqOnSubmit);

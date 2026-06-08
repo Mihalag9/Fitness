@@ -380,6 +380,7 @@ function onApplyFilters() {
     snapshotFilters();
     currentPage = 1;
     renderTable();
+    showToast('Фильтры применены', 'info');
 }
 
 // ---- Очистка фильтров ----
@@ -387,6 +388,7 @@ function onClearFilters() {
     clearAllFilters();
     currentPage = 1;
     renderTable();
+    showToast('Фильтры сброшены', 'info');
 }
 
 // ---- Пагинация абонементов ----

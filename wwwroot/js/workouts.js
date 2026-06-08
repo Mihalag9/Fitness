@@ -576,12 +576,14 @@ function onApplyFilters() {
     snapshotFilters();
     currentPage = 1;
     renderTable();
+    showToast('Фильтры применены', 'info');
 }
 
 function onClearFilters() {
     clearAllFilters();
     currentPage = 1;
     renderTable();
+    showToast('Фильтры сброшены', 'info');
 }
 
 function onToggleRange() {

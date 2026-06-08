@@ -623,8 +623,8 @@ addBtn.addEventListener('click', openCreateModal);
 modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-applyBtn.addEventListener('click', () => { snapshotFilters(); currentPage = 1; renderPage(); });
-clearBtn.addEventListener('click', () => { clearAllFilters(); currentPage = 1; renderPage(); });
+applyBtn.addEventListener('click', () => { snapshotFilters(); currentPage = 1; renderPage(); showToast('Фильтры применены', 'info'); });
+clearBtn.addEventListener('click', () => { clearAllFilters(); currentPage = 1; renderPage(); showToast('Фильтры сброшены', 'info'); });
 
 // ==========================================
 // ЗАПИСИ НА ЗАНЯТИЯ (BOOKINGS)
