@@ -400,6 +400,34 @@ document.getElementById('abonnements-next-btn').addEventListener('click', () => 
     if (currentPage < totalPages) { currentPage++; renderAbonnementsPage(); renderAbonnementsPagination(); }
 });
 
+// ---- Валидация фильтра цены ----
+[filterPriceMin, filterPriceMax].forEach(function (input) {
+    input.addEventListener('input', function () {
+        let val = this.value.replace(/\D/g, '');
+        if (val.length > 1) val = val.replace(/^0+/, '');
+        if (val && parseInt(val) > 100000) val = '100000';
+        this.value = val;
+    });
+    input.addEventListener('keydown', function (e) {
+        if (e.key === ' ') {
+            const val = parseInt(this.value);
+            if (this.value && val < 1000) this.value = '1000';
+            if (this.value && val > 100000) this.value = '100000';
+            e.preventDefault();
+            return;
+        }
+        const isDigit = /^\d$/.test(e.key);
+        const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
+        const isCtrlCmd = e.ctrlKey || e.metaKey;
+        if (!isDigit && !isNav && !isCtrlCmd) e.preventDefault();
+    });
+    input.addEventListener('blur', function () {
+        const val = parseInt(this.value);
+        if (this.value && val < 1000) this.value = '1000';
+        if (this.value && val > 100000) this.value = '100000';
+    });
+});
+
 // ---- Инициализация и обработчики событий (Абонементы) ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', closeModal);

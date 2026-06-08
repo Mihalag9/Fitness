@@ -658,6 +658,34 @@ document.getElementById('workouts-next-btn').addEventListener('click', () => {
     if (currentPage < totalPages) { currentPage++; renderWorkoutPage(); renderWorkoutsPagination(); }
 });
 
+// ---- Валидация фильтра длительности ----
+[filterDurationFrom, filterDurationTo].forEach(function (input) {
+    input.addEventListener('input', function () {
+        let val = this.value.replace(/\D/g, '');
+        if (val.length > 1) val = val.replace(/^0+/, '');
+        if (val && parseInt(val) > 180) val = '180';
+        this.value = val;
+    });
+    input.addEventListener('keydown', function (e) {
+        if (e.key === ' ') {
+            const val = parseInt(this.value);
+            if (this.value && val < 30) this.value = '30';
+            if (this.value && val > 180) this.value = '180';
+            e.preventDefault();
+            return;
+        }
+        const isDigit = /^\d$/.test(e.key);
+        const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
+        const isCtrlCmd = e.ctrlKey || e.metaKey;
+        if (!isDigit && !isNav && !isCtrlCmd) e.preventDefault();
+    });
+    input.addEventListener('blur', function () {
+        const val = parseInt(this.value);
+        if (this.value && val < 30) this.value = '30';
+        if (this.value && val > 180) this.value = '180';
+    });
+});
+
 // ---- Инициализация ----
 submitBtn.addEventListener('click', onSubmit);
 cancelBtn.addEventListener('click', closeModal);
