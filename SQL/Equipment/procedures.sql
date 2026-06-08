@@ -25,6 +25,10 @@ CREATE OR REPLACE FUNCTION add_equipment(p_equipmentname VARCHAR, p_brand VARCHA
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
+    IF p_equipmentname IS NULL OR trim(p_equipmentname) = '' THEN
+        RETURN 'Название оборудования не может быть пустым';
+    END IF;
+
     INSERT INTO "Equipment" ("EquipmentName", "Brand", "Model") 
     VALUES (trim(p_equipmentname), trim(p_brand), NULLIF(trim(p_model), '')) 
     RETURNING "EquipmentId" INTO new_id;
@@ -38,6 +42,11 @@ CREATE OR REPLACE FUNCTION update_equipment(p_id INTEGER, p_equipmentname VARCHA
 RETURNS TEXT AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM "Equipment" WHERE "EquipmentId" = p_id) THEN RETURN 'NOT_FOUND'; END IF;
+
+    IF p_equipmentname IS NULL OR trim(p_equipmentname) = '' THEN
+        RETURN 'Название оборудования не может быть пустым';
+    END IF;
+
     UPDATE "Equipment" 
     SET "EquipmentName" = trim(p_equipmentname), 
         "Brand" = trim(p_brand), 

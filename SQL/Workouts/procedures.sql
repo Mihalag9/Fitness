@@ -34,6 +34,22 @@ CREATE OR REPLACE FUNCTION add_workout(p_workoutname VARCHAR, p_durationminutes 
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
+    IF p_workoutname IS NULL OR trim(p_workoutname) = '' THEN
+        RETURN 'Название тренировки не может быть пустым';
+    END IF;
+
+    IF p_durationminutes IS NULL OR p_durationminutes < 30 OR p_durationminutes > 180 THEN
+        RETURN 'Длительность тренировки должна быть от 30 до 180 минут';
+    END IF;
+
+    IF p_maxparticipants IS NULL OR p_maxparticipants < 1 OR p_maxparticipants > 50 THEN
+        RETURN 'Количество участников должно быть от 1 до 50';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutName" ILIKE trim(p_workoutname)) THEN
+        RETURN 'Тренировка с таким названием уже существует';
+    END IF;
+
     INSERT INTO "Workout" ("WorkoutName", "DurationMinutes", "MaxParticipants")
     VALUES (trim(p_workoutname), p_durationminutes, p_maxparticipants)
     RETURNING "WorkoutId" INTO new_id;
@@ -47,6 +63,23 @@ CREATE OR REPLACE FUNCTION update_workout(p_id INTEGER, p_workoutname VARCHAR, p
 RETURNS TEXT AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutId" = p_id) THEN RETURN 'Тренировка не найдена'; END IF;
+
+    IF p_workoutname IS NULL OR trim(p_workoutname) = '' THEN
+        RETURN 'Название тренировки не может быть пустым';
+    END IF;
+
+    IF p_durationminutes IS NULL OR p_durationminutes < 5 OR p_durationminutes > 480 THEN
+        RETURN 'Длительность тренировки должна быть от 5 до 480 минут';
+    END IF;
+
+    IF p_maxparticipants IS NULL OR p_maxparticipants < 1 OR p_maxparticipants > 50 THEN
+        RETURN 'Количество участников должно быть от 1 до 50';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM "Workout" WHERE "WorkoutName" ILIKE trim(p_workoutname) AND "WorkoutId" != p_id) THEN
+        RETURN 'Тренировка с таким названием уже существует';
+    END IF;
+
     UPDATE "Workout"
     SET "WorkoutName" = trim(p_workoutname),
         "DurationMinutes" = p_durationminutes,

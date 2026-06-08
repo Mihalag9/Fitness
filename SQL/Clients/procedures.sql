@@ -29,6 +29,14 @@ CREATE OR REPLACE FUNCTION add_client(p_fullname VARCHAR, p_birthdate DATE, p_ph
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
+    IF p_fullname IS NULL OR trim(p_fullname) = '' THEN
+        RETURN 'ФИО клиента не может быть пустым';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM "Client" WHERE "Phone" = p_phone) THEN
+        RETURN 'Клиент с таким телефоном уже существует';
+    END IF;
+
     INSERT INTO "Client" ("FullName", "BirthDate", "Phone") VALUES (trim(p_fullname), p_birthdate, p_phone) RETURNING "ClientId" INTO new_id;
     RETURN 'Клиент "' || trim(p_fullname) || '" успешно добавлен (ID: ' || new_id || ')';
 EXCEPTION WHEN OTHERS THEN
@@ -40,6 +48,15 @@ CREATE OR REPLACE FUNCTION update_client(p_id INTEGER, p_fullname VARCHAR, p_bir
 RETURNS TEXT AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM "Client" WHERE "ClientId" = p_id) THEN RETURN 'Клиент не найден'; END IF;
+
+    IF p_fullname IS NULL OR trim(p_fullname) = '' THEN
+        RETURN 'ФИО клиента не может быть пустым';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM "Client" WHERE "Phone" = p_phone AND "ClientId" != p_id) THEN
+        RETURN 'Клиент с таким телефоном уже существует';
+    END IF;
+
     UPDATE "Client" SET "FullName" = trim(p_fullname), "BirthDate" = p_birthdate, "Phone" = p_phone WHERE "ClientId" = p_id;
     RETURN 'Клиент "' || trim(p_fullname) || '" успешно обновлён';
 EXCEPTION WHEN OTHERS THEN

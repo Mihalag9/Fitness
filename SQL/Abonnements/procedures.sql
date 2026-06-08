@@ -44,8 +44,20 @@ CREATE OR REPLACE FUNCTION add_abonnement(p_type VARCHAR, p_price NUMERIC, p_mon
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
+    IF p_type IS NULL OR trim(p_type) = '' THEN
+        RETURN 'Название абонемента не может быть пустым';
+    END IF;
+
+    IF p_price IS NULL OR p_price < 1000 THEN
+        RETURN 'Цена должна быть не менее 1 000 рублей';
+    END IF;
+
     IF p_price > 100000 THEN
-        RAISE EXCEPTION 'Цена не может превышать 100 000 рублей';
+        RETURN 'Цена не может превышать 100 000 рублей';
+    END IF;
+
+    IF p_months IS NULL OR p_months < 1 OR p_months > 18 THEN
+        RETURN 'Срок абонемента должен быть от 1 до 18 месяцев';
     END IF;
 
     INSERT INTO "Abonnement" ("AbonnementType", "Price", "DurationMonths", "WeekdayAccess", "WeekendAccess", "AccessStartTime", "AccessEndTime")
@@ -64,8 +76,20 @@ BEGIN
         RETURN 'Абонемент не найден';
     END IF;
 
+    IF p_type IS NULL OR trim(p_type) = '' THEN
+        RETURN 'Название абонемента не может быть пустым';
+    END IF;
+
+    IF p_price IS NULL OR p_price < 1000 THEN
+        RETURN 'Цена должна быть не менее 1 000 рублей';
+    END IF;
+
     IF p_price > 100000 THEN
-        RAISE EXCEPTION 'Цена не может превышать 100 000 рублей';
+        RETURN 'Цена не может превышать 100 000 рублей';
+    END IF;
+
+    IF p_months IS NULL OR p_months < 1 OR p_months > 18 THEN
+        RETURN 'Срок абонемента должен быть от 1 до 18 месяцев';
     END IF;
 
     UPDATE "Abonnement" SET "AbonnementType" = trim(p_type), "Price" = p_price, "DurationMonths" = p_months,

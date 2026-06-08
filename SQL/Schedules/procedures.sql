@@ -86,7 +86,32 @@ DECLARE
     v_duration INTEGER;
     v_end_time TIME;
 BEGIN
+    IF p_workout_id IS NULL OR p_workout_id <= 0 THEN
+        RETURN 'Не указана тренировка';
+    END IF;
+
+    IF p_gym_id IS NULL OR p_gym_id <= 0 THEN
+        RETURN 'Не указан зал';
+    END IF;
+
+    IF p_workout_type_id IS NULL OR p_workout_type_id <= 0 THEN
+        RETURN 'Не указан тип тренировки';
+    END IF;
+
+    IF p_work_date IS NULL THEN
+        RETURN 'Не указана дата занятия';
+    END IF;
+
+    IF p_start_time IS NULL THEN
+        RETURN 'Не указано время начала';
+    END IF;
+
     SELECT "DurationMinutes" INTO v_duration FROM "Workout" WHERE "WorkoutId" = p_workout_id;
+
+    IF v_duration IS NULL THEN
+        RETURN 'Тренировка не найдена';
+    END IF;
+
     v_end_time := p_start_time + (v_duration || ' minutes')::INTERVAL;
 
     INSERT INTO "Schedule" ("TrainerId", "WorkoutId", "GymId", "WorkoutTypeId", "WorkDate", "StartTime", "EndTime")
@@ -117,7 +142,32 @@ BEGIN
         RETURN 'Запись расписания не найдена';
     END IF;
 
+    IF p_workout_id IS NULL OR p_workout_id <= 0 THEN
+        RETURN 'Не указана тренировка';
+    END IF;
+
+    IF p_gym_id IS NULL OR p_gym_id <= 0 THEN
+        RETURN 'Не указан зал';
+    END IF;
+
+    IF p_workout_type_id IS NULL OR p_workout_type_id <= 0 THEN
+        RETURN 'Не указан тип тренировки';
+    END IF;
+
+    IF p_work_date IS NULL THEN
+        RETURN 'Не указана дата занятия';
+    END IF;
+
+    IF p_start_time IS NULL THEN
+        RETURN 'Не указано время начала';
+    END IF;
+
     SELECT "DurationMinutes" INTO v_duration FROM "Workout" WHERE "WorkoutId" = p_workout_id;
+
+    IF v_duration IS NULL THEN
+        RETURN 'Тренировка не найдена';
+    END IF;
+
     v_end_time := p_start_time + (v_duration || ' minutes')::INTERVAL;
 
     UPDATE "Schedule"

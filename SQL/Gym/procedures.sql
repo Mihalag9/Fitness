@@ -47,6 +47,14 @@ CREATE OR REPLACE FUNCTION add_gym(p_gymname VARCHAR)
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
+    IF p_gymname IS NULL OR trim(p_gymname) = '' THEN
+        RETURN 'Название зала не может быть пустым';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM "Gym" WHERE "GymName" ILIKE trim(p_gymname)) THEN
+        RETURN 'Зал с таким названием уже существует';
+    END IF;
+
     INSERT INTO "Gym" ("GymName") VALUES (trim(p_gymname)) RETURNING "GymId" INTO new_id;
     RETURN 'Зал "' || trim(p_gymname) || '" успешно добавлен (ID: ' || new_id || ')';
 EXCEPTION WHEN OTHERS THEN
@@ -59,6 +67,15 @@ CREATE OR REPLACE FUNCTION update_gym(p_id INTEGER, p_gymname VARCHAR)
 RETURNS TEXT AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM "Gym" WHERE "GymId" = p_id) THEN RETURN 'Зал не найден'; END IF;
+
+    IF p_gymname IS NULL OR trim(p_gymname) = '' THEN
+        RETURN 'Название зала не может быть пустым';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM "Gym" WHERE "GymName" ILIKE trim(p_gymname) AND "GymId" != p_id) THEN
+        RETURN 'Зал с таким названием уже существует';
+    END IF;
+
     UPDATE "Gym" SET "GymName" = trim(p_gymname) WHERE "GymId" = p_id;
     RETURN 'Зал "' || trim(p_gymname) || '" успешно обновлён';
 EXCEPTION WHEN OTHERS THEN

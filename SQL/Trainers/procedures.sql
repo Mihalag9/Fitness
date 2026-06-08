@@ -41,6 +41,14 @@ CREATE OR REPLACE FUNCTION add_trainer(p_fullname VARCHAR, p_experience INTEGER)
 RETURNS TEXT AS $$
 DECLARE new_id INTEGER;
 BEGIN
+    IF p_fullname IS NULL OR trim(p_fullname) = '' THEN
+        RETURN 'ФИО тренера не может быть пустым';
+    END IF;
+
+    IF p_experience IS NULL OR p_experience < 0 OR p_experience > 60 THEN
+        RETURN 'Стаж тренера должен быть от 0 до 60 лет';
+    END IF;
+
     INSERT INTO "Trainer" ("FullName", "Experience") VALUES (trim(p_fullname), p_experience) RETURNING "TrainerId" INTO new_id;
     RETURN 'Тренер "' || trim(p_fullname) || '" успешно добавлен (ID: ' || new_id || ')';
 EXCEPTION WHEN OTHERS THEN
@@ -52,6 +60,15 @@ CREATE OR REPLACE FUNCTION update_trainer(p_id INTEGER, p_fullname VARCHAR, p_ex
 RETURNS TEXT AS $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM "Trainer" WHERE "TrainerId" = p_id) THEN RETURN 'Тренер не найден'; END IF;
+
+    IF p_fullname IS NULL OR trim(p_fullname) = '' THEN
+        RETURN 'ФИО тренера не может быть пустым';
+    END IF;
+
+    IF p_experience IS NULL OR p_experience < 0 OR p_experience > 70 THEN
+        RETURN 'Стаж тренера должен быть от 0 до 70 лет';
+    END IF;
+
     UPDATE "Trainer" SET "FullName" = trim(p_fullname), "Experience" = p_experience WHERE "TrainerId" = p_id;
     RETURN 'Тренер "' || trim(p_fullname) || '" успешно обновлён';
 EXCEPTION WHEN OTHERS THEN

@@ -29,6 +29,14 @@ CREATE OR REPLACE FUNCTION add_booking(
 )
 RETURNS TEXT AS $$
 BEGIN
+    IF p_client_id IS NULL OR p_client_id <= 0 THEN
+        RETURN 'Не указан клиент';
+    END IF;
+
+    IF p_schedule_id IS NULL OR p_schedule_id <= 0 THEN
+        RETURN 'Не указано занятие';
+    END IF;
+
     INSERT INTO "Booking" ("ClientId", "ScheduleId")
     VALUES (p_client_id, p_schedule_id);
 
