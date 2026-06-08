@@ -659,6 +659,14 @@ document.getElementById('workouts-next-btn').addEventListener('click', () => {
 });
 
 // ---- Валидация фильтра длительности ----
+function clampDurationRange() {
+    if (filterDurationFrom.value && filterDurationTo.value) {
+        const from = parseInt(filterDurationFrom.value);
+        const to = parseInt(filterDurationTo.value);
+        if (from > to) filterDurationTo.value = filterDurationFrom.value;
+    }
+}
+
 [filterDurationFrom, filterDurationTo].forEach(function (input) {
     input.addEventListener('input', function () {
         let val = this.value.replace(/\D/g, '');
@@ -671,6 +679,7 @@ document.getElementById('workouts-next-btn').addEventListener('click', () => {
             const val = parseInt(this.value);
             if (this.value && val < 30) this.value = '30';
             if (this.value && val > 180) this.value = '180';
+            clampDurationRange();
             e.preventDefault();
             return;
         }
@@ -683,6 +692,7 @@ document.getElementById('workouts-next-btn').addEventListener('click', () => {
         const val = parseInt(this.value);
         if (this.value && val < 30) this.value = '30';
         if (this.value && val > 180) this.value = '180';
+        clampDurationRange();
     });
 });
 
