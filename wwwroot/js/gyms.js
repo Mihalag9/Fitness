@@ -1048,7 +1048,7 @@ function eqValidateForm() {
 
     if (model) {
         if (model.length < 3) { showToast('Модель должна содержать не менее 3 символов'); return false; }
-        if (model.length > 20) { showToast('Модель не должна превышать 20 символов'); return false; }
+        if (model.length > 40) { showToast('Модель не должна превышать 40 символов'); return false; }
         if (!/[a-zA-Zа-яА-ЯёЁ]/.test(model)) { showToast('Модель не может состоять только из цифр'); return false; }
         if (/^\d/.test(model)) { showToast('Модель не может начинаться с цифры'); return false; }
         if (/\s{2,}/.test(model)) { showToast('Пробелы не могут идти подряд'); return false; }
