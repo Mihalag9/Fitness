@@ -631,6 +631,7 @@ clearBtn.addEventListener('click', () => { clearAllFilters(); currentPage = 1; r
 // ==========================================
 
 let allClients = [];
+let bookedClientsForFilter = [];
 let selectedScheduleId = null;
 let allBookings = [];
 let filteredBookings = [];
@@ -677,6 +678,8 @@ function selectSchedule(item) {
         `${item.workoutName} | ${item.trainerName || '—'} | ${dateStr} | ${item.startTime.substring(0, 5)}–${item.endTime.substring(0, 5)}`;
 
     bookingsModal.classList.add('show');
+    bookedClientsForFilter.splice(0, bookedClientsForFilter.length);
+    if (filterBookingClientAC) filterBookingClientAC.refresh();
     loadBookingsForSchedule(selectedScheduleId);
 
     const scheduleDate = new Date(item.workDate);
@@ -793,6 +796,17 @@ async function loadBookingsForSchedule(scheduleId) {
         (data.items || []).forEach(b => {
             allBookings.push({ ...b, scheduleId });
         });
+
+        bookedClientsForFilter.splice(0, bookedClientsForFilter.length);
+        const seen = new Set();
+        (data.items || []).forEach(b => {
+            if (!seen.has(b.clientId)) {
+                seen.add(b.clientId);
+                bookedClientsForFilter.push({ clientId: b.clientId, fullName: b.clientName });
+            }
+        });
+        if (filterBookingClientAC) filterBookingClientAC.refresh();
+
         loadBookingsFromCache();
     } catch (err) {
         showToast(`Ошибка загрузки записей: ${err.message}`);
@@ -891,7 +905,7 @@ bookingFilterClientInput.addEventListener('input', () => {
     initAutocompletes();
 
     filterBookingClientAC = setupAutocomplete(
-        bookingFilterClientInput, bookingFilterClientDropdown, allClients,
+        bookingFilterClientInput, bookingFilterClientDropdown, bookedClientsForFilter,
         () => {}, (item) => item.fullName
     );
 
