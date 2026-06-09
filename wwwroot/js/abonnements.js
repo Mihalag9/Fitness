@@ -42,16 +42,34 @@ let currentEditId = null;
 
 accessTimeRangeInput.addEventListener('input', function () {
     let digits = this.value.replace(/\D/g, '');
-    digits = digits.substring(0, 8);
+
+    let valid = '';
+    for (let i = 0; i < digits.length && valid.length < 8; i++) {
+        const d = parseInt(digits[i], 10);
+        const pos = valid.length;
+
+        if (pos === 0 && d > 2) continue;
+        if (pos === 1) {
+            const tens = parseInt(valid[0] || '0', 10);
+            if (tens === 2 && d > 3) continue;
+        }
+        if (pos === 2 && d > 5) continue;
+        if (pos === 4 && d > 2) continue;
+        if (pos === 5) {
+            const tens = parseInt(valid[4] || '0', 10);
+            if (tens === 2 && d > 3) continue;
+        }
+        if (pos === 6 && d > 5) continue;
+
+        valid += digits[i];
+    }
 
     let formatted = '';
-    for (let i = 0; i < digits.length; i++) {
-        if (i === 2 || i === 4) {
-            formatted += i === 2 ? ':' : ' - ';
-        } else if (i === 6) {
-            formatted += ':';
-        }
-        formatted += digits[i];
+    for (let i = 0; i < valid.length; i++) {
+        if (i === 2) formatted += ':';
+        else if (i === 4) formatted += ' - ';
+        else if (i === 6) formatted += ':';
+        formatted += valid[i];
     }
     this.value = formatted;
 });
