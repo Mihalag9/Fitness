@@ -43,7 +43,7 @@ BEGIN
     VALUES (p_gymid, p_workoutid)
     ON CONFLICT DO NOTHING;
 
-    RETURN 'Связь зала и тренировки добавлена';
+    RETURN 'Связь зала и тренировки успешно добавлена';
 EXCEPTION WHEN OTHERS THEN
     RETURN SQLERRM;
 END;
@@ -66,7 +66,7 @@ BEGIN
         RETURN 'Связь не найдена';
     END IF;
     DELETE FROM "GymAllowedWorkout" WHERE "GymId" = p_gymid AND "WorkoutId" = p_workoutid;
-    RETURN 'Связь зала и тренировки удалена';
+    RETURN 'Связь зала и тренировки успешно удалена';
 EXCEPTION WHEN OTHERS THEN
     RETURN SQLERRM;
 END;
