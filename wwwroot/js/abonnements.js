@@ -44,6 +44,23 @@ accessTimeRangeInput.addEventListener('input', function () {
     this.value = this.value.replace(/[^0-9:\-\s]/g, '');
 });
 
+[priceInput, durationMonthsInput].forEach(function (input) {
+    input.addEventListener('input', function () {
+        let val = this.value.replace(/\D/g, '');
+        if (val.length > 1) val = val.replace(/^0+/, '');
+        if (input === priceInput && val && parseInt(val) > 100000) val = '100000';
+        if (input === durationMonthsInput && val && parseInt(val) > 18) val = '18';
+        this.value = val;
+    });
+    input.addEventListener('keydown', function (e) {
+        const isDigit = /^\d$/.test(e.key);
+        const isNav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
+        const isCtrlCmd = e.ctrlKey || e.metaKey;
+        if (isCtrlCmd || isNav) return;
+        if (!isDigit) e.preventDefault();
+    });
+});
+
 let appliedFilters = {};
 
 function snapshotFilters() {
