@@ -38,6 +38,10 @@ BEGIN
         RETURN 'Название тренировки не может быть пустым';
     END IF;
 
+    IF LENGTH(TRIM(p_workoutname)) < 3 OR LENGTH(TRIM(p_workoutname)) > 50 THEN
+        RETURN 'Название тренировки должно содержать от 3 до 50 символов';
+    END IF;
+
     IF p_durationminutes IS NULL OR p_durationminutes < 30 OR p_durationminutes > 180 THEN
         RETURN 'Длительность тренировки должна быть от 30 до 180 минут';
     END IF;
@@ -66,6 +70,10 @@ BEGIN
 
     IF p_workoutname IS NULL OR trim(p_workoutname) = '' THEN
         RETURN 'Название тренировки не может быть пустым';
+    END IF;
+
+    IF LENGTH(TRIM(p_workoutname)) < 3 OR LENGTH(TRIM(p_workoutname)) > 50 THEN
+        RETURN 'Название тренировки должно содержать от 3 до 50 символов';
     END IF;
 
     IF p_durationminutes IS NULL OR p_durationminutes < 5 OR p_durationminutes > 480 THEN
