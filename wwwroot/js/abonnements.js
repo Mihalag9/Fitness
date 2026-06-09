@@ -41,7 +41,19 @@ let currentPage = 1;
 let currentEditId = null;
 
 accessTimeRangeInput.addEventListener('input', function () {
-    this.value = this.value.replace(/[^0-9:\-\s]/g, '');
+    let digits = this.value.replace(/\D/g, '');
+    digits = digits.substring(0, 8);
+
+    let formatted = '';
+    for (let i = 0; i < digits.length; i++) {
+        if (i === 2 || i === 4) {
+            formatted += i === 2 ? ':' : ' - ';
+        } else if (i === 6) {
+            formatted += ':';
+        }
+        formatted += digits[i];
+    }
+    this.value = formatted;
 });
 
 [priceInput, durationMonthsInput].forEach(function (input) {
