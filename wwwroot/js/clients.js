@@ -954,7 +954,7 @@ purchDateInput.addEventListener('change', () => {
 filterPhone.addEventListener('input', function () {
     let digits = this.value.replace(/\D/g, '');
     if (digits === '7' || digits === '8') {
-        this.value = '';
+        this.value = '+7';
         return;
     }
     if (digits.startsWith('7') || digits.startsWith('8')) {
