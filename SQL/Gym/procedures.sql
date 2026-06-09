@@ -125,7 +125,7 @@ BEGIN
 
     IF p_quantity <= 0 THEN
         DELETE FROM "Inventory" WHERE "GymId" = p_gymid AND "EquipmentId" = p_equipmentid;
-        RETURN 'Оборудование удалено из зала';
+        RETURN 'Оборудование успешно удалено из зала';
     END IF;
     
     BEGIN
@@ -137,7 +137,7 @@ BEGIN
         RETURN SQLERRM;
     END;
     
-    RETURN 'Количество обновлено';
+    RETURN 'Количество успешно обновлено';
 END;
 $$ LANGUAGE plpgsql;
 
@@ -148,7 +148,7 @@ BEGIN
         RETURN 'Запись инвентаря не найдена';
     END IF;
     DELETE FROM "Inventory" WHERE "GymId" = p_gymid AND "EquipmentId" = p_equipmentid;
-    RETURN 'Оборудование удалено из зала';
+    RETURN 'Оборудование успешно удалено из зала';
 EXCEPTION WHEN OTHERS THEN
     RETURN SQLERRM;
 END;
