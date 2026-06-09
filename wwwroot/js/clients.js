@@ -951,17 +951,31 @@ purchDateInput.addEventListener('change', () => {
 });
 
 // ---- Валидация фильтра телефона ----
-filterPhone.addEventListener('input', function () {
+filterPhone.addEventListener('input', function (e) {
     let digits = this.value.replace(/\D/g, '');
-    if (digits === '7' || digits === '8') {
-        this.value = '+7';
-        return;
+    const isDeleting = e.inputType && e.inputType.includes('delete');
+
+    if (isDeleting) {
+        if (digits === '7' || digits === '8') {
+            this.value = '+7';
+            return;
+        }
+        if (digits.startsWith('7') || digits.startsWith('8')) {
+            digits = digits.substring(1);
+        }
+        digits = digits.substring(0, 10);
+        this.value = digits ? '+7' + digits : '';
+    } else {
+        if (digits.length === 1) {
+            this.value = '+7' + digits;
+            return;
+        }
+        if (digits.startsWith('7') || digits.startsWith('8')) {
+            digits = digits.substring(1);
+        }
+        digits = digits.substring(0, 10);
+        this.value = digits ? '+7' + digits : '';
     }
-    if (digits.startsWith('7') || digits.startsWith('8')) {
-        digits = digits.substring(1);
-    }
-    digits = digits.substring(0, 10);
-    this.value = digits ? '+7' + digits : '';
 });
 filterPhone.addEventListener('keydown', function (e) {
     const isDigit = /^\d$/.test(e.key);
