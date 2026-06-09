@@ -339,8 +339,22 @@ async function updateAbonnement(id) {
     }
 }
 
-function isValidTimeRange(value) {
-    return /^([01]\d|2[0-3]):[0-5]\d\s*-\s*([01]\d|2[0-3]):[0-5]\d$/.test(value.replace(/\s+/g, ''));
+function getTimeRangeError(value) {
+    if (!/^([01]\d|2[0-3]):[0-5]\d\s*-\s*([01]\d|2[0-3]):[0-5]\d$/.test(value.replace(/\s+/g, '')))
+        return 'Формат: HH:MM - HH:MM (например 08:00 - 23:00)';
+
+    const times = value.replace(/\s+/g, '').split('-');
+    const [h1, m1] = times[0].split(':').map(Number);
+    const [h2, m2] = times[1].split(':').map(Number);
+    const startMin = h1 * 60 + m1;
+    const endMin = h2 * 60 + m2;
+
+    if (startMin >= endMin)
+        return 'Время окончания должно быть позже времени начала';
+    if (endMin - startMin < 180)
+        return 'Минимальный диапазон времени — 3 часа';
+
+    return null;
 }
 
 function collectFormData() {
@@ -349,8 +363,9 @@ function collectFormData() {
     if (!rawValue) {
         rawValue = '08:00 - 23:00';
     }
-    if (!isValidTimeRange(rawValue)) {
-        showToast('Формат времени: HH:MM - HH:MM (например 08:00 - 23:00)');
+    const timeError = getTimeRangeError(rawValue);
+    if (timeError) {
+        showToast(timeError);
         return null;
     }
     const parts = rawValue.replace(/\s+/g, '').split('-');
