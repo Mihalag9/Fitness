@@ -40,6 +40,10 @@ let currentPage = 1;
 
 let currentEditId = null;
 
+accessTimeRangeInput.addEventListener('input', function () {
+    this.value = this.value.replace(/[^0-9:\-\s]/g, '');
+});
+
 let appliedFilters = {};
 
 function snapshotFilters() {
