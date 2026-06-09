@@ -594,9 +594,7 @@ function purchOpenEditModal(purchase) {
     purchAbonnementInput.value = purchase.abonnementType;
     selectedAbonnementId = purchase.abonnementId;
     purchDateInput.value = purchase.purchaseDate;
-    if (purchase.status === 'завершен') {
-        purchDateInput.disabled = true;
-    }
+    purchDateInput.disabled = true;
     purchExpiryInput.value = purchase.expiryDate;
     purchStatusSelect.value = purchase.status;
     purchEditClientId = purchase.clientId;
