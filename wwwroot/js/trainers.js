@@ -154,7 +154,7 @@ async function createTrainer() {
 
     const newTrainer = {
         fullName: fullNameInput.value.trim(),
-        experience: experienceInput.value ? parseInt(experienceInput.value, 10) : null
+        experience: experienceInput.value ? parseInt(experienceInput.value, 10) : 0
     };
 
     try {
@@ -190,7 +190,7 @@ async function updateTrainer(id) {
     const updated = {
         trainerId: id,
         fullName: fullNameInput.value.trim(),
-        experience: experienceInput.value ? parseInt(experienceInput.value, 10) : null
+        experience: experienceInput.value ? parseInt(experienceInput.value, 10) : 0
     };
 
     try {
