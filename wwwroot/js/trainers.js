@@ -175,6 +175,7 @@ async function createTrainer() {
         submitBtn.textContent = 'Сохранить';
         enableSpecSection(newId);
         await loadPageData();
+        revTabLoaded = false;
         showToast(data?.message || 'Тренер добавлен. Теперь можно назначить специализации.', 'success');
         return true;
     } catch (err) {
@@ -208,6 +209,7 @@ async function updateTrainer(id) {
         closeModal();
         restoreFiltersToDOM();
         await loadPageData();
+        revTabLoaded = false;
         showToast(data?.message || 'Тренер обновлён', 'success');
         return true;
     } catch (err) {
@@ -232,6 +234,7 @@ async function deleteTrainer(id) {
 
         restoreFiltersToDOM();
         await loadPageData();
+        revTabLoaded = false;
         showToast(data?.message || 'Тренер удалён', 'success');
     } catch (err) {
         showToast(`Ошибка удаления: ${err.message}`);
