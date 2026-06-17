@@ -707,52 +707,82 @@ function loadBookingsFromCache() {
     renderBookingsSlotsInfo();
 }
 
+// --- Функция renderBookingsTable ---
 function renderBookingsTable() {
     bookingsBody.innerHTML = '';
-    const start = (bookingPage - 1) * BOOKINGS_PER_PAGE;
-    const pageItems = filteredBookings.slice(start, start + BOOKINGS_PER_PAGE);
+    const startIndex = (bookingPage - 1) * BOOKINGS_PER_PAGE;
+    const pageItems = filteredBookings.slice(startIndex, startIndex + BOOKINGS_PER_PAGE);
 
     if (pageItems.length === 0) {
         const row = bookingsBody.insertRow();
         const cell = row.insertCell(0);
-        cell.colSpan = 4;
+        cell.colSpan = 4; // Увеличиваем colspan до 4, так как в таблице 4 столбца
         cell.textContent = 'Нет записей';
         cell.style.textAlign = 'center';
         cell.style.color = '#999';
         return;
     }
 
+    // Проверяем, выбрано ли расписание и есть ли у него дата и время
+    const scheduleSelected = selectedScheduleItem && selectedScheduleItem.workDate && selectedScheduleItem.startTime;
+
     pageItems.forEach(b => {
         const row = bookingsBody.insertRow();
         row.insertCell(0).textContent = b.clientName;
+
         const dateCell = row.insertCell(1);
-        const bd = new Date(b.bookedAt);
-        dateCell.textContent = bd.toLocaleDateString('ru-RU') + ' ' + bd.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        const bookedAt = new Date(b.bookedAt);
+        dateCell.textContent = `${bookedAt.toLocaleDateString('ru-RU')} ${bookedAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
 
         const attendedCell = row.insertCell(2);
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = b.attended === true;
         checkbox.style.cursor = 'pointer';
-        checkbox.style.width = '18px';
-        checkbox.style.height = '18px';
-        checkbox.onchange = () => toggleAttended(b.clientId);
-        if (selectedScheduleItem) {
+        checkbox.onchange = () => toggleAttended(b.clientId); // Оставляем только обработчик клика
+
+        let isDisabled = false;
+        let titleText = '';
+
+        if (scheduleSelected) {
             const schDate = new Date(selectedScheduleItem.workDate);
             const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0); // Начало сегодняшнего дня по местному времени
+
+            // Сценарий 1: Занятие уже прошло
             if (schDate < today) {
-                checkbox.disabled = true;
-                checkbox.title = 'Занятие уже прошло';
+                isDisabled = true;
+                titleText = 'Занятие уже прошло';
             }
+            // Сценарий 2: Занятие сегодня или в будущем
+            else {
+                const [startHour, startMinute] = selectedScheduleItem.startTime.split(':').map(Number);
+                const nowLocal = new Date(); // Текущее локальное время пользователя
+
+                // Устанавливаем дату занятия и время старта для сравнения
+                schDate.setHours(startHour, startMinute, 0, 0);
+
+                // Сценарий 3: Время начала еще не наступило (сегодня)
+                if (nowLocal < schDate) {
+                    isDisabled = true;
+                    titleText = 'Отметить можно только после начала занятия';
+                }
+            }
+        } else {
+            // Если данные о расписании некорректны, просто блокируем
+            isDisabled = true;
+            titleText = 'Данные о занятии недоступны';
         }
+
+        checkbox.disabled = isDisabled;
+        checkbox.title = titleText;
         attendedCell.appendChild(checkbox);
 
         const actionsCell = row.insertCell(3);
         const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = '\uD83D\uDDD1\uFE0F';
+        deleteBtn.textContent = '\uD83D\uDDD1\uFE0F'; // Unicode иконка корзины
         deleteBtn.title = 'Удалить запись';
-        deleteBtn.onclick = () => deleteBooking(b.clientId);
+        deleteBtn.onclick = (e) => { e.stopPropagation(); deleteBooking(b.clientId); };
         actionsCell.appendChild(deleteBtn);
     });
 }
@@ -851,14 +881,22 @@ async function deleteBooking(clientId) {
 }
 
 async function toggleAttended(clientId) {
+    if (!selectedScheduleId || !clientId || !selectedScheduleItem) {
+        showToast('Ошибка: недостаточно данных.');
+        return;
+    }
+
     try {
         const response = await fetch(`${API_URL}/${selectedScheduleId}/bookings/${clientId}/attended`, { method: 'PUT' });
         const data = await response.json().catch(() => null);
         if (!response.ok) throw new Error(data?.message || `HTTP ${response.status}`);
 
         const booking = allBookings.find(b => b.clientId === clientId && b.scheduleId === selectedScheduleId);
-        if (booking) booking.attended = !booking.attended;
-        renderBookingsTable();
+        if (booking) {
+            booking.attended = !booking.attended;
+            renderBookingsTable();
+        }
+        showToast(data?.message || 'Статус посещения обновлен', 'success');
     } catch (err) {
         showToast(`Ошибка: ${err.message}`);
     }
